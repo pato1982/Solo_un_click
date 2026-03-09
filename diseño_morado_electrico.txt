@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OfiMarket - Marketplace Juvenil</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#611994",
+                        "accent": "#FACC15",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#1a1220",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-primary text-white px-6 py-4 sticky top-0 z-50 shadow-lg">
+<div class="max-w-7xl mx-auto flex items-center justify-between gap-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="bg-accent p-1.5 rounded-lg text-primary">
+<span class="material-symbols-outlined block text-2xl font-bold">rocket_launch</span>
+</div>
+<h2 class="text-2xl font-black tracking-tighter uppercase italic">OfiMarket</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors" href="#">Categorías</a>
+<a class="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors" href="#">Ofertas</a>
+<a class="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors" href="#">Novedades</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<label class="flex-1 max-w-md relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 group-focus-within:text-primary">search</span>
+</div>
+<input class="w-full rounded-full bg-white text-slate-900 py-2 pl-10 pr-4 focus:ring-4 focus:ring-accent/50 border-none transition-all placeholder:text-slate-400" placeholder="Busca sillas, desks o tech..." type="text"/>
+<button class="absolute right-1 top-1 bottom-1 bg-accent text-primary px-4 rounded-full font-bold text-sm hover:scale-105 transition-transform">Buscar</button>
+</label>
+<div class="flex items-center gap-4">
+<button class="relative p-2 hover:bg-white/10 rounded-full">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="absolute top-0 right-0 bg-accent text-primary text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">3</span>
+</button>
+<div class="h-10 w-10 rounded-full border-2 border-accent overflow-hidden bg-slate-200" data-alt="Avatar de usuario sonriente con estilo moderno">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgS0GuuSBmYSqSi68cq7clqR9LuUOw7s8qw910UvRVW8XC2k6Df2Xiii3Nc8n490XS3_MEb_6PX_wcUpNYwt5FA4jhHw_lFDUvUoS09c6kc0UwDHnAu-ZkFV1SVUPhyxYhDQa_3XrZZu0Zri9iSuuecCiCiA-pxqFwSjzIny--cDJK5HxVB5X9JRzvvpoHACYRDMtUk2n0PE3uspjdtFjMmfWpIJIS-Rsd0ZVJ_mZI7egH5Z3W6rBsmQRXBMBaN7bBb3VAfywYrk0"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class="max-w-7xl mx-auto w-full flex flex-1 flex-col md:flex-row gap-6 p-6">
+<!-- Sidebar Filters -->
+<aside class="w-full md:w-72 flex flex-col gap-6">
+<div class="bg-primary rounded-xl p-6 text-white shadow-xl">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-black uppercase tracking-tight">Filtros</h3>
+<span class="material-symbols-outlined text-accent">tune</span>
+</div>
+<div class="space-y-4">
+<div class="flex flex-col gap-2">
+<p class="text-xs font-bold uppercase text-white/60 mb-1">Categorías</p>
+<button class="flex items-center gap-3 px-3 py-2 rounded-lg bg-accent text-primary font-bold shadow-md shadow-accent/20">
+<span class="material-symbols-outlined text-xl">chair</span>
+<span class="text-sm">Sillas Ergónomicas</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-xl">desk</span>
+<span class="text-sm">Escritorios</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-xl">laptop_mac</span>
+<span class="text-sm">Tecnología</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-xl">mouse</span>
+<span class="text-sm">Accesorios</span>
+</button>
+</div>
+<div class="pt-4 border-t border-white/10">
+<p class="text-xs font-bold uppercase text-white/60 mb-3">Rango de Precio</p>
+<input class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-accent" type="range"/>
+<div class="flex justify-between mt-2 text-xs font-bold">
+<span>$0</span>
+<span>$2000+</span>
+</div>
+</div>
+<button class="w-full mt-4 py-3 rounded-lg border-2 border-accent text-accent font-bold text-sm hover:bg-accent hover:text-primary transition-all uppercase tracking-widest">
+                            Limpiar Todo
+                        </button>
+</div>
+</div>
+<!-- Promo Card -->
+<div class="bg-accent rounded-xl p-6 text-primary shadow-xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-black text-2xl leading-none uppercase italic">Estudiante?</p>
+<p class="text-sm font-bold mt-2">Usa tu correo .edu y obtén un 15% extra.</p>
+<button class="mt-4 bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold uppercase hover:scale-105 transition-transform">Verificar ahora</button>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-8xl opacity-20 transform -rotate-12 group-hover:rotate-0 transition-transform">school</span>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col gap-6">
+<!-- Breadcrumbs & Sort -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<nav class="flex items-center gap-2 text-sm">
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">Inicio</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">Setup</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="font-bold text-primary">Resultados</span>
+</nav>
+<div class="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0">
+<button class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200 text-sm font-bold text-slate-700 whitespace-nowrap">
+                            Precio: Menor a Mayor
+                            <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200 text-sm font-bold text-slate-700 whitespace-nowrap">
+                            Marca
+                            <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+</div>
+</div>
+<div class="mb-4">
+<h1 class="text-4xl font-black tracking-tight text-primary uppercase italic">Lo mejor para tu setup</h1>
+<p class="text-slate-500 font-medium">324 productos encontrados en mobiliario y tech.</p>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Product Card 1: Chair -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col group">
+<div class="relative h-64 bg-slate-100 overflow-hidden" data-alt="Silla ergonómica de oficina negra con diseño moderno minimalista">
+<img alt="Chair" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtgS0SetPDa0pDvV-eKE4m0aK2J26dGm6gy0M1dUy-G-2N8exAFgxYVFOAGSShBaD66dYz7ydh-e1ItrO_e6xFTkR3HvtDNCMGzoJmSmMudDH2ZcBcooUxMd9XR7PvWEv-ZDD49kJEGKEzqL8YBnHk7Ptxn6gOTb3ey2EmoHHKPnA9Ny8Z1Zv81SsfQObaMoIzx2GMNjcSTnzjPWgTyETTnwU7p2calL-ZMBcXvos9_TL0H8_0UPntrurqNg5dqTI55A7SmoHnTj0"/>
+<span class="absolute top-4 left-4 bg-accent text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">Más Vendido</span>
+<button class="absolute top-4 right-4 h-10 w-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-black text-lg text-slate-900 leading-tight">Silla Pro-Gamer Alpha V2</h3>
+<div class="flex items-center text-accent">
+<span class="material-symbols-outlined text-sm fill-current">star</span>
+<span class="text-xs font-bold text-slate-600 ml-1">4.9</span>
+</div>
+</div>
+<p class="text-slate-500 text-sm line-clamp-2 mb-4">Ergonomía superior con soporte lumbar ajustable y malla transpirable de alta tecnología.</p>
+<div class="mt-auto flex items-center justify-between gap-4">
+<div>
+<p class="text-xs font-bold text-slate-400 line-through leading-none">$450</p>
+<p class="text-2xl font-black text-primary">$299.00</p>
+</div>
+<button class="bg-accent hover:bg-yellow-400 text-primary h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-accent/30 transition-all hover:scale-110">
+<span class="material-symbols-outlined font-bold">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2: Desk -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col group">
+<div class="relative h-64 bg-slate-100 overflow-hidden" data-alt="Escritorio moderno minimalista de madera clara con patas metálicas blancas">
+<img alt="Desk" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA38oJjJWEUBdLOIOQn9-ZxX3k5SCbkc4Qz5vzl_TvRayDl6FbSIk974zdMpQHY145ZG6vD5Deq91Iw971LdVWrB82pl5fcMHV1NkALb7zk7w4BW01tQaAl-WoH1QeXsEQ0Cmp66PkIWPi8F94bKz3nWIaUE6HSaV2gFyvju4fVBDt88fM3RXq2g02EkG7bnmi3f8pEORPEGACVIgj4zaC2nSW0BU6DuM1-frKn2Bymil3ID2Qj1yNEFzpsZsS6MqCFQwnVkcMnINg"/>
+<span class="absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">Premium</span>
+<button class="absolute top-4 right-4 h-10 w-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-black text-lg text-slate-900 leading-tight">Escritorio Nórdico "Z-Line"</h3>
+<div class="flex items-center text-accent">
+<span class="material-symbols-outlined text-sm fill-current">star</span>
+<span class="text-xs font-bold text-slate-600 ml-1">4.7</span>
+</div>
+</div>
+<p class="text-slate-500 text-sm line-clamp-2 mb-4">Madera de roble sustentable con gestión de cables integrada. Perfecto para espacios pequeños.</p>
+<div class="mt-auto flex items-center justify-between gap-4">
+<div>
+<p class="text-2xl font-black text-primary">$185.50</p>
+</div>
+<button class="bg-accent hover:bg-yellow-400 text-primary h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-accent/30 transition-all hover:scale-110">
+<span class="material-symbols-outlined font-bold">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3: Laptop -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col group">
+<div class="relative h-64 bg-slate-100 overflow-hidden" data-alt="Laptop de alta gama abierta mostrando pantalla vibrante sobre fondo minimalista">
+<img alt="Laptop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_lzR7ViSyn9C9Zd0jUBxTS__s2kzDNB8GsK8FsGYMv4aAvpcMMKD6OZscTI77gCTqSw6J68F17xDAcfsg1kiCKEJ9KAIgjnPZDPpa21o2TIhUKVp-K9m8s7haZfTBPOCeyirQGhSkEnwjiw7H_I2y9zsn4RSgYFeKVU7yN1u4w4BCrLjXet-S4btobWZ7reoQ4DQuaP2Ioet3EBEgj3tjyjO8AvW-VyHDj1v9UBMwwwzzZJiRKUeRs4Z62LltzVtV4QmoHamCw5U"/>
+<span class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">Últimas Unidades</span>
+<button class="absolute top-4 right-4 h-10 w-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-black text-lg text-slate-900 leading-tight">Laptop ZenBook 14" OLED</h3>
+<div class="flex items-center text-accent">
+<span class="material-symbols-outlined text-sm fill-current">star</span>
+<span class="text-xs font-bold text-slate-600 ml-1">5.0</span>
+</div>
+</div>
+<p class="text-slate-500 text-sm line-clamp-2 mb-4">Potencia bruta con chip M2 Pro y pantalla Retina XDR. Diseñada para creadores digitales.</p>
+<div class="mt-auto flex items-center justify-between gap-4">
+<div>
+<p class="text-2xl font-black text-primary">$1,299.99</p>
+</div>
+<button class="bg-accent hover:bg-yellow-400 text-primary h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-accent/30 transition-all hover:scale-110">
+<span class="material-symbols-outlined font-bold">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Repetir o añadir más productos aquí para llenar el grid -->
+</div>
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-2 py-8">
+<button class="h-10 w-10 rounded-lg flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="h-10 w-10 rounded-lg flex items-center justify-center bg-primary text-white font-bold">1</button>
+<button class="h-10 w-10 rounded-lg flex items-center justify-center border border-slate-200 font-bold hover:bg-slate-100 transition-all">2</button>
+<button class="h-10 w-10 rounded-lg flex items-center justify-center border border-slate-200 font-bold hover:bg-slate-100 transition-all">3</button>
+<span class="px-2">...</span>
+<button class="h-10 w-10 rounded-lg flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-primary text-white py-12 px-6 mt-12">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+<div class="col-span-1 md:col-span-1">
+<div class="flex items-center gap-2 mb-6">
+<div class="bg-accent p-1 rounded text-primary">
+<span class="material-symbols-outlined block text-xl font-bold">rocket_launch</span>
+</div>
+<h2 class="text-xl font-black tracking-tighter uppercase italic">OfiMarket</h2>
+</div>
+<p class="text-white/60 text-sm leading-relaxed">Rediseñando el espacio de trabajo para la nueva generación de creadores y emprendedores.</p>
+</div>
+<div>
+<h4 class="font-black uppercase tracking-widest text-accent text-sm mb-6">Comprar</h4>
+<ul class="space-y-4 text-sm font-medium text-white/80">
+<li><a class="hover:text-accent transition-colors" href="#">Sillas</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Escritorios</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Laptops</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Accesorios</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-black uppercase tracking-widest text-accent text-sm mb-6">Soporte</h4>
+<ul class="space-y-4 text-sm font-medium text-white/80">
+<li><a class="hover:text-accent transition-colors" href="#">Envíos</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Devoluciones</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Garantía</a></li>
+<li><a class="hover:text-accent transition-colors" href="#">Contacto</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-black uppercase tracking-widest text-accent text-sm mb-6">Newsletter</h4>
+<div class="flex flex-col gap-4">
+<p class="text-xs text-white/60 uppercase font-bold tracking-wider">Recibe ofertas exclusivas</p>
+<div class="flex gap-2">
+<input class="bg-white/10 border-none rounded-lg text-sm flex-1 focus:ring-accent" placeholder="Tu email" type="email"/>
+<button class="bg-accent text-primary px-4 py-2 rounded-lg font-bold text-xs uppercase">Unirse</button>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto pt-12 mt-12 border-t border-white/10 text-center md:text-left">
+<p class="text-white/40 text-xs font-bold uppercase tracking-widest">© 2024 OfiMarket. Todos los derechos reservados.</p>
+</div>
+</footer>
+</div>
+</body></html>

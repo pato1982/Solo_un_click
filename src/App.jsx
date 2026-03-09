@@ -1,0 +1,337 @@
+import { useState } from 'react'
+import Header from './components/Header'
+import Sidebar from './components/Sidebar'
+import Breadcrumbs from './components/Breadcrumbs'
+import ProductCarousel from './components/ProductCarousel'
+import Banner from './components/Banner'
+import TourismPage from './components/TourismPage'
+import EventsSection from './components/EventsSection'
+import StoresCarousel from './components/StoresCarousel'
+import Footer from './components/Footer'
+import SectionPage from './components/SectionPage'
+import StoresPage from './components/StoresPage'
+import EventsPage from './components/EventsPage'
+import StorePage, { StoreFooter } from './components/StorePage'
+import { sections } from './data/products'
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState(null)   // 'turismo', 'locales', 'eventos' o null (inicio)
+  const [activeSidebar, setActiveSidebar] = useState(null) // qué sidebar mostrar
+  const [activeSection, setActiveSection] = useState(null) // sección "Ver todo"
+  const [activeFilter, setActiveFilter] = useState(null)   // filtro de subcategoría
+  const [storeMapMode, setStoreMapMode] = useState(false)
+  const [activeStore, setActiveStore] = useState(null)      // tienda premium abierta
+
+  const toggleNav = (nav) => {
+    if (nav === 'negocios') {
+      if (currentPage === 'locales' && activeSidebar === 'locales') {
+        goHome()
+      } else {
+        handleViewAllStores()
+      }
+      return
+    }
+    if (nav === 'turismo') {
+      if (currentPage === 'turismo' && activeSidebar === 'turismo') {
+        setCurrentPage(null)
+        setActiveSidebar(null)
+        setActiveSection(null)
+        setActiveFilter(null)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        setCurrentPage('turismo')
+        setActiveSidebar('turismo')
+        setActiveSection(null)
+        setActiveFilter(null)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    } else {
+      if (currentPage === 'turismo') {
+        // Estamos en turismo: solo cambiar el sidebar, no salir de la página
+        setActiveSidebar(activeSidebar === nav ? 'turismo' : nav)
+      } else if (currentPage === 'locales') {
+        setActiveSidebar(activeSidebar === nav ? 'locales' : nav)
+        setActiveFilter(null)
+      } else if (currentPage === 'eventos') {
+        setActiveSidebar(activeSidebar === nav ? 'eventos' : nav)
+        setActiveFilter(null)
+      } else {
+        // Estamos en inicio o SectionPage: toggle sidebar y limpiar filtro al cambiar
+        const newSidebar = activeSidebar === nav ? null : nav
+        setActiveSidebar(newSidebar)
+        setActiveFilter(null)
+      }
+    }
+  }
+
+  const goHome = () => {
+    setCurrentPage(null)
+    setActiveSidebar(null)
+    setActiveSection(null)
+    setActiveFilter(null)
+    setStoreMapMode(false)
+    setActiveStore(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleOpenStore = (store) => {
+    window.scrollTo({ top: 0 })
+    setActiveStore(store)
+    setCurrentPage(null)
+    setActiveSidebar(null)
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
+
+  const handleViewAll = (section) => {
+    setActiveSection(section)
+    setActiveFilter(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleFilterSelect = (filter) => {
+    setActiveFilter(filter)
+    window.scrollTo({ top: 0 })
+  }
+
+  const handleCategorySelect = (catLabel, subcategories) => {
+    setActiveFilter({ category: catLabel, subcategories })
+    window.scrollTo({ top: 0 })
+  }
+
+  const handleViewAllStores = () => {
+    window.scrollTo({ top: 0 })
+    setCurrentPage('locales')
+    setActiveSidebar('locales')
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
+  const handleViewAllEvents = () => {
+    window.scrollTo({ top: 0 })
+    setCurrentPage('eventos')
+    setActiveSidebar('eventos')
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
+  const handleSearchSelect = (item) => {
+    window.scrollTo({ top: 0 })
+    setStoreMapMode(false)
+    setActiveSection(null)
+
+    if (item.nav === 'turismo') {
+      setCurrentPage('turismo')
+      setActiveSidebar('turismo')
+      setActiveFilter(item.label)
+    } else if (item.nav === 'locales') {
+      setCurrentPage('locales')
+      setActiveSidebar('locales')
+      setActiveFilter(item.label)
+    } else if (item.nav === 'eventos') {
+      setCurrentPage('eventos')
+      setActiveSidebar('eventos')
+      setActiveFilter(item.label)
+    } else {
+      // productos, servicios, arriendos
+      setCurrentPage(null)
+      setActiveSidebar(item.nav)
+      if (item.type === 'category' && item.subcategories) {
+        setActiveFilter({ category: item.label, subcategories: item.subcategories })
+      } else {
+        setActiveFilter(item.label)
+      }
+    }
+  }
+
+  // Para el header, marcar como activo el sidebar actual
+  const activeNav = activeSidebar
+
+  // Determinar si mostrar botón Inicio
+  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || activeSection !== null || activeFilter !== null || activeStore !== null
+
+  if (activeStore) {
+    return (
+      <div className="relative flex min-h-screen flex-col">
+        {/* Header fijo: mini barra + header tienda */}
+        <div className="sticky top-0 z-50">
+          {/* <div className="bg-primary px-6 border-b border-white/10" style={{ paddingTop: '1px', paddingBottom: '1px' }}>
+            <div className="max-w-7xl mx-auto flex items-center">
+              <button onClick={goHome} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                <div className="bg-accent p-0.5 rounded text-primary leading-none">
+                  <span className="material-symbols-outlined block text-xs font-bold">ads_click</span>
+                </div>
+                <span className="text-[7px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
+                <span className="text-[10px] font-black italic tracking-tight text-white -ml-0.5">un <span className="text-accent uppercase">CLICK</span></span>
+              </button>
+            </div>
+          </div> */}
+          <header className="bg-primary text-white px-6 py-7 shadow-lg border-b-2 border-accent">
+            <div className="max-w-7xl mx-auto flex items-center gap-6 relative">
+              <button onClick={goHome} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
+                <div className="bg-accent p-1.5 rounded-lg text-primary leading-none">
+                  <span className="material-symbols-outlined block text-2xl font-bold">ads_click</span>
+                </div>
+                <div className="flex flex-col leading-none">
+                  <span className="text-xs font-bold uppercase tracking-widest text-white/70">Solo a</span>
+                  <span className="text-lg font-black italic tracking-tight text-white">un <span className="text-accent uppercase">CLICK</span></span>
+                </div>
+              </button>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="flex flex-col leading-none text-center">
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70">{activeStore.slogan}</span>
+                  <span className="text-3xl font-black italic tracking-tight">{activeStore.name}</span>
+                </div>
+              </div>
+              <div className="flex-1"></div>
+              <label className="relative group shrink-0 w-64">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary">search</span>
+                </div>
+                <input
+                  className="w-full rounded-full bg-white text-slate-900 py-1.5 pl-9 pr-20 focus:ring-4 focus:ring-primary-light/40 border-none transition-all placeholder:text-slate-400 text-xs"
+                  placeholder={`Buscar en ${activeStore.name}...`}
+                  type="text"
+                />
+                <button className="absolute right-1 top-1 bottom-1 bg-accent text-primary px-3 rounded-full font-bold text-xs hover:brightness-110 hover:scale-105 transition-all">
+                  Buscar
+                </button>
+              </label>
+            </div>
+          </header>
+        </div>
+
+        <div className="w-full flex flex-1 flex-col md:flex-row">
+          <StorePage store={activeStore} onBack={goHome} onOpenStore={handleOpenStore} />
+        </div>
+
+        <StoreFooter store={activeStore} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} />
+
+      <div className="w-full flex flex-1 flex-col md:flex-row">
+        <Sidebar
+          activeNav={activeSidebar}
+          onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : null)}
+          onGoHome={goHome}
+          showInicio={showInicio}
+          onFilterSelect={handleFilterSelect}
+          activeFilter={activeFilter}
+          onMapClick={() => setStoreMapMode(true)}
+          onCategorySelect={handleCategorySelect}
+        />
+
+        <main className="flex-1 flex flex-col gap-8 p-6 overflow-hidden transition-all duration-300">
+          {/* <Breadcrumbs /> */}
+
+          {currentPage === 'eventos' ? (
+            <EventsPage
+              sidebarOpen={!!activeSidebar}
+              onBack={goHome}
+              activeFilter={activeFilter}
+            />
+          ) : currentPage === 'locales' ? (
+            <StoresPage
+              sidebarOpen={!!activeSidebar}
+              onBack={goHome}
+              activeFilter={activeFilter}
+              mapMode={storeMapMode}
+              onToggleMap={() => setStoreMapMode(false)}
+            />
+          ) : currentPage === 'turismo' ? (
+            <TourismPage activeFilter={activeFilter} onClearFilter={() => setActiveFilter(null)} />
+          ) : activeFilter ? (
+            /* Filtro activo: mostrar secciones (filas) que tengan productos de esa subcategoría o categoría */
+            (() => {
+              const isCategory = typeof activeFilter === 'object' && activeFilter.subcategories
+              const filterLabel = isCategory ? activeFilter.category : activeFilter
+              const filteredSections = sections
+                .map((s) => ({
+                  ...s,
+                  items: s.items.filter((item) =>
+                    isCategory
+                      ? activeFilter.subcategories.includes(item.subcategory)
+                      : item.subcategory === activeFilter
+                  ),
+                }))
+                .filter((s) => s.items.length > 0)
+
+              const rowCount = filteredSections.length
+
+              return (
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <button
+                      onClick={() => setActiveFilter(null)}
+                      className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-xs font-bold"
+                    >
+                      <span className="material-symbols-outlined text-sm">arrow_back</span>
+                      Volver
+                    </button>
+                    <div className="w-1 h-5 bg-accent rounded-full"></div>
+                    <h2 className="text-sm font-bold text-slate-700 tracking-wide">{filterLabel}</h2>
+                    <span className="text-[10px] text-slate-400">
+                      {filteredSections.reduce((acc, s) => acc + s.items.length, 0)} resultados
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-8">
+                    {filteredSections.map((section, index) => (
+                      <div key={section.id}>
+                        <ProductCarousel
+                          title={section.title}
+                          items={section.items}
+                          sidebarOpen={!!activeSidebar}
+                          hidePrice={section.hidePrice}
+                          onViewAll={() => handleViewAll(section)}
+                          onOpenStore={handleOpenStore}
+                        />
+                        {rowCount >= 3 && index === 1 && <div className="mt-8"><Banner /></div>}
+                        {rowCount > 4 && index === 3 && <div className="mt-8"><StoresCarousel onViewAll={handleViewAllStores} /></div>}
+                      </div>
+                    ))}
+                  </div>
+                  {filteredSections.length === 0 && (
+                    <p className="text-center text-slate-400 text-xs mt-8">
+                      No hay productos para mostrar.
+                    </p>
+                  )}
+                </div>
+              )
+            })()
+          ) : activeSection ? (
+            <SectionPage
+              section={activeSection}
+              sidebarOpen={!!activeSidebar}
+              onBack={goHome}
+              onOpenStore={handleOpenStore}
+            />
+          ) : (
+            sections.map((section, index) => (
+              <div key={section.id}>
+                <ProductCarousel
+                  title={section.title}
+                  items={section.items}
+                  sidebarOpen={!!activeSidebar}
+                  hidePrice={section.hidePrice}
+                  onViewAll={() => handleViewAll(section)}
+                  onOpenStore={handleOpenStore}
+                />
+                {index === 1 && <div className="mt-8"><Banner /></div>}
+                {index === 2 && <div className="mt-8"><EventsSection onViewAll={handleViewAllEvents} /></div>}
+                {index === 4 && <div className="mt-8"><StoresCarousel onViewAll={handleViewAllStores} /></div>}
+              </div>
+            ))
+          )}
+        </main>
+      </div>
+
+      <Footer />
+    </div>
+  )
+}
