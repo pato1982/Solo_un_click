@@ -4,6 +4,7 @@ const menuItems = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
   { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles' },
+  { label: 'Banner', icon: 'photo_library', path: '/admin/banner' },
 ]
 
 export default function AdminSidebar({ open }) {

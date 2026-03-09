@@ -282,15 +282,24 @@ function StoreCarousel({ title, items, onOpenStore }) {
   )
 }
 
-function StoreBanner({ store, products }) {
+function StoreBanner({ store, products, bannerItems, phone }) {
   const [activeSlide, setActiveSlide] = useState(0)
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const intervalRef = useRef(null)
-  const bannerProducts = products.filter((p) => p.image).slice(0, 10)
 
-  const slides = [
-    bannerProducts.slice(0, 5),
-    bannerProducts.slice(5, 10),
-  ].filter((s) => s.length >= 5)
+  // Usar banner items del API si están disponibles, sino productos
+  let slides
+  if (bannerItems && bannerItems.length > 0) {
+    const slide1 = bannerItems.filter(b => b.banner_orden >= 1 && b.banner_orden <= 5).sort((a, b) => a.banner_orden - b.banner_orden)
+    const slide2 = bannerItems.filter(b => b.banner_orden >= 6 && b.banner_orden <= 10).sort((a, b) => a.banner_orden - b.banner_orden)
+    slides = [slide1, slide2].filter(s => s.length >= 1)
+  } else {
+    const bannerProducts = products.filter((p) => p.image).slice(0, 10)
+    slides = [
+      bannerProducts.slice(0, 5),
+      bannerProducts.slice(5, 10),
+    ].filter((s) => s.length >= 5)
+  }
 
   useEffect(() => {
     if (slides.length < 2) return
@@ -301,56 +310,61 @@ function StoreBanner({ store, products }) {
   }, [slides.length])
 
   return (
-    <div className="relative w-full h-72 overflow-hidden mb-2 bg-white">
-      {slides.map((slide, i) => (
-        <div
-          key={i}
-          className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000"
-          style={{ opacity: activeSlide === i ? 1 : 0 }}
-        >
-          {slide[0] && (
-            <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3">
-              <img src={slide[0].image} alt={slide[0].alt} className="h-full w-1/2 object-contain shrink-0" />
-              <div className="flex flex-col justify-center min-w-0">
-                <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].name}</p>
-                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{slide[0].description}</p>
-                {slide[0].price && (
-                  <p className="text-sm font-black text-accent mt-1">${slide[0].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                )}
+    <>
+      <div className="relative w-full h-72 overflow-hidden mb-2 bg-white">
+        {slides.map((slide, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000"
+            style={{ opacity: activeSlide === i ? 1 : 0 }}
+          >
+            {slide[0] && (
+              <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedProduct(slide[0])}>
+                <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="h-full w-1/2 object-contain shrink-0" />
+                <div className="flex flex-col justify-center min-w-0">
+                  <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].name}</p>
+                  <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{slide[0].description}</p>
+                  {slide[0].price > 0 && (
+                    <p className="text-sm font-black text-accent mt-1">${slide[0].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-          {[1, 2, 3, 4].map((idx) => slide[idx] && (
-            <div key={slide[idx].id} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2">
-              <img src={slide[idx].image} alt={slide[idx].alt} className="h-full w-2/5 object-contain shrink-0" />
-              <div className="flex flex-col justify-center min-w-0">
-                <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].name}</p>
-                <p className="text-[8px] text-slate-400 line-clamp-1 mt-0.5">{slide[idx].description}</p>
-                {slide[idx].price && (
-                  <p className="text-[10px] font-black text-accent mt-0.5">${slide[idx].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                )}
+            )}
+            {[1, 2, 3, 4].map((idx) => slide[idx] && (
+              <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedProduct(slide[idx])}>
+                <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="h-full w-2/5 object-contain shrink-0" />
+                <div className="flex flex-col justify-center min-w-0">
+                  <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].name}</p>
+                  <p className="text-[8px] text-slate-400 line-clamp-1 mt-0.5">{slide[idx].description}</p>
+                  {slide[idx].price > 0 && (
+                    <p className="text-[10px] font-black text-accent mt-0.5">${slide[idx].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ))}
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-primary/30 pointer-events-none"></div>
-      {/* Indicadores */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => { setActiveSlide(i); clearInterval(intervalRef.current) }}
-              className={`h-1.5 rounded-full transition-all ${
-                activeSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
+            ))}
+          </div>
+        ))}
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-primary/30 pointer-events-none"></div>
+        {/* Indicadores */}
+        {slides.length > 1 && (
+          <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { setActiveSlide(i); clearInterval(intervalRef.current) }}
+                className={`h-1.5 rounded-full transition-all ${
+                  activeSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      {selectedProduct && (
+        <MarqueeModal product={selectedProduct} phone={phone} onClose={() => setSelectedProduct(null)} />
       )}
-    </div>
+    </>
   )
 }
 
@@ -391,6 +405,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeSection, setActiveSection] = useState(null)
   const [seccionesOpen, setSeccionesOpen] = useState(false)
   const [carouselItems, setCarouselItems] = useState([])
+  const [bannerItems, setBannerItems] = useState([])
   const [apiProducts, setApiProducts] = useState(null)
   const [storeInfo, setStoreInfo] = useState(null)
   const [loading, setLoading] = useState(!!store.userId)
@@ -404,7 +419,14 @@ export default function StorePage({ store, onBack, onOpenStore }) {
       fetch(`${API}/api/business/${store.userId}`).then(r => r.json()),
     ]).then(([listData, carData, bizData]) => {
       if (listData.listings) {
-        setApiProducts(listData.listings.filter(l => !l.carousel_posicion).map(mapListing))
+        // Productos normales (sin carrusel ni banner)
+        setApiProducts(listData.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(mapListing))
+        // Banner items
+        const banners = listData.listings.filter(l => l.banner_orden).map(l => ({
+          ...mapListing(l),
+          banner_orden: l.banner_orden,
+        }))
+        setBannerItems(banners)
       }
       if (carData.listings) {
         setCarouselItems(carData.listings.map(mapListing))
@@ -612,7 +634,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
         {/* Contenido principal */}
         <main className="flex-1 flex flex-col gap-8 pt-1 px-6 pb-6 overflow-hidden transition-all duration-300">
           {/* Banner publicitario */}
-          <StoreBanner store={store} products={storeProducts} />
+          <StoreBanner store={store} products={storeProducts} bannerItems={bannerItems} phone={storePhone} />
           {filteredProducts.length > 0 ? (
             (() => {
               const rows = []
