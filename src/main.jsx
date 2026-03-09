@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import AdminLayout from './admin/AdminLayout'
-import AdminDashboard from './admin/pages/AdminDashboard'
 import AdminProductos from './admin/pages/AdminProductos'
 import './index.css'
 
@@ -12,8 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="productos" element={<AdminProductos />} />
+          <Route index element={<AdminProductos />} />
         </Route>
         <Route path="/*" element={<App />} />
       </Routes>

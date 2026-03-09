@@ -1,8 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
 const menuItems = [
-  { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
-  { label: 'Productos', icon: 'inventory_2', path: '/admin/productos' },
+  { label: 'Productos', icon: 'inventory_2', path: '/admin' },
   // { label: 'Tiendas', icon: 'storefront', path: '/admin/tiendas' },
   // { label: 'Pedidos', icon: 'shopping_cart', path: '/admin/pedidos' },
   // { label: 'Usuarios', icon: 'group', path: '/admin/usuarios' },

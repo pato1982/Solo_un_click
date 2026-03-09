@@ -1,5 +1,104 @@
 # Registro de Cambios - Solo a un Click
 
+## Conexiones y Credenciales
+> Las credenciales (SSH, MySQL, GitHub token) están en `CREDENCIALES.md` (no sube a git)
+
+### Estado del Servidor
+- **Hostname:** portalestudiantil
+- **Instalado:** Node.js, PM2, MySQL, Nginx
+- **Nginx:** config default (/var/www/html)
+- **Disco:** 5.1GB usados / 20GB
+- **RAM:** 957MB total
+- **Nota:** dotenv NO funciona con PM2, usar credenciales directas
+- **Nota:** No hay Node.js en WSL, usar SSH para ejecutar comandos en el servidor
+
+### Base de Datos MySQL
+- **Nombre BD:** soloaunclick
+- **Charset:** utf8mb4_unicode_ci
+- **Tablas creadas (6):**
+  1. `plans` — 3 planes: Gratis (5 listings), Básico (20), Premium (100, con página propia)
+  2. `users` — tipo_cuenta: general/turismo, campos vende_productos/ofrece_servicios/ofrece_arriendos
+  3. `listings` — tabla única para productos/servicios/arriendos/turismo, badge solo para productos
+  4. `listing_images` — 1 imagen por publicación, ON DELETE CASCADE
+  5. `listing_sizes` — tallas ropa/calzado/accesorios, ON DELETE CASCADE
+  6. `listing_dimensions` — medidas alto/ancho/profundidad, ON DELETE CASCADE
+- **Regla badge:** solo tipo='producto' usa badge (Liquidación, Oferta, etc.), servicios/arriendos van directo a su sección
+- **Restricción admin:** campos vende_productos/ofrece_servicios/ofrece_arriendos determinan qué pestañas ve cada usuario
+- **Sin tabla stores:** solo 2 tipos de usuario (general y turismo)
+- **Precios planes:** aún en $0, se definen después
+
+---
+
+## 9 de Marzo 2026 - Mejoras Admin, Datos Productos y Conexión Servidor
+
+### Imagen Cuadrada con Cropper (AdminProductos)
+- Contenedor de imagen cuadrado (208x208px) para crear/editar productos
+- Componente `ImageCropper` con arrastrar (mouse y touch) para reposicionar imagen
+- Slider de zoom (1x a 3x)
+- Al guardar, `generateCroppedImage` usa canvas para generar imagen cuadrada 400x400px con la posición exacta
+- Imagen centrada automáticamente al cargarla
+- Tarjetas de productos guardados también con `aspect-square`
+
+### Precios bajo la Imagen
+- Campos Precio y Precio anterior movidos debajo de la imagen en el modal
+- Precios siempre enteros: `step="1"`, bloqueo de teclas `.`, `,`, `e`, `E`
+- `Math.round()` al guardar
+- Flechas (spinners) de inputs numéricos ocultadas globalmente en `index.css`
+- Precio anterior tachado visible en tarjeta del producto
+
+### Tipo, Tallas, Medidas, Género
+- Campo **Tipo** (select): Productos, Servicios, Arriendos
+- Campo **Tallas** (select): Calzado (20-46), Ropa (2-XXXL), Accesorios (XS-Único) — selección múltiple
+- Campo **Medidas** (toggle con círculo): inputs Alto, Ancho, Profundidad en cm
+- Campo **Género** (select): Niño, Niña, Hombre, Mujer, Unisex
+- Los tres en fila con `grid-cols-3`, espaciado compacto (`space-y-1`, `py-1`)
+
+### Editar y Eliminar Productos
+- Botones **Editar** y **Eliminar** en cada tarjeta de producto
+- Editar abre modal con todos los datos cargados (nombre, precios, imagen, tallas, medidas, género)
+- Título cambia a "Editar producto", botón a "Actualizar Producto"
+- Lápiz (edit) arriba a la izquierda de la imagen para cambiar imagen existente
+- Imagen existente (URL) se muestra directamente; imagen nueva activa el cropper
+- Popup de confirmación al eliminar con botones Cancelar/Aceptar (`z-[60]`)
+
+### Persistencia y Pestañas
+- Productos guardados en `localStorage` (key `admin_productos`, versión `admin_productos_v`)
+- Pestaña "Turismo" eliminada de pestañas y del select Tipo
+- Grid de tarjetas fijo a 5 columnas (`grid-cols-5`)
+- Tarjeta "Agregar producto" siempre primera
+- 25 productos de ejemplo (5 por sección) con imágenes de la página principal
+
+### Datos de Productos - Página Principal (products.js)
+- Todos los productos actualizados con campos: `tipo`, `tallas`, `medidas`, `genero`
+- Ropa con tallas y género: Polera Running, Chaqueta Outdoor, Vestido Lino, Parka, Jeans, etc.
+- Calzado con tallas y género: Zapatillas Trail, Urbanas Retro, Botines Chelsea, Sandalias, Zapatos Escolares
+- Muebles con medidas: Silla Pro-Gamer, Escritorio, Estante Industrial, Mesa Centro
+- Arriendos con medidas: Casas, Deptos, Locales, Cabañas, Oficinas, Bodegas
+- Tecnología con medidas: Consola PS5, GPU, SSD, Monitores
+- Servicios sin tallas/medidas/género
+
+### Modal Popup Página Principal (ProductCard)
+- Género mostrado como badge en esquina superior derecha de la imagen
+- Tipo (productos/servicios/arriendos) NO se muestra (dato interno)
+- Layout estructurado con posiciones fijas:
+  1. Nombre: 2 líneas fijas (`min-h-[36px]`, `line-clamp-2`)
+  2. Descripción: hasta 5 líneas (`min-h-[60px]`, `line-clamp-5`)
+  3. Tallas y/o Medidas: zona variable
+  4. Precio actual (izquierda) / Precio anterior tachado (derecha) con separador
+  5. Iconos de contacto: última línea con separador
+
+### Conexión al Servidor VPS
+- Llave SSH encontrada en `/mnt/c/Users/Telqway/Desktop/colegio-react/.ssh_keys/id_rsa_vps_new`
+- Conexión SSH verificada exitosamente
+- MySQL operativo, sin BD de usuario creada aún
+
+### Repositorio GitHub
+- Proyecto subido a https://github.com/pato1982/Solo_un_click.git
+- `.gitignore` creado (node_modules, dist, .env)
+- Commit inicial con 36 archivos
+
+---
+
 ## 8 de Marzo 2026 - Panel de Administración
 
 ### Estructura del Panel Admin
