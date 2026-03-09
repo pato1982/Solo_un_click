@@ -1,11 +1,14 @@
 import { useState } from 'react'
 
+const IVA = 0.19
+
+const formatCLP = (n) => '$' + n.toLocaleString('es-CL')
+
 const plansList = [
   {
     id: 1,
     name: 'Plan Gratuito',
-    price: '$0',
-    period: null,
+    neto: 0,
     max: '5 publicaciones',
     features: ['Panel de control', 'Visible en página principal', 'Editar información'],
     noFeatures: ['Producto destacado', 'Página propia', 'Estadísticas'],
@@ -14,8 +17,7 @@ const plansList = [
   {
     id: 2,
     name: 'Plan Normal',
-    price: '$2.990',
-    period: '+ IVA / mes',
+    neto: 2990,
     max: '20 publicaciones',
     features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Producto destacado', 'Prioridad alta'],
     noFeatures: ['Página propia', 'Estadísticas'],
@@ -24,8 +26,7 @@ const plansList = [
   {
     id: 3,
     name: 'Plan Premium',
-    price: '$4.990',
-    period: '+ IVA / mes',
+    neto: 4990,
     max: '100 publicaciones',
     features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Producto destacado', 'Prioridad máxima', 'Página propia', 'Carruseles', 'Banner', 'Estadísticas'],
     noFeatures: [],
@@ -398,10 +399,26 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                     </div>
 
                     <h3 className="text-sm font-black text-slate-800">{plan.name}</h3>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-2xl font-black text-primary">{plan.price}</span>
-                      {plan.period && <span className="text-[10px] text-slate-400">{plan.period}</span>}
-                    </div>
+
+                    {plan.neto === 0 ? (
+                      <div className="mt-1">
+                        <span className="text-2xl font-black text-primary">Gratis</span>
+                      </div>
+                    ) : (
+                      <div className="mt-1 space-y-0.5">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-black text-primary">{formatCLP(plan.neto)}</span>
+                          <span className="text-[10px] text-slate-400">/ mes</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-tight">
+                          IVA (19%): {formatCLP(Math.round(plan.neto * IVA))}
+                        </div>
+                        <div className="text-xs font-bold text-slate-700">
+                          Total: {formatCLP(Math.round(plan.neto * (1 + IVA)))} / mes
+                        </div>
+                      </div>
+                    )}
+
                     <span className="text-[11px] font-bold text-primary/70 mt-1">{plan.max}</span>
 
                     <div className="mt-3 space-y-1">

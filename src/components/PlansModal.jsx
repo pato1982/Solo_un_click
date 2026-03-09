@@ -162,12 +162,22 @@ export default function PlansModal({ onClose }) {
 
                 <div className="text-center mb-1.5">
                   <h3 className="text-sm font-black text-slate-800 leading-tight">{plan.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-xl font-black text-primary">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-[10px] text-slate-400">{plan.period}</span>
-                    )}
-                  </div>
+                  {plan.price === '$0' ? (
+                    <span className="text-xl font-black text-primary">Gratis</span>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xl font-black text-primary">{plan.price}</span>
+                        <span className="text-[10px] text-slate-400">/ mes</span>
+                      </div>
+                      <span className="text-[9px] text-slate-400">
+                        IVA: {plan.price === '$2.990' ? '$568' : '$948'}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-700">
+                        Total: {plan.price === '$2.990' ? '$3.558' : '$5.938'} / mes
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <button className={`w-full py-1 rounded-lg text-xs font-bold uppercase tracking-wide transition-all mb-2 ${plan.buttonStyle}`}>
