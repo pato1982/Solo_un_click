@@ -37,13 +37,13 @@ const plansList = [
 export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSuccess }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
-    nombre: '',
-    email: '',
-    password: '',
-    password2: '',
-    telefono: '',
-    comuna: '',
-    direccion: '',
+    nombre: 'Usuario Demo',
+    email: 'demo@soloaunclick.cl',
+    password: '123456',
+    password2: '123456',
+    telefono: '+56 9 8765 4321',
+    comuna: 'Villarrica',
+    direccion: 'Av. Pedro de Valdivia 123',
     tipo_cuenta: '',
     vende_productos: false,
     ofrece_servicios: false,
