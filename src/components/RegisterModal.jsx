@@ -128,7 +128,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className={`bg-white rounded-2xl shadow-2xl w-full overflow-hidden ${step === 3 ? 'max-w-3xl' : 'max-w-md'} transition-all duration-300`} onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-white rounded-2xl shadow-2xl w-full overflow-hidden ${step === 3 ? 'max-w-2xl' : 'max-w-sm'} transition-all duration-300`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-primary px-6 py-4 flex items-center justify-between">
           <h2 className="text-white font-bold text-lg flex items-center gap-2">
@@ -309,15 +309,15 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
               {form.tipo_cuenta === 'general' && (
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-2">¿Qué ofreces? (selecciona al menos una)</label>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {[
-                      { key: 'vende_productos', label: 'Vendo productos', icon: 'inventory_2', desc: 'Venta de artículos físicos' },
-                      { key: 'ofrece_servicios', label: 'Ofrezco servicios', icon: 'work', desc: 'Servicios profesionales' },
-                      { key: 'ofrece_arriendos', label: 'Arriendo', icon: 'home', desc: 'Propiedades, equipos, vehículos' },
+                      { key: 'vende_productos', label: 'Productos', icon: 'inventory_2' },
+                      { key: 'ofrece_servicios', label: 'Servicios', icon: 'work' },
+                      { key: 'ofrece_arriendos', label: 'Arriendos', icon: 'home' },
                     ].map((opt) => (
                       <label
                         key={opt.key}
-                        className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                           form[opt.key]
                             ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
@@ -329,13 +329,10 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                           onChange={(e) => update(opt.key, e.target.checked)}
                           className="sr-only"
                         />
-                        <span className={`material-symbols-outlined text-xl ${form[opt.key] ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`material-symbols-outlined text-lg ${form[opt.key] ? 'text-primary' : 'text-gray-400'}`}>
                           {form[opt.key] ? 'check_circle' : opt.icon}
                         </span>
-                        <div>
-                          <span className={`text-sm font-medium block ${form[opt.key] ? 'text-primary' : 'text-gray-600'}`}>{opt.label}</span>
-                          <span className="text-[10px] text-gray-400">{opt.desc}</span>
-                        </div>
+                        <span className={`text-[11px] font-medium ${form[opt.key] ? 'text-primary' : 'text-gray-600'}`}>{opt.label}</span>
                       </label>
                     ))}
                   </div>
@@ -343,9 +340,9 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
               )}
 
               {form.tipo_cuenta === 'turismo' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700 flex items-start gap-2">
-                  <span className="material-symbols-outlined text-base mt-0.5">info</span>
-                  <span>Como cuenta de turismo podrás publicar experiencias, tours y actividades turísticas en Villarrica y alrededores.</span>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-start gap-2">
+                  <span className="material-symbols-outlined text-xs text-blue-500 mt-0.5">info</span>
+                  <span className="text-[11px] text-blue-700 leading-tight" style={{ textAlign: 'justify' }}>Como cuenta de turismo podrás publicar experiencias, tours y actividades turísticas en Villarrica y alrededores.</span>
                 </div>
               )}
 
