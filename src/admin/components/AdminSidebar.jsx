@@ -1,11 +1,8 @@
 import { NavLink } from 'react-router-dom'
 
 const menuItems = [
+  { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
-  // { label: 'Tiendas', icon: 'storefront', path: '/admin/tiendas' },
-  // { label: 'Pedidos', icon: 'shopping_cart', path: '/admin/pedidos' },
-  // { label: 'Usuarios', icon: 'group', path: '/admin/usuarios' },
-  // { label: 'Configuración', icon: 'settings', path: '/admin/configuracion' },
 ]
 
 export default function AdminSidebar({ open }) {
