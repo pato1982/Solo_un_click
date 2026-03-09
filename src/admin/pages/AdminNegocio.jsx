@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react'
 
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+const defaultHorarios = DIAS.map((dia) => ({
+  dia,
+  activo: dia !== 'Domingo',
+  apertura: '09:00',
+  cierre: '18:00',
+}))
+
 const emptyForm = {
   nombre_negocio: '',
   direccion: '',
@@ -8,6 +17,7 @@ const emptyForm = {
   correo: '',
   facebook: '',
   instagram: '',
+  horarios: defaultHorarios,
 }
 
 export default function AdminNegocio() {
@@ -21,6 +31,13 @@ export default function AdminNegocio() {
 
   const update = (field, value) => {
     setForm({ ...form, [field]: value })
+    setSaved(false)
+  }
+
+  const updateHorario = (index, field, value) => {
+    const newHorarios = [...form.horarios]
+    newHorarios[index] = { ...newHorarios[index], [field]: value }
+    setForm({ ...form, horarios: newHorarios })
     setSaved(false)
   }
 
@@ -105,6 +122,53 @@ export default function AdminNegocio() {
                 placeholder="contacto@minegocio.cl"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Horarios de atención */}
+        <div className="mb-5">
+          <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-primary text-lg">schedule</span>
+            Horarios de atención
+          </h2>
+          <div className="space-y-1.5">
+            {form.horarios.map((h, i) => (
+              <div key={h.dia} className="flex items-center gap-3">
+                {/* Toggle día */}
+                <button
+                  type="button"
+                  onClick={() => updateHorario(i, 'activo', !h.activo)}
+                  className={`w-24 text-left text-xs font-semibold py-1.5 px-2 rounded-lg transition-colors flex items-center gap-1.5 ${
+                    h.activo ? 'text-primary bg-primary/5' : 'text-gray-400 bg-gray-50'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-sm ${h.activo ? 'text-primary' : 'text-gray-300'}`}>
+                    {h.activo ? 'check_box' : 'check_box_outline_blank'}
+                  </span>
+                  {h.dia}
+                </button>
+
+                {h.activo ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={h.apertura}
+                      onChange={(e) => updateHorario(i, 'apertura', e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    />
+                    <span className="text-xs text-gray-400">a</span>
+                    <input
+                      type="time"
+                      value={h.cierre}
+                      onChange={(e) => updateHorario(i, 'cierre', e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-400 italic">Cerrado</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
