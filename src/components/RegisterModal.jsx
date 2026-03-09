@@ -1,5 +1,38 @@
 import { useState } from 'react'
 
+const plansList = [
+  {
+    id: 1,
+    name: 'Plan Gratuito',
+    price: '$0',
+    period: null,
+    max: '5 publicaciones',
+    features: ['Panel de control', 'Visible en página principal', 'Editar información'],
+    noFeatures: ['Producto destacado', 'Página propia', 'Estadísticas'],
+    highlight: false,
+  },
+  {
+    id: 2,
+    name: 'Plan Normal',
+    price: '$2.990',
+    period: '+ IVA / mes',
+    max: '20 publicaciones',
+    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Producto destacado', 'Prioridad alta'],
+    noFeatures: ['Página propia', 'Estadísticas'],
+    highlight: false,
+  },
+  {
+    id: 3,
+    name: 'Plan Premium',
+    price: '$4.990',
+    period: '+ IVA / mes',
+    max: '100 publicaciones',
+    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Producto destacado', 'Prioridad máxima', 'Página propia', 'Carruseles', 'Banner', 'Estadísticas'],
+    noFeatures: [],
+    highlight: true,
+  },
+]
+
 export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSuccess }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -9,10 +42,12 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
     password2: '',
     telefono: '',
     comuna: '',
-    tipo_cuenta: 'general',
+    direccion: '',
+    tipo_cuenta: '',
     vende_productos: false,
     ofrece_servicios: false,
     ofrece_arriendos: false,
+    plan_id: 1,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,6 +63,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
   }
 
   const validateStep2 = () => {
+    if (!form.tipo_cuenta) return 'Selecciona un tipo de cuenta'
     if (form.tipo_cuenta === 'general' && !form.vende_productos && !form.ofrece_servicios && !form.ofrece_arriendos) {
       return 'Selecciona al menos una opción'
     }
@@ -35,17 +71,19 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
   }
 
   const handleNext = () => {
-    const err = validateStep1()
-    if (err) { setError(err); return }
+    if (step === 1) {
+      const err = validateStep1()
+      if (err) { setError(err); return }
+    }
+    if (step === 2) {
+      const err = validateStep2()
+      if (err) { setError(err); return }
+    }
     setError('')
-    setStep(2)
+    setStep(step + 1)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const err = validateStep2()
-    if (err) { setError(err); return }
-
+  const handleSubmit = async () => {
     setError('')
     setLoading(true)
 
@@ -59,10 +97,12 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
           password: form.password,
           telefono: form.telefono.trim() || null,
           comuna: form.comuna.trim() || null,
+          direccion: form.direccion.trim() || null,
           tipo_cuenta: form.tipo_cuenta,
           vende_productos: form.vende_productos,
           ofrece_servicios: form.ofrece_servicios,
           ofrece_arriendos: form.ofrece_arriendos,
+          plan_id: form.plan_id,
         })
       })
       const data = await res.json()
@@ -83,32 +123,53 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
     }
   }
 
+  const stepTitles = ['Datos personales', 'Tipo de cuenta', 'Elige tu plan']
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-white rounded-2xl shadow-2xl w-full overflow-hidden ${step === 3 ? 'max-w-3xl' : 'max-w-md'} transition-all duration-300`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-primary px-6 py-4 flex items-center justify-between">
           <h2 className="text-white font-bold text-lg flex items-center gap-2">
             <span className="material-symbols-outlined">person_add</span>
             Registrarse
-            <span className="text-white/50 text-sm font-normal">Paso {step} de 2</span>
           </h2>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Indicador de pasos */}
+            <div className="flex items-center gap-1">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                    s === step ? 'bg-accent text-primary' : s < step ? 'bg-white/30 text-white' : 'bg-white/10 text-white/40'
+                  }`}>
+                    {s < step ? <span className="material-symbols-outlined text-sm">check</span> : s}
+                  </div>
+                  {s < 3 && <div className={`w-4 h-0.5 ${s < step ? 'bg-white/30' : 'bg-white/10'}`} />}
+                </div>
+              ))}
+            </div>
+            <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); handleNext() }} className="p-6 space-y-4">
+        {/* Subtítulo del paso */}
+        <div className="bg-primary/5 px-6 py-2 border-b border-gray-100">
+          <p className="text-xs font-semibold text-primary">{stepTitles[step - 1]}</p>
+        </div>
+
+        <div className="p-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-base">error</span>
               {error}
             </div>
           )}
 
+          {/* PASO 1: Datos personales */}
           {step === 1 && (
-            <>
+            <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Nombre completo *</label>
                 <input
@@ -117,7 +178,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                   value={form.nombre}
                   onChange={(e) => update('nombre', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                  placeholder="Tu nombre"
+                  placeholder="Tu nombre completo"
                 />
               </div>
 
@@ -158,17 +219,18 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  value={form.telefono}
+                  onChange={(e) => update('telefono', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Teléfono</label>
-                  <input
-                    type="tel"
-                    value={form.telefono}
-                    onChange={(e) => update('telefono', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                    placeholder="+56 9 1234 5678"
-                  />
-                </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Comuna</label>
                   <input
@@ -179,64 +241,78 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                     placeholder="Ej: Villarrica"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Dirección</label>
+                  <input
+                    type="text"
+                    value={form.direccion}
+                    onChange={(e) => update('direccion', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    placeholder="Tu dirección"
+                  />
+                </div>
               </div>
 
               <button
-                type="submit"
-                className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors"
+                type="button"
+                onClick={handleNext}
+                className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors mt-2"
               >
                 Siguiente
               </button>
-            </>
+
+              <p className="text-center text-sm text-gray-500">
+                ¿Ya tienes cuenta?{' '}
+                <button type="button" onClick={onSwitchToLogin} className="text-primary font-bold hover:underline">
+                  Ingresar
+                </button>
+              </p>
+            </div>
           )}
 
+          {/* PASO 2: Tipo de cuenta */}
           {step === 2 && (
-            <>
-              {/* Tipo de cuenta */}
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-2">Tipo de cuenta</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-3">¿Qué tipo de cuenta necesitas?</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => update('tipo_cuenta', 'general')}
-                    className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 transition-all ${
+                    onClick={() => setForm({ ...form, tipo_cuenta: 'general', vende_productos: false, ofrece_servicios: false, ofrece_arriendos: false })}
+                    className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all ${
                       form.tipo_cuenta === 'general'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-3xl">storefront</span>
+                    <span className="material-symbols-outlined text-4xl">storefront</span>
                     <span className="text-sm font-bold">General</span>
-                    <span className="text-[10px] text-center leading-tight">Productos, servicios o arriendos</span>
+                    <span className="text-[10px] text-center leading-tight">Venta de productos, servicios o arriendos</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      update('tipo_cuenta', 'turismo')
-                      setForm(prev => ({ ...prev, tipo_cuenta: 'turismo', vende_productos: false, ofrece_servicios: false, ofrece_arriendos: false }))
-                    }}
-                    className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 transition-all ${
+                    onClick={() => setForm({ ...form, tipo_cuenta: 'turismo', vende_productos: false, ofrece_servicios: false, ofrece_arriendos: false })}
+                    className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all ${
                       form.tipo_cuenta === 'turismo'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-3xl">tour</span>
+                    <span className="material-symbols-outlined text-4xl">tour</span>
                     <span className="text-sm font-bold">Turismo</span>
-                    <span className="text-[10px] text-center leading-tight">Experiencias y tours</span>
+                    <span className="text-[10px] text-center leading-tight">Experiencias, tours y actividades turísticas</span>
                   </button>
                 </div>
               </div>
 
-              {/* Opciones para cuenta general */}
               {form.tipo_cuenta === 'general' && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-2">¿Qué ofreces?</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">¿Qué ofreces? (selecciona al menos una)</label>
                   <div className="space-y-2">
                     {[
-                      { key: 'vende_productos', label: 'Vendo productos', icon: 'inventory_2' },
-                      { key: 'ofrece_servicios', label: 'Ofrezco servicios', icon: 'work' },
-                      { key: 'ofrece_arriendos', label: 'Arriendo propiedades/equipos', icon: 'home' },
+                      { key: 'vende_productos', label: 'Vendo productos', icon: 'inventory_2', desc: 'Venta de artículos físicos' },
+                      { key: 'ofrece_servicios', label: 'Ofrezco servicios', icon: 'work', desc: 'Servicios profesionales' },
+                      { key: 'ofrece_arriendos', label: 'Arriendo', icon: 'home', desc: 'Propiedades, equipos, vehículos' },
                     ].map((opt) => (
                       <label
                         key={opt.key}
@@ -255,9 +331,10 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                         <span className={`material-symbols-outlined text-xl ${form[opt.key] ? 'text-primary' : 'text-gray-400'}`}>
                           {form[opt.key] ? 'check_circle' : opt.icon}
                         </span>
-                        <span className={`text-sm font-medium ${form[opt.key] ? 'text-primary' : 'text-gray-600'}`}>
-                          {opt.label}
-                        </span>
+                        <div>
+                          <span className={`text-sm font-medium block ${form[opt.key] ? 'text-primary' : 'text-gray-600'}`}>{opt.label}</span>
+                          <span className="text-[10px] text-gray-400">{opt.desc}</span>
+                        </div>
                       </label>
                     ))}
                   </div>
@@ -267,11 +344,11 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
               {form.tipo_cuenta === 'turismo' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700 flex items-start gap-2">
                   <span className="material-symbols-outlined text-base mt-0.5">info</span>
-                  <span>Como cuenta de turismo podrás publicar experiencias, tours y actividades turísticas en Villarrica.</span>
+                  <span>Como cuenta de turismo podrás publicar experiencias, tours y actividades turísticas en Villarrica y alrededores.</span>
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-2">
                 <button
                   type="button"
                   onClick={() => { setStep(1); setError('') }}
@@ -280,25 +357,91 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                   Volver
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleNext}
+                  className="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PASO 3: Selección de plan */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {plansList.map((plan) => (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => update('plan_id', plan.id)}
+                    className={`relative flex flex-col rounded-xl border-2 p-4 transition-all text-left ${
+                      form.plan_id === plan.id
+                        ? 'border-primary bg-primary/5 shadow-lg'
+                        : plan.highlight
+                          ? 'border-accent hover:border-primary'
+                          : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {plan.highlight && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-primary text-[8px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full">
+                        Recomendado
+                      </span>
+                    )}
+
+                    {/* Check de selección */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`material-symbols-outlined text-xl ${form.plan_id === plan.id ? 'text-primary' : 'text-gray-300'}`}>
+                        {form.plan_id === plan.id ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-black text-slate-800">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-black text-primary">{plan.price}</span>
+                      {plan.period && <span className="text-[10px] text-slate-400">{plan.period}</span>}
+                    </div>
+                    <span className="text-[11px] font-bold text-primary/70 mt-1">{plan.max}</span>
+
+                    <div className="mt-3 space-y-1">
+                      {plan.features.map((f) => (
+                        <div key={f} className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                          <span className="text-[11px] text-slate-600">{f}</span>
+                        </div>
+                      ))}
+                      {plan.noFeatures.map((f) => (
+                        <div key={f} className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-red-400 text-sm">cancel</span>
+                          <span className="text-[11px] text-slate-400">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setStep(2); setError('') }}
+                  className="flex-1 border-2 border-gray-300 text-gray-600 font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Volver
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
                   disabled={loading}
                   className="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Registrando...' : 'Crear cuenta'}
                 </button>
               </div>
-            </>
+            </div>
           )}
-
-          {step === 1 && (
-            <p className="text-center text-sm text-gray-500">
-              ¿Ya tienes cuenta?{' '}
-              <button type="button" onClick={onSwitchToLogin} className="text-primary font-bold hover:underline">
-                Ingresar
-              </button>
-            </p>
-          )}
-        </form>
+        </div>
       </div>
     </div>
   )

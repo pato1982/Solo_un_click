@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'soloaunclick_secret_2026'
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { nombre, email, password, telefono, comuna, tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos } = req.body
+    const { nombre, email, password, telefono, comuna, direccion, tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id } = req.body
 
     // Verificar si el email ya existe
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email])
@@ -20,17 +20,22 @@ router.post('/register', async (req, res) => {
     // Encriptar password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Insertar usuario (plan_id = 1 = Gratis por defecto)
+    // Validar plan_id (1, 2 o 3)
+    const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : 1
+
+    // Insertar usuario
     const [result] = await pool.query(
-      `INSERT INTO users (plan_id, tipo_cuenta, nombre, email, password, telefono, comuna, vende_productos, ofrece_servicios, ofrece_arriendos)
-       VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (plan_id, tipo_cuenta, nombre, email, password, telefono, comuna, direccion, vende_productos, ofrece_servicios, ofrece_arriendos)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        selectedPlan,
         tipo_cuenta || 'general',
         nombre,
         email,
         hashedPassword,
         telefono || null,
         comuna || null,
+        direccion || null,
         vende_productos ? 1 : 0,
         ofrece_servicios ? 1 : 0,
         ofrece_arriendos ? 1 : 0
@@ -43,7 +48,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       message: 'Usuario registrado',
       token,
-      user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general' }
+      user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
     })
   } catch (err) {
     console.error('Error en registro:', err)
