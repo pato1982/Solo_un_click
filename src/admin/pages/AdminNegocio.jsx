@@ -61,26 +61,27 @@ export default function AdminNegocio() {
         <div className="grid grid-cols-2 gap-6">
           {/* COLUMNA IZQUIERDA: Datos del negocio */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Negocio o emprendimiento</label>
-              <input
-                type="text"
-                value={form.nombre_negocio}
-                onChange={(e) => update('nombre_negocio', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                placeholder="Nombre de tu negocio"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
-              <input
-                type="text"
-                value={form.direccion}
-                onChange={(e) => update('direccion', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                placeholder="Dirección del negocio"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Negocio o emprendimiento</label>
+                <input
+                  type="text"
+                  value={form.nombre_negocio}
+                  onChange={(e) => update('nombre_negocio', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  placeholder="Nombre de tu negocio"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
+                <input
+                  type="text"
+                  value={form.direccion}
+                  onChange={(e) => update('direccion', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  placeholder="Dirección del negocio"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
