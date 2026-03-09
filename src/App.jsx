@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Breadcrumbs from './components/Breadcrumbs'
@@ -12,19 +12,93 @@ import SectionPage from './components/SectionPage'
 import StoresPage from './components/StoresPage'
 import EventsPage from './components/EventsPage'
 import StorePage, { StoreFooter } from './components/StorePage'
-import { sections } from './data/products'
+import { sections as staticSections } from './data/products'
+
+const API = import.meta.env.VITE_API || ''
+
+const SECTION_TITLES = {
+  destacados: 'Productos Destacados',
+  ofertas: 'Productos en Ofertas',
+  novedades: 'Novedades',
+  liquidacion: 'Productos en Liquidación',
+  tecnologia: 'Tecnología',
+  servicios: 'Servicios',
+  arriendos: 'Arriendos',
+  turismo: 'Tendencia',
+}
+
+const SECTION_ORDER = ['destacados', 'ofertas', 'arriendos', 'novedades', 'servicios', 'liquidacion', 'turismo', 'tecnologia']
+
+function mapListingToProduct(l) {
+  return {
+    id: l.id,
+    name: l.nombre,
+    description: l.descripcion,
+    image: l.imagen ? `${API}${l.imagen}` : null,
+    alt: l.nombre,
+    price: l.precio,
+    originalPrice: l.precio_original,
+    badge: l.badge,
+    badgeColor: l.badge ? 'bg-primary text-white' : null,
+    rating: null,
+    category: l.tipo === 'producto' ? 'productos' : l.tipo === 'servicio' ? 'servicios' : l.tipo === 'arriendo' ? 'arriendos' : 'turismo',
+    subcategory: l.subcategoria,
+    tipo: l.tipo,
+    medidas: l.medidas,
+    tallas: l.tallas,
+    genero: l.genero,
+    negocio_whatsapp: l.negocio_whatsapp,
+    negocio_telefono: l.negocio_telefono,
+    negocio_direccion: l.negocio_direccion,
+    nombre_negocio: l.nombre_negocio,
+  }
+}
+
+function buildSectionsFromAPI(listings) {
+  const grouped = {}
+  listings.forEach((l) => {
+    const sec = l.seccion || 'destacados'
+    if (!grouped[sec]) grouped[sec] = []
+    grouped[sec].push(mapListingToProduct(l))
+  })
+
+  return SECTION_ORDER
+    .filter((id) => grouped[id] && grouped[id].length > 0)
+    .map((id) => ({
+      id,
+      title: SECTION_TITLES[id] || id,
+      hidePrice: id === 'servicios',
+      items: grouped[id],
+    }))
+}
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState(null)   // 'turismo', 'locales', 'eventos' o null (inicio)
-  const [activeSidebar, setActiveSidebar] = useState(null) // qué sidebar mostrar
-  const [activeSection, setActiveSection] = useState(null) // sección "Ver todo"
-  const [activeFilter, setActiveFilter] = useState(null)   // filtro de subcategoría
+  const [currentPage, setCurrentPage] = useState(null)
+  const [activeSidebar, setActiveSidebar] = useState(null)
+  const [activeSection, setActiveSection] = useState(null)
+  const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
-  const [activeStore, setActiveStore] = useState(null)      // tienda premium abierta
+  const [activeStore, setActiveStore] = useState(null)
+  const [sections, setSections] = useState(staticSections)
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
   })
+
+  // Cargar listings desde API
+  useEffect(() => {
+    fetch(`${API}/api/listings`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.listings && data.listings.length > 0) {
+          const apiSections = buildSectionsFromAPI(data.listings)
+          if (apiSections.length > 0) {
+            setSections(apiSections)
+          }
+        }
+      })
+      .catch(err => console.error('Error cargando listings:', err))
+  }, [])
 
   const handleLoginSuccess = (userData) => {
     setUser(userData)

@@ -319,6 +319,9 @@ function StoreBanner({ store, products }) {
 export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeCat, setActiveCat] = useState(null)
   const [activeSub, setActiveSub] = useState(null)
+  const [activeSection, setActiveSection] = useState(null)
+  const [seccionesOpen, setSeccionesOpen] = useState(false)
+
   // Obtener todos los productos de esta tienda
   const storeProducts = []
   sections.forEach((section) => {
@@ -329,22 +332,45 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     })
   })
 
-  // Filtrar por categoría y subcategoría seleccionada
+  // Detectar qué tipos tiene esta tienda
+  const tiposEnTienda = new Set(storeProducts.map((p) => p.tipo))
+
+  // Filtrar secciones: solo mostrar las que tengan productos de esta tienda
+  const storeSections = sections.filter((s) =>
+    s.items.some((item) => store.productIds.includes(item.id))
+  )
+
+  // Filtrar por categoría, subcategoría o sección seleccionada
   const currentCat = store.categories.find((c) => c.label === activeCat)
   const currentSubs = currentCat ? currentCat.subcategories : []
 
   const filteredProducts = storeProducts.filter((p) => {
+    if (activeSection) {
+      const sec = sections.find((s) => s.id === activeSection)
+      return sec ? sec.items.some((item) => item.id === p.id) : true
+    }
     if (activeSub) return p.subcategory === activeSub
     if (currentCat) return currentSubs.includes(p.subcategory)
     return true
   })
 
   const handleCatClick = (catLabel) => {
+    setActiveSection(null)
     if (activeCat === catLabel) {
       setActiveCat(null)
       setActiveSub(null)
     } else {
       setActiveCat(catLabel)
+      setActiveSub(null)
+    }
+  }
+
+  const handleSectionClick = (sectionId) => {
+    if (activeSection === sectionId) {
+      setActiveSection(null)
+    } else {
+      setActiveSection(sectionId)
+      setActiveCat(null)
       setActiveSub(null)
     }
   }
@@ -389,6 +415,43 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                   </div>
                 ))}
               </div>
+              {/* Secciones */}
+              {storeSections.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white/20">
+                  <button
+                    onClick={() => setSeccionesOpen(!seccionesOpen)}
+                    className={`flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full ${
+                      seccionesOpen ? 'bg-white/10 text-accent' : ''
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-xs" style={{ transition: 'transform 0.2s', transform: seccionesOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                      chevron_right
+                    </span>
+                    <span className="flex-1 text-left">Secciones</span>
+                  </button>
+                  <div
+                    className="overflow-hidden transition-all duration-300"
+                    style={{ maxHeight: seccionesOpen ? `${storeSections.length * 28}px` : '0px' }}
+                  >
+                    {storeSections.map((sec) => (
+                      <button
+                        key={sec.id}
+                        onClick={() => handleSectionClick(sec.id)}
+                        className={`flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50 w-full text-left ${
+                          activeSection === sec.id ? 'text-white font-bold' : ''
+                        }`}
+                      >
+                        {activeSection === sec.id
+                          ? <span className="material-symbols-outlined text-white text-xs shrink-0">check</span>
+                          : <span className="w-1 h-1 rounded-full bg-accent shrink-0"></span>
+                        }
+                        <span className="truncate">{sec.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-3 pt-3 border-t border-white/20">
                 <button
                   onClick={onBack}
@@ -415,7 +478,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               return rows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
-                    title={idx === 0 ? (activeSub || activeCat || 'Todos los productos') : ''}
+                    title={idx === 0 ? (activeSection ? sections.find(s => s.id === activeSection)?.title : activeSub || activeCat || 'Todos los productos') : ''}
                     items={row}
                     onOpenStore={onOpenStore}
                   />

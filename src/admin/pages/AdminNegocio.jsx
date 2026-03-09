@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 
+const API = import.meta.env.VITE_API || ''
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 const defaultHorarios = DIAS.map((dia) => ({
@@ -26,13 +27,35 @@ const emptyForm = {
 export default function AdminNegocio() {
   const [form, setForm] = useState(emptyForm)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const token = localStorage.getItem('token')
   const tieneSlogan = user.plan_id && user.plan_id >= 2
 
   useEffect(() => {
-    const data = localStorage.getItem('admin_negocio')
-    if (data) setForm(JSON.parse(data))
+    fetch(`${API}/api/business`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.business) {
+          setForm({
+            nombre_negocio: data.business.nombre_negocio || '',
+            slogan: data.business.slogan || '',
+            direccion: data.business.direccion || '',
+            whatsapp: data.business.whatsapp || '',
+            telefono: data.business.telefono || '',
+            correo: data.business.correo || '',
+            facebook: data.business.facebook || '',
+            instagram: data.business.instagram || '',
+            horarios: data.business.horarios || defaultHorarios,
+          })
+        }
+      })
+      .catch(err => console.error('Error cargando negocio:', err))
+      .finally(() => setLoading(false))
   }, [])
 
   const update = (field, value) => {
@@ -53,11 +76,34 @@ export default function AdminNegocio() {
     setSaved(false)
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    localStorage.setItem('admin_negocio', JSON.stringify(form))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    setSaving(true)
+    try {
+      const res = await fetch(`${API}/api/business`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(form)
+      })
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      }
+    } catch (err) {
+      console.error('Error guardando negocio:', err)
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+      </div>
+    )
   }
 
   return (
@@ -244,10 +290,11 @@ export default function AdminNegocio() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-2"
+            disabled={saving}
+            className="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-lg">save</span>
-            Guardar cambios
+            {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
           {saved && (
             <span className="text-green-600 text-sm font-medium flex items-center gap-1">

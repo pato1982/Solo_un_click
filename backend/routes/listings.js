@@ -93,7 +93,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
 // POST /api/listings — crear publicación
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { tipo, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
+    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
 
     // Verificar límite del plan
     const [userRows] = await pool.query(
@@ -114,9 +114,9 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Insertar listing
     const [result] = await pool.query(
-      `INSERT INTO listings (user_id, tipo, nombre, descripcion, precio, precio_original, subcategoria, badge, genero)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, tipo, nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null]
+      `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.userId, tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null]
     )
 
     const listingId = result.insertId
@@ -151,7 +151,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params
-    const { tipo, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
+    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
 
     // Verificar que el listing pertenece al usuario
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
@@ -162,9 +162,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     // Actualizar listing
     await pool.query(
-      `UPDATE listings SET tipo=?, nombre=?, descripcion=?, precio=?, precio_original=?, subcategoria=?, badge=?, genero=?
+      `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, subcategoria=?, badge=?, genero=?
        WHERE id=?`,
-      [tipo, nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null, id]
+      [tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null, id]
     )
 
     // Actualizar imagen

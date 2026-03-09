@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 const menuItems = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
+  { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles' },
 ]
 
 export default function AdminSidebar({ open }) {

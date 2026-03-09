@@ -1,0 +1,208 @@
+const express = require('express')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+const pool = require('../db')
+const { authMiddleware } = require('./auth')
+
+const router = express.Router()
+
+// Crear carpeta uploads/carousels si no existe
+const carouselsDir = path.join(__dirname, '..', 'uploads', 'carousels')
+if (!fs.existsSync(carouselsDir)) {
+  fs.mkdirSync(carouselsDir, { recursive: true })
+}
+
+// Configurar multer para carruseles
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, carouselsDir),
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1000)}${path.extname(file.originalname)}`
+    cb(null, uniqueName)
+  }
+})
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp/
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase())
+    const mime = allowed.test(file.mimetype)
+    if (ext && mime) return cb(null, true)
+    cb(new Error('Solo se permiten imágenes (jpg, png, webp)'))
+  }
+})
+
+// GET /api/carousels — obtener los 3 carruseles del usuario
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const [carousels] = await pool.query(
+      'SELECT * FROM carousels WHERE user_id = ? ORDER BY posicion',
+      [req.userId]
+    )
+
+    // Obtener imágenes de cada carrusel
+    const result = []
+    for (const c of carousels) {
+      const [images] = await pool.query(
+        'SELECT id, imagen_url, orden FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+        [c.id]
+      )
+      result.push({
+        id: c.id,
+        posicion: c.posicion,
+        nombre: c.nombre,
+        imagenes: images
+      })
+    }
+
+    res.json({ carousels: result })
+  } catch (err) {
+    console.error('Error al obtener carruseles:', err)
+    res.status(500).json({ error: 'Error al obtener carruseles' })
+  }
+})
+
+// POST /api/carousels/:posicion — guardar carrusel (nombre + imágenes nuevas)
+router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (req, res) => {
+  try {
+    const posicion = parseInt(req.params.posicion)
+    if (![1, 2, 3].includes(posicion)) {
+      return res.status(400).json({ error: 'Posición inválida (1, 2 o 3)' })
+    }
+
+    const { nombre } = req.body
+
+    // Buscar o crear el carrusel
+    const [existing] = await pool.query(
+      'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
+      [req.userId, posicion]
+    )
+
+    let carouselId
+    if (existing.length > 0) {
+      carouselId = existing[0].id
+      await pool.query('UPDATE carousels SET nombre = ? WHERE id = ?', [nombre || '', carouselId])
+    } else {
+      const [result] = await pool.query(
+        'INSERT INTO carousels (user_id, nombre, posicion) VALUES (?, ?, ?)',
+        [req.userId, nombre || '', posicion]
+      )
+      carouselId = result.insertId
+    }
+
+    // Agregar imágenes nuevas
+    if (req.files && req.files.length > 0) {
+      // Contar imágenes existentes
+      const [countResult] = await pool.query(
+        'SELECT COUNT(*) as total FROM carousel_images WHERE carousel_id = ?',
+        [carouselId]
+      )
+      const currentCount = countResult[0].total
+      const maxNew = 8 - currentCount
+      const filesToAdd = req.files.slice(0, maxNew)
+
+      for (let i = 0; i < filesToAdd.length; i++) {
+        const url = `/uploads/carousels/${filesToAdd[i].filename}`
+        await pool.query(
+          'INSERT INTO carousel_images (carousel_id, imagen_url, orden) VALUES (?, ?, ?)',
+          [carouselId, url, currentCount + i + 1]
+        )
+      }
+    }
+
+    // Devolver carrusel actualizado
+    const [images] = await pool.query(
+      'SELECT id, imagen_url, orden FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+      [carouselId]
+    )
+
+    res.json({
+      message: 'Carrusel guardado',
+      carousel: { id: carouselId, posicion, nombre: nombre || '', imagenes: images }
+    })
+  } catch (err) {
+    console.error('Error al guardar carrusel:', err)
+    res.status(500).json({ error: 'Error al guardar carrusel' })
+  }
+})
+
+// PUT /api/carousels/:posicion/reorder — reordenar imágenes
+router.put('/:posicion/reorder', authMiddleware, async (req, res) => {
+  try {
+    const posicion = parseInt(req.params.posicion)
+    const { imageIds } = req.body // Array de IDs en el nuevo orden
+
+    const [carousel] = await pool.query(
+      'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
+      [req.userId, posicion]
+    )
+
+    if (carousel.length === 0) {
+      return res.status(404).json({ error: 'Carrusel no encontrado' })
+    }
+
+    for (let i = 0; i < imageIds.length; i++) {
+      await pool.query(
+        'UPDATE carousel_images SET orden = ? WHERE id = ? AND carousel_id = ?',
+        [i + 1, imageIds[i], carousel[0].id]
+      )
+    }
+
+    res.json({ message: 'Orden actualizado' })
+  } catch (err) {
+    console.error('Error al reordenar:', err)
+    res.status(500).json({ error: 'Error al reordenar imágenes' })
+  }
+})
+
+// DELETE /api/carousels/:posicion/images/:imageId — eliminar imagen
+router.delete('/:posicion/images/:imageId', authMiddleware, async (req, res) => {
+  try {
+    const posicion = parseInt(req.params.posicion)
+    const imageId = parseInt(req.params.imageId)
+
+    const [carousel] = await pool.query(
+      'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
+      [req.userId, posicion]
+    )
+
+    if (carousel.length === 0) {
+      return res.status(404).json({ error: 'Carrusel no encontrado' })
+    }
+
+    // Obtener URL para borrar archivo
+    const [img] = await pool.query(
+      'SELECT imagen_url FROM carousel_images WHERE id = ? AND carousel_id = ?',
+      [imageId, carousel[0].id]
+    )
+
+    if (img.length > 0) {
+      // Borrar archivo físico
+      const filePath = path.join(__dirname, '..', img[0].imagen_url)
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+      }
+
+      // Borrar registro
+      await pool.query('DELETE FROM carousel_images WHERE id = ?', [imageId])
+
+      // Reordenar los restantes
+      const [remaining] = await pool.query(
+        'SELECT id FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+        [carousel[0].id]
+      )
+      for (let i = 0; i < remaining.length; i++) {
+        await pool.query('UPDATE carousel_images SET orden = ? WHERE id = ?', [i + 1, remaining[i].id])
+      }
+    }
+
+    res.json({ message: 'Imagen eliminada' })
+  } catch (err) {
+    console.error('Error al eliminar imagen:', err)
+    res.status(500).json({ error: 'Error al eliminar imagen' })
+  }
+})
+
+module.exports = router

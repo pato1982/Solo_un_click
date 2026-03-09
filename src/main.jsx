@@ -5,6 +5,7 @@ import App from './App'
 import AdminLayout from './admin/AdminLayout'
 import AdminProductos from './admin/pages/AdminProductos'
 import AdminNegocio from './admin/pages/AdminNegocio'
+import AdminCarruseles from './admin/pages/AdminCarruseles'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminProductos />} />
           <Route path="negocio" element={<AdminNegocio />} />
+          <Route path="carruseles" element={<AdminCarruseles />} />
         </Route>
         <Route path="/*" element={<App />} />
       </Routes>
