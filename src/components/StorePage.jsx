@@ -619,6 +619,11 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               for (let i = 0; i < filteredProducts.length; i += 10) {
                 rows.push(filteredProducts.slice(i, i + 10))
               }
+              // Separar carouseles por posición
+              const carousel1 = carouselItems.filter(c => c.carousel_posicion === 1)
+              const carousel2 = carouselItems.filter(c => c.carousel_posicion === 2)
+              const carousel3 = carouselItems.filter(c => c.carousel_posicion === 3)
+
               return rows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
@@ -626,7 +631,12 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {(idx + 1) % 3 === 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carouselItems} />}
+                  {/* Carrusel 1 después de 2 filas */}
+                  {idx === 1 && carousel1.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} />}
+                  {/* Carrusel 2 después de 4 filas */}
+                  {idx === 3 && carousel2.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} />}
+                  {/* Carrusel 3 después de 6 filas */}
+                  {idx === 5 && carousel3.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} />}
                 </div>
               ))
             })()

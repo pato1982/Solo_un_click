@@ -76,16 +76,26 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
+// Requisitos de productos para desbloquear carruseles
+const CAROUSEL_REQUIREMENTS = {
+  1: { normal: 10, premium: 0 },   // Carrusel 1: plan normal necesita 10 productos, premium siempre
+  2: { normal: null, premium: 30 }, // Carrusel 2: solo premium, necesita 30 productos
+  3: { normal: null, premium: 40 }, // Carrusel 3: solo premium, necesita 40 productos
+}
+
 export default function AdminCarruseles() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
+  const esNormal = user.plan_id && user.plan_id >= 2
   const esPremium = user.plan_id && user.plan_id >= 3
 
   const [activeTab, setActiveTab] = useState(1)
   const [items, setItems] = useState([])
+  const [totalProductos, setTotalProductos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showLockedPopup, setShowLockedPopup] = useState(null)
   const [formData, setFormData] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
@@ -93,14 +103,42 @@ export default function AdminCarruseles() {
   const [saved, setSaved] = useState(false)
   const fileInputRef = useRef(null)
 
+  // Tabs visibles según plan
+  const visibleTabs = esPremium ? [1, 2, 3] : esNormal ? [1] : []
+
+  // Verificar si un carrusel está desbloqueado
+  const isCarouselUnlocked = (pos) => {
+    const req = CAROUSEL_REQUIREMENTS[pos]
+    if (esPremium) return req.premium === 0 || totalProductos >= req.premium
+    if (esNormal) return req.normal !== null && totalProductos >= req.normal
+    return false
+  }
+
+  const getRequiredProducts = (pos) => {
+    const req = CAROUSEL_REQUIREMENTS[pos]
+    return esPremium ? req.premium : req.normal
+  }
+
+  // Manejar click en tab
+  const handleTabClick = (pos) => {
+    if (!isCarouselUnlocked(pos)) {
+      const required = getRequiredProducts(pos)
+      setShowLockedPopup({ pos, required })
+      return
+    }
+    setActiveTab(pos)
+  }
+
   // Cargar items desde API
   useEffect(() => {
-    if (!esPremium) { setLoading(false); return }
+    if (!esNormal) { setLoading(false); return }
     Promise.all([
       fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       fetch(`${API}/api/carousels`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
     ]).then(([listData, carData]) => {
       if (listData.listings) {
+        // Contar productos que NO son de carrusel
+        setTotalProductos(listData.listings.filter(l => !l.carousel_posicion).length)
         setItems(listData.listings.filter(l => l.carousel_posicion).map(l => ({
           id: l.id, carousel: l.carousel_posicion, orden: l.carousel_orden,
           nombre: l.nombre, descripcion: l.descripcion, precio: l.precio, precioOriginal: l.precio_original,
@@ -241,14 +279,14 @@ export default function AdminCarruseles() {
     setSaving(false)
   }
 
-  if (!esPremium) {
+  if (!esNormal) {
     return (
       <div>
         <div className="mb-6"><h1 className="text-xl font-black text-gray-800">Carruseles</h1><p className="text-xs text-gray-400 mt-0.5">Imágenes destacadas en tu página</p></div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
           <span className="material-symbols-outlined text-4xl text-gray-300 mb-3 block">lock</span>
-          <h2 className="text-sm font-bold text-gray-600 mb-1">Función exclusiva del Plan Premium</h2>
-          <p className="text-xs text-gray-400 max-w-sm mx-auto">Los carruseles de imágenes están disponibles solo para usuarios con Plan Premium.</p>
+          <h2 className="text-sm font-bold text-gray-600 mb-1">Función exclusiva de planes Normal y Premium</h2>
+          <p className="text-xs text-gray-400 max-w-sm mx-auto">Los carruseles están disponibles a partir del Plan Normal.</p>
         </div>
       </div>
     )
@@ -258,22 +296,34 @@ export default function AdminCarruseles() {
 
   return (
     <div>
-      <div className="mb-6"><h1 className="text-xl font-black text-gray-800">Carruseles</h1><p className="text-xs text-gray-400 mt-0.5">Administra los productos de tus 3 carruseles (máx. {MAX_ITEMS} por carrusel)</p></div>
+      <div className="mb-6">
+        <h1 className="text-xl font-black text-gray-800">Carruseles</h1>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Administra los productos de tus {esPremium ? '3 carruseles' : 'carrusel'} (máx. {MAX_ITEMS} por carrusel)
+          <span className="ml-2 text-gray-300">|</span>
+          <span className="ml-2">{totalProductos} producto{totalProductos !== 1 ? 's' : ''} subido{totalProductos !== 1 ? 's' : ''}</span>
+        </p>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Tabs */}
         <div className="flex border-b border-gray-200">
-          {[1, 2, 3].map((pos) => {
+          {visibleTabs.map((pos) => {
             const count = items.filter(i => i.carousel === pos).length
+            const unlocked = isCarouselUnlocked(pos)
             return (
-              <button key={pos} onClick={() => setActiveTab(pos)}
-                className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${activeTab === pos ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
+              <button key={pos} onClick={() => handleTabClick(pos)}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${!unlocked ? 'text-gray-300 cursor-not-allowed' : activeTab === pos ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
                 <span className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-base">view_carousel</span>
+                  <span className="material-symbols-outlined text-base">{unlocked ? 'view_carousel' : 'lock'}</span>
                   {carouselNames[pos - 1]}
-                  <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${count >= MAX_ITEMS ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>{count}/{MAX_ITEMS}</span>
+                  {unlocked ? (
+                    <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${count >= MAX_ITEMS ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>{count}/{MAX_ITEMS}</span>
+                  ) : (
+                    <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">{getRequiredProducts(pos)}+ prod.</span>
+                  )}
                 </span>
-                {activeTab === pos && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>}
+                {activeTab === pos && unlocked && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>}
               </button>
             )
           })}
@@ -510,6 +560,32 @@ export default function AdminCarruseles() {
                 <button onClick={() => setDeleteId(null)} className="flex-1 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancelar</button>
                 <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">Aceptar</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup carrusel bloqueado */}
+      {showLockedPopup && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setShowLockedPopup(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl text-amber-500">lock</span>
+              </div>
+              <h3 className="text-sm font-bold text-gray-800">Carrusel {showLockedPopup.pos} bloqueado</h3>
+              <p className="text-xs text-gray-500 text-center leading-relaxed">
+                Este carrusel se desbloqueará cuando tengas al menos <strong className="text-primary">{showLockedPopup.required} productos</strong> subidos en tu tienda.
+              </p>
+              <p className="text-[10px] text-gray-400">
+                Actualmente tienes {totalProductos} producto{totalProductos !== 1 ? 's' : ''}.
+                {showLockedPopup.required - totalProductos > 0 && (
+                  <span className="ml-1">Te faltan <strong>{showLockedPopup.required - totalProductos}</strong> más.</span>
+                )}
+              </p>
+              <button onClick={() => setShowLockedPopup(null)} className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-colors mt-1">
+                Entendido
+              </button>
             </div>
           </div>
         </div>
