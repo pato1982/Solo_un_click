@@ -19,7 +19,7 @@ const plans = [
       panel: true,
       edit: true,
       storeInfo: true,
-      slogan: true,
+      slogan: false,
     },
     ownPage: {
       enabled: false,
