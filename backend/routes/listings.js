@@ -11,10 +11,13 @@ router.get('/', async (req, res) => {
 
     let query = `
       SELECT l.*, li.url as imagen,
-             u.nombre as autor_nombre
+             u.nombre as autor_nombre,
+             b.nombre_negocio, b.whatsapp as negocio_whatsapp,
+             b.telefono as negocio_telefono, b.direccion as negocio_direccion
       FROM listings l
       LEFT JOIN listing_images li ON l.id = li.listing_id
       LEFT JOIN users u ON l.user_id = u.id
+      LEFT JOIN businesses b ON l.user_id = b.user_id
       WHERE l.activo = 1
     `
     const params = []
