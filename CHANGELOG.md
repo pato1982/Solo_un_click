@@ -6,7 +6,10 @@
 ### Estado del Servidor
 - **Hostname:** portalestudiantil
 - **Instalado:** Node.js, PM2, MySQL, Nginx
-- **Nginx:** config default (/var/www/html)
+- **Proyecto en:** /var/www/soloaunclick
+- **Nginx:** proxy /api/ → Express:3001, frontend desde dist/, uploads desde backend/uploads/
+- **PM2:** soloaunclick-api (ecosystem.config.js con env vars en servidor, NO en git)
+- **API puerto:** 3001
 - **Disco:** 5.1GB usados / 20GB
 - **RAM:** 957MB total
 - **Nota:** dotenv NO funciona con PM2, usar credenciales directas
@@ -26,6 +29,16 @@
 - **Restricción admin:** campos vende_productos/ofrece_servicios/ofrece_arriendos determinan qué pestañas ve cada usuario
 - **Sin tabla stores:** solo 2 tipos de usuario (general y turismo)
 - **Precios planes:** aún en $0, se definen después
+
+### Backend API (Express + MySQL)
+- **Archivos:** `backend/server.js`, `backend/db.js`, `backend/routes/auth.js`, `backend/routes/listings.js`, `backend/routes/upload.js`
+- **Auth:** registro (POST /api/auth/register), login (POST /api/auth/login), datos usuario (GET /api/auth/me)
+- **Listings:** listar públicas (GET /api/listings), mis publicaciones (GET /api/listings/mine), crear (POST), editar (PUT /:id), eliminar (DELETE /:id)
+- **Upload:** subir imagen (POST /api/upload), máximo 5MB, solo jpg/png/webp
+- **Seguridad:** JWT (7 días), bcrypt para passwords, validación de propiedad al editar/eliminar
+- **Validaciones:** límite de listings según plan, badge solo para tipo='producto'
+- **Credenciales:** via variables de entorno (ecosystem.config.js en servidor)
+- **CREDENCIALES.md:** archivo local con SSH, MySQL y GitHub token (en .gitignore, NO sube a git)
 
 ---
 

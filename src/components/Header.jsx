@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import PlansModal from './PlansModal'
+import LoginModal from './LoginModal'
+import RegisterModal from './RegisterModal'
 import { searchIndex } from '../data/searchIndex'
 
-export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onSearchSelect }) {
+export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onSearchSelect, user, onLoginSuccess, onLogout }) {
   const [showPlans, setShowPlans] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [showResults, setShowResults] = useState(false)
@@ -150,14 +154,26 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
 
           {/* Registrarse, Ingresar y Planes */}
           <div className="absolute right-0 flex items-center gap-4">
-            <button className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
-              <span className="material-symbols-outlined text-base">person_add</span>
-              Registrarse
-            </button>
-            <button className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
-              <span className="material-symbols-outlined text-base">login</span>
-              Ingresar
-            </button>
+            {user ? (
+              <>
+                <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span></span>
+                <button onClick={onLogout} className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
+                  <span className="material-symbols-outlined text-base">logout</span>
+                  Salir
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setShowRegister(true)} className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
+                  <span className="material-symbols-outlined text-base">person_add</span>
+                  Registrarse
+                </button>
+                <button onClick={() => setShowLogin(true)} className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
+                  <span className="material-symbols-outlined text-base">login</span>
+                  Ingresar
+                </button>
+              </>
+            )}
             <button onClick={() => setShowPlans(true)} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
               <span className="material-symbols-outlined text-base">star</span>
               Planes
@@ -167,6 +183,20 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
       </nav>
 
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} />}
+      {showLogin && (
+        <LoginModal
+          onClose={() => setShowLogin(false)}
+          onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true) }}
+          onLoginSuccess={onLoginSuccess}
+        />
+      )}
+      {showRegister && (
+        <RegisterModal
+          onClose={() => setShowRegister(false)}
+          onSwitchToLogin={() => { setShowRegister(false); setShowLogin(true) }}
+          onRegisterSuccess={onLoginSuccess}
+        />
+      )}
     </div>
   )
 }

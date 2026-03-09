@@ -21,6 +21,20 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState(null)   // filtro de subcategoría
   const [storeMapMode, setStoreMapMode] = useState(false)
   const [activeStore, setActiveStore] = useState(null)      // tienda premium abierta
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  const handleLoginSuccess = (userData) => {
+    setUser(userData)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setUser(null)
+  }
 
   const toggleNav = (nav) => {
     if (nav === 'negocios') {
@@ -213,7 +227,7 @@ export default function App() {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} />
+      <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
       <div className="w-full flex flex-1 flex-col md:flex-row">
         <Sidebar
