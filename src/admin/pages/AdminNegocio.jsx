@@ -9,8 +9,11 @@ const defaultHorarios = DIAS.map((dia) => ({
   cierre: '18:00',
 }))
 
+const MAX_SLOGAN_WORDS = 10
+
 const emptyForm = {
   nombre_negocio: '',
+  slogan: '',
   direccion: '',
   whatsapp: '',
   telefono: '',
@@ -30,9 +33,15 @@ export default function AdminNegocio() {
   }, [])
 
   const update = (field, value) => {
+    if (field === 'slogan') {
+      const words = value.trim().split(/\s+/).filter(Boolean)
+      if (words.length > MAX_SLOGAN_WORDS) return
+    }
     setForm({ ...form, [field]: value })
     setSaved(false)
   }
+
+  const sloganWordCount = form.slogan.trim() ? form.slogan.trim().split(/\s+/).filter(Boolean).length : 0
 
   const updateHorario = (index, field, value) => {
     const newHorarios = [...form.horarios]
@@ -73,13 +82,18 @@ export default function AdminNegocio() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Slogan
+                  <span className={`ml-2 text-[10px] font-normal ${sloganWordCount >= MAX_SLOGAN_WORDS ? 'text-red-500' : 'text-gray-400'}`}>
+                    {sloganWordCount}/{MAX_SLOGAN_WORDS} palabras
+                  </span>
+                </label>
                 <input
                   type="text"
-                  value={form.direccion}
-                  onChange={(e) => update('direccion', e.target.value)}
+                  value={form.slogan}
+                  onChange={(e) => update('slogan', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                  placeholder="Dirección del negocio"
+                  placeholder="Ej: Lo mejor en calidad y precio"
                 />
               </div>
             </div>
@@ -113,17 +127,32 @@ export default function AdminNegocio() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Correo electrónico</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg material-symbols-outlined">mail</span>
-                <input
-                  type="email"
-                  value={form.correo}
-                  onChange={(e) => update('correo', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                  placeholder="contacto@minegocio.cl"
-                />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Correo electrónico</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg material-symbols-outlined">mail</span>
+                  <input
+                    type="email"
+                    value={form.correo}
+                    onChange={(e) => update('correo', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    placeholder="contacto@minegocio.cl"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg material-symbols-outlined">location_on</span>
+                  <input
+                    type="text"
+                    value={form.direccion}
+                    onChange={(e) => update('direccion', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    placeholder="Dirección del negocio"
+                  />
+                </div>
               </div>
             </div>
 

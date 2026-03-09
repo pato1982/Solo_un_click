@@ -28,7 +28,15 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST /api/business — crear o actualizar datos del negocio
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { nombre_negocio, direccion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
+    const { nombre_negocio, slogan, direccion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
+
+    // Validar slogan: máximo 10 palabras
+    if (slogan) {
+      const words = slogan.trim().split(/\s+/).filter(Boolean)
+      if (words.length > 10) {
+        return res.status(400).json({ error: 'El slogan debe tener máximo 10 palabras' })
+      }
+    }
 
     const horariosJson = horarios ? JSON.stringify(horarios) : null
 
@@ -36,15 +44,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     if (existing.length > 0) {
       await pool.query(
-        `UPDATE businesses SET nombre_negocio=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
+        `UPDATE businesses SET nombre_negocio=?, slogan=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
          WHERE user_id=?`,
-        [nombre_negocio || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson, req.userId]
+        [nombre_negocio || null, slogan || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson, req.userId]
       )
     } else {
       await pool.query(
-        `INSERT INTO businesses (user_id, nombre_negocio, direccion, whatsapp, telefono, correo, facebook, instagram, horarios)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, nombre_negocio || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson]
+        `INSERT INTO businesses (user_id, nombre_negocio, slogan, direccion, whatsapp, telefono, correo, facebook, instagram, horarios)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, nombre_negocio || null, slogan || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson]
       )
     }
 
