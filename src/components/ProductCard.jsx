@@ -9,8 +9,23 @@ function getWhatsAppUrl(product, phone) {
   return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
 }
 
+function getStoreFromProduct(product) {
+  // Si el producto viene del API con datos de negocio, crear store dinámico
+  if (product.user_id && product.nombre_negocio) {
+    return {
+      id: `user-${product.user_id}`,
+      userId: product.user_id,
+      name: product.nombre_negocio,
+      phone: product.negocio_whatsapp || product.negocio_telefono || '',
+      address: product.negocio_direccion || '',
+    }
+  }
+  // Fallback a tiendas demo estáticas
+  return getStoreForProduct(product.id)
+}
+
 function ProductModal({ product, hidePrice, onClose }) {
-  const store = getStoreForProduct(product.id)
+  const store = getStoreFromProduct(product)
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
@@ -160,7 +175,7 @@ function ProductModal({ product, hidePrice, onClose }) {
 
 export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, inStorePage }) {
   const [showModal, setShowModal] = useState(false)
-  const store = getStoreForProduct(product.id)
+  const store = getStoreFromProduct(product)
 
   return (
     <>

@@ -32,6 +32,7 @@ const SECTION_ORDER = ['destacados', 'ofertas', 'arriendos', 'novedades', 'servi
 function mapListingToProduct(l) {
   return {
     id: l.id,
+    user_id: l.user_id,
     name: l.nombre,
     description: l.descripcion,
     image: l.imagen ? `${API}${l.imagen}` : null,
@@ -164,11 +165,38 @@ export default function App() {
 
   const handleOpenStore = (store) => {
     window.scrollTo({ top: 0 })
-    setActiveStore(store)
     setCurrentPage(null)
     setActiveSidebar(null)
     setActiveSection(null)
     setActiveFilter(null)
+
+    // Si la tienda tiene userId, cargar datos completos del negocio
+    if (store.userId) {
+      fetch(`${API}/api/business/${store.userId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.business) {
+            const b = data.business
+            setActiveStore({
+              ...store,
+              name: b.nombre_negocio || store.name,
+              slogan: b.slogan || '',
+              phone: b.whatsapp || b.telefono || store.phone || '',
+              email: b.correo || '',
+              address: b.direccion || '',
+              description: '',
+              facebook: b.facebook || '',
+              instagram: b.instagram || '',
+              horarios: b.horarios || [],
+            })
+          } else {
+            setActiveStore(store)
+          }
+        })
+        .catch(() => setActiveStore(store))
+    } else {
+      setActiveStore(store)
+    }
   }
 
 

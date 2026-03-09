@@ -6,7 +6,7 @@ const API = import.meta.env.VITE_API || ''
 const DEFAULT_PHONE = '56912345678'
 
 export function StoreFooter({ store }) {
-  const waPhone = store.phone.replace(/[\s+]/g, '')
+  const waPhone = (store.phone || '').replace(/[\s+]/g, '')
   return (
     <footer className="bg-primary text-white px-6 py-4">
       <div className="mx-auto grid grid-cols-[0.3fr_1fr_1.5fr_1fr_0.3fr] gap-8 items-start px-6">
@@ -354,63 +354,134 @@ function StoreBanner({ store, products }) {
   )
 }
 
+function mapListing(l) {
+  return {
+    id: l.id,
+    name: l.nombre,
+    description: l.descripcion,
+    image: l.imagen ? `${API}${l.imagen}` : null,
+    alt: l.nombre,
+    price: l.precio,
+    originalPrice: l.precio_original,
+    badge: l.badge,
+    tallas: l.tallas,
+    medidas: l.medidas,
+    genero: l.genero,
+    tipo: l.tipo,
+    subcategory: l.subcategoria,
+    seccion: l.seccion,
+    carousel_posicion: l.carousel_posicion,
+  }
+}
+
+const SECTION_TITLES = {
+  destacados: 'Productos Destacados',
+  ofertas: 'Productos en Ofertas',
+  novedades: 'Novedades',
+  liquidacion: 'Productos en Liquidación',
+  tecnologia: 'Tecnología',
+  servicios: 'Servicios',
+  arriendos: 'Arriendos',
+  turismo: 'Tendencia',
+}
+
 export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeCat, setActiveCat] = useState(null)
   const [activeSub, setActiveSub] = useState(null)
   const [activeSection, setActiveSection] = useState(null)
   const [seccionesOpen, setSeccionesOpen] = useState(false)
   const [carouselItems, setCarouselItems] = useState([])
+  const [apiProducts, setApiProducts] = useState(null)
+  const [storeInfo, setStoreInfo] = useState(null)
+  const [loading, setLoading] = useState(!!store.userId)
 
-  // Fetch carousel items from API if store has userId
+  // Fetch data from API if store has userId
   useEffect(() => {
     if (!store.userId) return
-    fetch(`${API}/api/listings?user_id=${store.userId}&carousel=1`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.listings && data.listings.length > 0) {
-          setCarouselItems(data.listings.map(l => ({
-            id: l.id,
-            name: l.nombre,
-            description: l.descripcion,
-            image: l.imagen ? `${API}${l.imagen}` : null,
-            alt: l.nombre,
-            price: l.precio,
-            originalPrice: l.precio_original,
-            badge: l.badge,
-            tallas: l.tallas,
-            medidas: l.medidas,
-            genero: l.genero,
-            carousel_posicion: l.carousel_posicion,
-          })))
-        }
-      })
-      .catch(err => console.error('Error cargando carrusel:', err))
+    Promise.all([
+      fetch(`${API}/api/listings?user_id=${store.userId}`).then(r => r.json()),
+      fetch(`${API}/api/listings?user_id=${store.userId}&carousel=1`).then(r => r.json()),
+      fetch(`${API}/api/business/${store.userId}`).then(r => r.json()),
+    ]).then(([listData, carData, bizData]) => {
+      if (listData.listings) {
+        setApiProducts(listData.listings.filter(l => !l.carousel_posicion).map(mapListing))
+      }
+      if (carData.listings) {
+        setCarouselItems(carData.listings.map(mapListing))
+      }
+      if (bizData.business) {
+        setStoreInfo(bizData.business)
+      }
+    }).catch(err => console.error('Error cargando tienda:', err))
+      .finally(() => setLoading(false))
   }, [store.userId])
 
-  // Obtener todos los productos de esta tienda
-  const storeProducts = []
-  sections.forEach((section) => {
-    section.items.forEach((item) => {
-      if (store.productIds.includes(item.id)) {
-        storeProducts.push(item)
-      }
+  // Datos de la tienda: API o estáticos
+  const storeName = storeInfo?.nombre_negocio || store.name
+  const storePhone = storeInfo?.whatsapp || storeInfo?.telefono || store.phone
+  const storeSlogan = storeInfo?.slogan || store.slogan
+
+  // Productos: API o estáticos
+  let storeProducts
+  if (apiProducts) {
+    storeProducts = apiProducts
+  } else {
+    storeProducts = []
+    sections.forEach((section) => {
+      section.items.forEach((item) => {
+        if (store.productIds && store.productIds.includes(item.id)) {
+          storeProducts.push(item)
+        }
+      })
     })
-  })
+  }
 
-  // Detectar qué tipos tiene esta tienda
-  const tiposEnTienda = new Set(storeProducts.map((p) => p.tipo))
+  // Categorías: API (dinámicas desde subcategorías) o estáticas
+  const storeCategories = apiProducts
+    ? (() => {
+        const catMap = {}
+        apiProducts.forEach(p => {
+          if (!p.subcategory) return
+          // Usar tipo como categoría padre
+          const catLabel = p.tipo === 'servicio' ? 'Servicios' : p.tipo === 'arriendo' ? 'Arriendos' : 'Productos'
+          if (!catMap[catLabel]) catMap[catLabel] = new Set()
+          catMap[catLabel].add(p.subcategory)
+        })
+        return Object.entries(catMap).map(([label, subs]) => ({
+          label,
+          subcategories: [...subs],
+        }))
+      })()
+    : (store.categories || [])
 
-  // Filtrar secciones: solo mostrar las que tengan productos de esta tienda
-  const storeSections = sections.filter((s) =>
-    s.items.some((item) => store.productIds.includes(item.id))
-  )
+  // Secciones del store
+  const storeSections = apiProducts
+    ? (() => {
+        const secMap = {}
+        apiProducts.forEach(p => {
+          const sec = p.seccion || 'destacados'
+          if (!secMap[sec]) secMap[sec] = []
+          secMap[sec].push(p)
+        })
+        return Object.entries(secMap).map(([id, items]) => ({
+          id,
+          title: SECTION_TITLES[id] || id,
+          items,
+        }))
+      })()
+    : sections.filter((s) =>
+        s.items.some((item) => store.productIds && store.productIds.includes(item.id))
+      )
 
   // Filtrar por categoría, subcategoría o sección seleccionada
-  const currentCat = store.categories.find((c) => c.label === activeCat)
+  const currentCat = storeCategories.find((c) => c.label === activeCat)
   const currentSubs = currentCat ? currentCat.subcategories : []
 
   const filteredProducts = storeProducts.filter((p) => {
     if (activeSection) {
+      if (apiProducts) {
+        return (p.seccion || 'destacados') === activeSection
+      }
       const sec = sections.find((s) => s.id === activeSection)
       return sec ? sec.items.some((item) => item.id === p.id) : true
     }
@@ -440,6 +511,14 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-20">
+        <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+      </div>
+    )
+  }
+
   return (
     <>
       {/* Sidebar con categorías y subcategorías */}
@@ -447,10 +526,10 @@ export default function StorePage({ store, onBack, onOpenStore }) {
           <div className="bg-primary text-white animate-slide-in shadow-lg p-2">
             <div className="border border-accent rounded-lg p-2 pt-3">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-black uppercase tracking-tight">{store.name.split(' ')[0]}</h3>
+                <h3 className="text-sm font-black uppercase tracking-tight">{storeName.split(' ')[0]}</h3>
               </div>
               <div className="flex flex-col gap-0 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
-                {store.categories.map((cat) => (
+                {storeCategories.map((cat) => (
                   <div key={cat.label}>
                     <button
                       onClick={() => handleCatClick(cat.label)}
@@ -543,11 +622,11 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               return rows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
-                    title={idx === 0 ? (activeSection ? sections.find(s => s.id === activeSection)?.title : activeSub || activeCat || 'Todos los productos') : ''}
+                    title={idx === 0 ? (activeSection ? (storeSections.find(s => s.id === activeSection)?.title || SECTION_TITLES[activeSection] || activeSection) : activeSub || activeCat || 'Todos los productos') : ''}
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {(idx + 1) % 3 === 0 && <ImageMarquee products={storeProducts} phone={store.phone} carouselItems={carouselItems} />}
+                  {(idx + 1) % 3 === 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carouselItems} />}
                 </div>
               ))
             })()

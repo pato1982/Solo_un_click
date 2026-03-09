@@ -25,6 +25,30 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
+// GET /api/business/:userId — obtener datos del negocio por userId (público)
+router.get('/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ?`,
+      [req.params.userId]
+    )
+
+    if (rows.length === 0) {
+      return res.json({ business: null })
+    }
+
+    const business = rows[0]
+    if (business.horarios && typeof business.horarios === 'string') {
+      business.horarios = JSON.parse(business.horarios)
+    }
+
+    res.json({ business })
+  } catch (err) {
+    console.error('Error al obtener negocio público:', err)
+    res.status(500).json({ error: 'Error al obtener datos del negocio' })
+  }
+})
+
 // POST /api/business — crear o actualizar datos del negocio
 router.post('/', authMiddleware, async (req, res) => {
   try {
