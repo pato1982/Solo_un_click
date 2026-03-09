@@ -7,7 +7,7 @@ const router = express.Router()
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
-    const { tipo, badge } = req.query
+    const { tipo, badge, user_id, carousel } = req.query
 
     let query = `
       SELECT l.*, li.url as imagen,
@@ -30,8 +30,16 @@ router.get('/', async (req, res) => {
       query += ' AND l.badge = ?'
       params.push(badge)
     }
-
-    query += ' ORDER BY l.created_at DESC'
+    if (user_id) {
+      query += ' AND l.user_id = ?'
+      params.push(user_id)
+    }
+    if (carousel === '1') {
+      query += ' AND l.carousel_posicion IS NOT NULL'
+      query += ' ORDER BY l.carousel_posicion ASC, l.carousel_orden ASC'
+    } else {
+      query += ' ORDER BY l.created_at DESC'
+    }
 
     const [rows] = await pool.query(query, params)
 
@@ -93,7 +101,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
 // POST /api/listings — crear publicación
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
+    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden } = req.body
 
     // Verificar límite del plan
     const [userRows] = await pool.query(
@@ -114,9 +122,9 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Insertar listing
     const [result] = await pool.query(
-      `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null]
+      `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, carousel_posicion, carousel_orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.userId, tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null]
     )
 
     const listingId = result.insertId
@@ -151,7 +159,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params
-    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas } = req.body
+    const { tipo, seccion, nombre, descripcion, precio, precio_original, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden } = req.body
 
     // Verificar que el listing pertenece al usuario
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
@@ -162,9 +170,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     // Actualizar listing
     await pool.query(
-      `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, subcategoria=?, badge=?, genero=?
+      `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?
        WHERE id=?`,
-      [tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null, id]
+      [tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, subcategoria || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, id]
     )
 
     // Actualizar imagen

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { sections } from '../data/products'
 import ProductCard from './ProductCard'
 
+const API = import.meta.env.VITE_API || ''
 const DEFAULT_PHONE = '56912345678'
 
 export function StoreFooter({ store }) {
@@ -69,26 +70,60 @@ function MarqueeModal({ product, phone, onClose }) {
         </button>
         <div className="flex flex-col md:flex-row md:min-h-[220px]">
           <div className="md:w-[50%] h-44 md:h-auto shrink-0 pt-1 pr-1 pl-1">
-            <img src={product.image} alt={product.alt} className="w-full h-full object-cover rounded-tr-xl bg-slate-100" />
+            <img src={product.image} alt={product.alt || product.name} className="w-full h-full object-cover rounded-tr-xl bg-slate-100" />
           </div>
-          <div className="md:w-[50%] p-3 flex flex-col flex-1">
-            <h3 className="text-sm font-black text-primary text-center mb-3 line-clamp-2">
+          <div className="md:w-[50%] p-3 flex flex-col flex-1 overflow-y-auto">
+            <h3 className="text-sm font-black text-primary text-center mb-2 line-clamp-2">
               {(() => {
                 const words = product.name.split(' ')
                 if (words.length <= 2) return product.name
                 return <>{words.slice(0, 2).join(' ')}<br />{words.slice(2).join(' ')}</>
               })()}
             </h3>
-            <p className="text-[10px] text-slate-500 leading-relaxed mb-3">{product.description}</p>
+            {product.badge && (
+              <div className="flex justify-center mb-2">
+                <span className="text-[9px] font-bold bg-primary text-white px-2 py-0.5 rounded-full">{product.badge}</span>
+              </div>
+            )}
+            <p className="text-[10px] text-slate-500 leading-relaxed mb-2">{product.description}</p>
+
+            {product.tallas && product.tallas.seleccion && product.tallas.seleccion.length > 0 && (
+              <div className="mb-2">
+                <p className="text-[9px] font-bold text-slate-600 mb-1">Tallas disponibles:</p>
+                <div className="flex flex-wrap gap-1">
+                  {product.tallas.seleccion.map((t) => (
+                    <span key={t} className="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-primary/20 bg-primary/5 text-primary">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.medidas && (product.medidas.alto || product.medidas.ancho || product.medidas.profundidad) && (
+              <div className="mb-2">
+                <p className="text-[9px] font-bold text-slate-600 mb-1">Medidas:</p>
+                <div className="flex gap-2 text-[9px] text-slate-500">
+                  {product.medidas.alto && <span>Alto: {product.medidas.alto}cm</span>}
+                  {product.medidas.ancho && <span>Ancho: {product.medidas.ancho}cm</span>}
+                  {product.medidas.profundidad && <span>Prof: {product.medidas.profundidad}cm</span>}
+                </div>
+              </div>
+            )}
+
+            {product.genero && (
+              <p className="text-[9px] text-slate-400 mb-2">Género: {product.genero}</p>
+            )}
+
             <div className="mt-auto pt-2 flex items-center gap-2">
               {product.originalPrice && (
                 <p className="text-[10px] font-bold text-slate-400 line-through">
                   ${product.originalPrice.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                 </p>
               )}
-              <p className="text-sm font-black text-primary">
-                ${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
-              </p>
+              {product.price > 0 && (
+                <p className="text-sm font-black text-primary">
+                  ${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -113,8 +148,11 @@ function MarqueeModal({ product, phone, onClose }) {
   )
 }
 
-function ImageMarquee({ products, phone }) {
-  const items = products.filter((p) => p.image).slice(0, 10)
+function ImageMarquee({ products, phone, carouselItems }) {
+  // Use carousel items from API if available, otherwise fall back to store products
+  const items = (carouselItems && carouselItems.length > 0)
+    ? carouselItems
+    : products.filter((p) => p.image).slice(0, 8)
   if (items.length === 0) return null
   const doubled = [...items, ...items]
   const [paused, setPaused] = useState(false)
@@ -140,7 +178,7 @@ function ImageMarquee({ products, phone }) {
             >
               <img
                 src={product.image}
-                alt={product.alt}
+                alt={product.alt || product.name}
                 className="w-full h-full object-contain p-2"
               />
             </div>
@@ -321,6 +359,33 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeSub, setActiveSub] = useState(null)
   const [activeSection, setActiveSection] = useState(null)
   const [seccionesOpen, setSeccionesOpen] = useState(false)
+  const [carouselItems, setCarouselItems] = useState([])
+
+  // Fetch carousel items from API if store has userId
+  useEffect(() => {
+    if (!store.userId) return
+    fetch(`${API}/api/listings?user_id=${store.userId}&carousel=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.listings && data.listings.length > 0) {
+          setCarouselItems(data.listings.map(l => ({
+            id: l.id,
+            name: l.nombre,
+            description: l.descripcion,
+            image: l.imagen ? `${API}${l.imagen}` : null,
+            alt: l.nombre,
+            price: l.precio,
+            originalPrice: l.precio_original,
+            badge: l.badge,
+            tallas: l.tallas,
+            medidas: l.medidas,
+            genero: l.genero,
+            carousel_posicion: l.carousel_posicion,
+          })))
+        }
+      })
+      .catch(err => console.error('Error cargando carrusel:', err))
+  }, [store.userId])
 
   // Obtener todos los productos de esta tienda
   const storeProducts = []
@@ -482,7 +547,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {(idx + 1) % 3 === 0 && <ImageMarquee products={storeProducts} phone={store.phone} />}
+                  {(idx + 1) % 3 === 0 && <ImageMarquee products={storeProducts} phone={store.phone} carouselItems={carouselItems} />}
                 </div>
               ))
             })()
