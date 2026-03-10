@@ -76,6 +76,82 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
+function BannerPreview({ items }) {
+  const [previewSlide, setPreviewSlide] = useState(0)
+  const intervalRef = useRef(null)
+
+  const slide1 = items.filter(i => i.orden >= 1 && i.orden <= 5).sort((a, b) => a.orden - b.orden)
+  const slide2 = items.filter(i => i.orden >= 6 && i.orden <= 10).sort((a, b) => a.orden - b.orden)
+  const slides = [slide1, slide2].filter(s => s.length >= 1)
+
+  useEffect(() => {
+    if (slides.length < 2) return
+    intervalRef.current = setInterval(() => setPreviewSlide(prev => (prev === 0 ? 1 : 0)), 7000)
+    return () => clearInterval(intervalRef.current)
+  }, [slides.length])
+
+  if (slides.length === 0) return (
+    <div className="w-full h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
+      <span className="material-symbols-outlined text-3xl text-gray-300">photo_library</span>
+      <p className="text-xs text-gray-400">Agrega productos para ver la vista previa del banner</p>
+    </div>
+  )
+
+  return (
+    <div className="relative w-full h-72 overflow-hidden rounded-lg bg-white shadow-sm border border-gray-200">
+      {slides.map((slide, i) => (
+        <div key={i} className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000" style={{ opacity: previewSlide === i ? 1 : 0 }}>
+          {slide[0] && (
+            <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3">
+              {slide[0].imagenPreview ? (
+                <img src={slide[0].imagenPreview} alt={slide[0].nombre} className="h-full w-1/2 object-contain shrink-0" />
+              ) : (
+                <div className="h-full w-1/2 bg-gray-100 rounded flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
+                </div>
+              )}
+              <div className="flex flex-col justify-center min-w-0">
+                <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].nombre}</p>
+                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{slide[0].descripcion}</p>
+                {slide[0].precio > 0 && (
+                  <p className="text-sm font-black text-accent mt-1">${slide[0].precio.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
+                )}
+              </div>
+            </div>
+          )}
+          {[1, 2, 3, 4].map(idx => slide[idx] && (
+            <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2">
+              {slide[idx].imagenPreview ? (
+                <img src={slide[idx].imagenPreview} alt={slide[idx].nombre} className="h-full w-2/5 object-contain shrink-0" />
+              ) : (
+                <div className="h-full w-2/5 bg-gray-100 rounded flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-lg text-gray-300">image</span>
+                </div>
+              )}
+              <div className="flex flex-col justify-center min-w-0">
+                <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].nombre}</p>
+                <p className="text-[8px] text-slate-400 line-clamp-1 mt-0.5">{slide[idx].descripcion}</p>
+                {slide[idx].precio > 0 && (
+                  <p className="text-[10px] font-black text-accent mt-0.5">${slide[idx].precio.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div className="absolute inset-0 bg-primary/30 pointer-events-none rounded-lg"></div>
+      {slides.length > 1 && (
+        <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
+          {slides.map((_, i) => (
+            <button key={i} onClick={() => { setPreviewSlide(i); clearInterval(intervalRef.current) }}
+              className={`h-1.5 rounded-full transition-all ${previewSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminBanner() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
@@ -91,8 +167,7 @@ export default function AdminBanner() {
   const [deleteId, setDeleteId] = useState(null)
   const fileInputRef = useRef(null)
 
-  useEffect(() => {
-    if (!esPremium) { setLoading(false); return }
+  const fetchItems = () => {
     fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
@@ -108,6 +183,11 @@ export default function AdminBanner() {
       })
       .catch(err => console.error('Error cargando:', err))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    if (!esPremium) { setLoading(false); return }
+    fetchItems()
   }, [])
 
   // Slide 1 = orden 1-5, Slide 2 = orden 6-10
@@ -179,17 +259,7 @@ export default function AdminBanner() {
         : await fetch(`${API}/api/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
 
       if (res.ok) {
-        const listRes = await fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
-        const listData = await listRes.json()
-        if (listData.listings) {
-          setItems(listData.listings.filter(l => l.banner_orden).map(l => ({
-            id: l.id, orden: l.banner_orden,
-            nombre: l.nombre, descripcion: l.descripcion, precio: l.precio, precioOriginal: l.precio_original,
-            subcategoria: l.subcategoria, badge: l.badge, tipo: l.tipo,
-            tallas: l.tallas, medidas: l.medidas, genero: l.genero,
-            imagenPreview: l.imagen ? `${API}${l.imagen}` : null, imagenUrl: l.imagen,
-          })))
-        }
+        fetchItems()
         setEditingId(null); setFormData(emptyForm); setShowModal(false)
       } else {
         const err = await res.json()
@@ -207,18 +277,24 @@ export default function AdminBanner() {
     setDeleteId(null)
   }
 
+  const buildBodyFromItem = (item) => ({
+    tipo: item.tipo || 'producto', seccion: 'destacados', nombre: item.nombre, descripcion: item.descripcion,
+    precio: item.precio || 0, precio_original: item.precioOriginal || null, subcategoria: item.subcategoria,
+    badge: item.badge, genero: item.genero || null, imagen: item.imagenUrl,
+    tallas: item.tallas, medidas: item.medidas,
+  })
+
   const handleSetPrincipal = (prod) => {
-    // Intercambiar: el actual principal toma el orden del clickeado, y el clickeado toma el orden del principal
     const principalOrden = slideOffset + 1
     const currentPrincipal = items.find(i => i.orden === principalOrden)
     if (!currentPrincipal || currentPrincipal.id === prod.id) return
 
-    const updates = items.map(i => {
+    const updated = items.map(i => {
       if (i.id === prod.id) return { ...i, orden: principalOrden }
       if (i.id === currentPrincipal.id) return { ...i, orden: prod.orden }
       return i
     })
-    setItems(updates)
+    setItems(updated)
 
     // Guardar en BD
     Promise.all([
@@ -226,13 +302,6 @@ export default function AdminBanner() {
       fetch(`${API}/api/listings/${currentPrincipal.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(currentPrincipal), banner_orden: prod.orden }) }),
     ]).catch(err => console.error('Error reordenando:', err))
   }
-
-  const buildBodyFromItem = (item) => ({
-    tipo: item.tipo || 'producto', seccion: 'destacados', nombre: item.nombre, descripcion: item.descripcion,
-    precio: item.precio || 0, precio_original: item.precioOriginal || null, subcategoria: item.subcategoria,
-    badge: item.badge, genero: item.genero || null, imagen: item.imagenUrl,
-    tallas: item.tallas, medidas: item.medidas,
-  })
 
   const openModal = () => {
     setEditingId(null)
@@ -297,22 +366,13 @@ export default function AdminBanner() {
         </div>
 
         <div className="p-5">
-          {/* Preview de estructura */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          {/* Vista previa real del banner */}
+          <div className="mb-4">
             <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">info</span>
-              Vista previa de la estructura del slide
+              <span className="material-symbols-outlined text-xs">visibility</span>
+              Vista previa real — así se verá en tu página premium
             </p>
-            <div className="grid grid-cols-4 grid-rows-2 gap-1 h-24">
-              <div className={`col-span-2 row-span-2 rounded flex items-center justify-center text-[9px] font-bold ${principalItem ? 'bg-primary/20 text-primary' : 'bg-gray-200 text-gray-400'}`}>
-                {principalItem ? principalItem.nombre : 'Principal'}
-              </div>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className={`rounded flex items-center justify-center text-[8px] ${secondaryItems[i] ? 'bg-accent/20 text-primary' : 'bg-gray-200 text-gray-400'}`}>
-                  {secondaryItems[i] ? secondaryItems[i].nombre?.split(' ')[0] : `Pos ${i + 2}`}
-                </div>
-              ))}
-            </div>
+            <BannerPreview items={items} />
           </div>
 
           {/* Grid de productos */}

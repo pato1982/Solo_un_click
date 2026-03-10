@@ -8,6 +8,8 @@ const plans = [
     highlight: false,
     basics: {
       images: '5',
+      carousel: null,
+      banner: null,
     },
     visibility: {
       mainPage: true,
@@ -37,6 +39,8 @@ const plans = [
     highlight: false,
     basics: {
       images: '25',
+      carousel: '8',
+      banner: null,
     },
     visibility: {
       mainPage: true,
@@ -51,8 +55,8 @@ const plans = [
       slogan: true,
     },
     ownPage: {
-      enabled: false,
-      carousel: false,
+      enabled: true,
+      carousel: '1 Carrusel',
       banner: false,
       stats: false,
     },
@@ -66,6 +70,8 @@ const plans = [
     highlight: true,
     basics: {
       images: '100',
+      carousel: '24',
+      banner: '10',
     },
     visibility: {
       mainPage: true,
@@ -171,10 +177,7 @@ export default function PlansModal({ onClose }) {
                         <span className="text-[10px] text-slate-400">/ mes</span>
                       </div>
                       <span className="text-[9px] text-slate-400">
-                        IVA: {plan.price === '$2.990' ? '$568' : '$948'}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-700">
-                        Total: {plan.price === '$2.990' ? '$3.558' : '$5.938'} / mes
+                        + IVA ({plan.price === '$2.990' ? '$568' : '$948'})
                       </span>
                     </div>
                   )}
@@ -188,8 +191,28 @@ export default function PlansModal({ onClose }) {
                   <h4 className="text-[10px] font-black text-primary uppercase tracking-wider mb-1 border-b border-primary/20 pb-0.5">Caracteristicas basicas</h4>
                   <div className="space-y-0.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-600">Imagenes permitidas</span>
-                      <span className="text-[11px] font-bold text-primary">{plan.basics.images}</span>
+                      <span className="text-[11px] text-slate-600">Publicaciones</span>
+                      <span className="text-[11px] font-bold text-primary">{plan.basics.images} imágenes</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-slate-600">Carrusel</span>
+                      {plan.basics.carousel
+                        ? <span className="text-[11px] font-bold text-primary">+ {plan.basics.carousel} imágenes</span>
+                        : <Cross />
+                      }
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-slate-600">Banner</span>
+                      {plan.basics.banner
+                        ? <span className="text-[11px] font-bold text-primary">+ {plan.basics.banner} imágenes</span>
+                        : <Cross />
+                      }
+                    </div>
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-0.5">
+                      <span className="text-[11px] font-bold text-slate-700">Total imágenes</span>
+                      <span className="text-[11px] font-black text-accent bg-primary/5 px-1.5 py-0.5 rounded">{
+                        Number(plan.basics.images) + Number(plan.basics.carousel || 0) + Number(plan.basics.banner || 0)
+                      } imágenes</span>
                     </div>
                   </div>
                 </div>

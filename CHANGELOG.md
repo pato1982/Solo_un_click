@@ -42,6 +42,120 @@
 
 ---
 
+## 10 de Marzo 2026 - Estadísticas, Analytics, Restricciones Plan Gratis y Mejoras UI
+
+### Nueva Sección: Estadísticas (`AdminEstadisticas.jsx`)
+- KPIs por sección (Destacados, Ofertas, Novedades, etc.) filtrados por permisos del usuario
+- Barras de uso del plan: Publicaciones, Carrusel, Banner, Total (con colores según nivel de uso)
+- Gráfico de barras SVG: visitas mensuales a la página premium (últimos 6 meses)
+- Gráfico de líneas SVG: clicks en productos (últimos 6 meses)
+- Layout grid 2x2, todo responsive
+- Ruta `/admin/estadisticas` agregada en `main.jsx`
+- Nuevo item "Estadísticas" en AdminSidebar
+
+### Sistema de Analytics (Backend + Frontend)
+- **Nueva tabla MySQL:** `analytics` (id, user_id, event_type, listing_id, created_at) con índices
+- **Nuevo endpoint:** `POST /api/analytics/track` — registra page_view y product_click (público)
+- **Nuevo endpoint:** `GET /api/analytics/stats` — estadísticas mensuales del usuario autenticado (últimos 6 meses)
+- **Nuevo archivo:** `backend/routes/analytics.js` registrado en `server.js`
+- **Tracking en StorePage:** page_view al cargar la página premium, product_click al clickear en banner/carrusel
+- **Tracking en ProductCard:** product_click al abrir modal de producto
+- Props `storeUserId` propagado a StoreBanner e ImageMarquee para asociar clicks al dueño
+
+### Restricción Plan Gratis en Sidebar
+- Plan Gratis (plan_id=1): no puede acceder a Carruseles ni Banner (popup informativo)
+- Plan Normal (plan_id=2): no puede acceder a Banner (popup "Contenido exclusivo Premium")
+- Sidebar con `minPlan` en items: Carruseles (minPlan: 2), Banner (minPlan: 3)
+- Items bloqueados muestran icono candado + texto gris
+
+### Mejoras en Planes (PlansModal y RegisterModal)
+- Planes muestran desglose de imágenes: Publicaciones + Carrusel + Banner = Total
+- Plan Normal: 25 publicaciones + 8 carrusel = 33 imágenes
+- Plan Premium: 100 publicaciones + 24 carrusel + 10 banner = 134 imágenes
+- IVA mostrado como "+ IVA ($monto)" sin sumar al precio
+- RegisterModal simplificado: solo muestra total de imágenes por plan
+- BD actualizada: Plan Normal max_listings de 20 a 25
+
+### Banner Admin - Vista Previa Real
+- Preview del banner en AdminBanner replica el diseño real del StoreBanner
+- Grid 4 columnas x 2 filas con item principal grande y secundarios
+- Auto-rotación entre slides con indicadores de puntos
+
+### Configuración Local
+- Vite proxy configurado para desarrollo local: /api/ y /uploads/ redirigen al VPS
+
+---
+
+## 9 de Marzo 2026 (Sesión 2) - Carruseles API, Banner Admin y Restricciones por Plan
+
+### Carruseles Conectados a API (StorePage)
+- Carruseles de la página premium (ImageMarquee) ahora cargan items desde la API
+- `MarqueeModal` mejorado con información completa: badge, tallas (chips seleccionables), medidas (alto/ancho/profundidad), género
+- Items del carrusel se muestran como productos completos al hacer clic
+- Máximo 8 items por carrusel
+
+### StorePage Conectada a Datos Reales
+- Página premium carga productos, carruseles, banners y datos del negocio desde la API
+- 3 llamadas API en paralelo: listings del usuario, items de carrusel, info del negocio
+- Categorías construidas dinámicamente desde productos de la API (agrupados por tipo → subcategoría)
+- Secciones construidas dinámicamente (agrupadas por campo `seccion`)
+- Fallback a datos estáticos demo cuando no hay `userId` o la API no responde
+
+### Endpoints Públicos Nuevos
+- `GET /api/listings?user_id=X` — filtrar publicaciones por usuario
+- `GET /api/listings?carousel=1` — obtener items de carrusel ordenados por posición y orden
+- `GET /api/business/:userId` — obtener datos del negocio de un usuario (sin autenticación)
+
+### ProductCard - Tiendas Dinámicas desde API
+- Función `getStoreFromProduct` crea objetos de tienda dinámicos desde datos de la API
+- Usa `nombre_negocio`, `negocio_whatsapp`, `negocio_telefono`, `negocio_direccion` del listing
+- Fallback a `getStoreForProduct` para datos estáticos
+
+### Restricciones de Carruseles por Plan y Productos
+- **Plan Normal (plan_id=2):** 1 carrusel, desbloqueado con 10+ productos
+- **Plan Premium (plan_id=3):** 3 carruseles, C2 con 30+ productos, C3 con 40+ productos
+- Tabs bloqueados muestran icono de candado y cantidad de productos requeridos
+- Popup informativo al intentar acceder a carrusel bloqueado (muestra productos actuales vs requeridos)
+- Contador de productos excluye items de carrusel y banner
+
+### Carruseles Cada 2 Filas (StorePage)
+- Carruseles se muestran cada 2 filas de tarjetas (antes cada 3)
+- Cada carrusel (1/2/3) aparece en su posición correspondiente separadamente
+- Carrusel 1 después de fila 2, Carrusel 2 después de fila 4, Carrusel 3 después de fila 6
+
+### Nueva Sección: Banner Admin (`AdminBanner.jsx`)
+- Gestión completa del StoreBanner de la página premium
+- 2 slides (pestañas), 5 items por slide
+- Item principal (grande) + 4 secundarios por slide
+- Modal idéntico al de productos: ImageCropper, nombre, descripción, precio, badge, subcategoría, tallas, medidas, género
+- Vista previa del slide con estructura de grilla (principal grande + 4 pequeños)
+- Item principal resaltado con borde ámbar y etiqueta "PRINCIPAL"
+- Botón "Principal" para intercambiar posición de cualquier item con el principal (swap de `banner_orden` via 2 PUT)
+- Items almacenados como listings con `banner_orden` (1-5 = slide 1, 6-10 = slide 2; posiciones 1 y 6 son principales)
+
+### Base de Datos - Columna banner_orden
+- Nueva columna `banner_orden TINYINT NULL DEFAULT NULL` en tabla `listings`
+- Valores 1-5 para slide 1, 6-10 para slide 2
+- Posiciones 1 y 6 son los items principales de cada slide
+
+### StoreBanner Conectado a API
+- Banner de la página premium carga items desde la API (campo `banner_orden`)
+- Items organizados automáticamente en 2 slides
+- Click en item del banner abre `MarqueeModal` con información completa del producto
+
+### Restricción Banner por Plan Premium
+- Sección Banner visible en sidebar para todos los planes
+- Plan Normal: click en "Banner" muestra popup "Contenido exclusivo Premium" (no navega)
+- Plan Premium: acceso completo a la gestión del banner
+- Sidebar usa propiedad `minPlan` en items del menú para determinar acceso
+- Items bloqueados renderizan `<button>` en vez de `<NavLink>` (misma apariencia visual)
+
+### Routing
+- Nueva ruta `/admin/banner` → `AdminBanner`
+- Import agregado en `main.jsx`
+
+---
+
 ## 9 de Marzo 2026 - Mejoras Admin, Datos Productos y Conexión Servidor
 
 ### Imagen Cuadrada con Cropper (AdminProductos)

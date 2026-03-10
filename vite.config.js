@@ -3,4 +3,16 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://45.236.130.25',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://45.236.130.25',
+        changeOrigin: true,
+      },
+    },
+  },
 })

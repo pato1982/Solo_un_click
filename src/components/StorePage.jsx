@@ -5,6 +5,14 @@ import ProductCard from './ProductCard'
 const API = import.meta.env.VITE_API || ''
 const DEFAULT_PHONE = '56912345678'
 
+function trackClick(userId, listingId) {
+  if (!userId) return
+  fetch(`${API}/api/analytics/track`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: listingId || null }),
+  }).catch(() => {})
+}
+
 export function StoreFooter({ store }) {
   const waPhone = (store.phone || '').replace(/[\s+]/g, '')
   return (
@@ -148,7 +156,7 @@ function MarqueeModal({ product, phone, onClose }) {
   )
 }
 
-function ImageMarquee({ products, phone, carouselItems }) {
+function ImageMarquee({ products, phone, carouselItems, storeUserId }) {
   // Use carousel items from API if available, otherwise fall back to store products
   const items = (carouselItems && carouselItems.length > 0)
     ? carouselItems
@@ -174,7 +182,7 @@ function ImageMarquee({ products, phone, carouselItems }) {
               key={`${product.id}-${i}`}
               className="shrink-0 h-40 rounded-lg bg-white shadow-sm overflow-hidden border border-slate-100 cursor-pointer hover:shadow-md hover:scale-105 transition-all"
               style={{ width: 'calc((100vw - 280px) / 6 - 12px)' }}
-              onClick={() => setSelectedProduct(product)}
+              onClick={() => { trackClick(storeUserId, product.id); setSelectedProduct(product) }}
             >
               <img
                 src={product.image}
@@ -282,7 +290,7 @@ function StoreCarousel({ title, items, onOpenStore }) {
   )
 }
 
-function StoreBanner({ store, products, bannerItems, phone }) {
+function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
   const [activeSlide, setActiveSlide] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const intervalRef = useRef(null)
@@ -319,7 +327,7 @@ function StoreBanner({ store, products, bannerItems, phone }) {
             style={{ opacity: activeSlide === i ? 1 : 0 }}
           >
             {slide[0] && (
-              <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedProduct(slide[0])}>
+              <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
                 <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="h-full w-1/2 object-contain shrink-0" />
                 <div className="flex flex-col justify-center min-w-0">
                   <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].name}</p>
@@ -331,7 +339,7 @@ function StoreBanner({ store, products, bannerItems, phone }) {
               </div>
             )}
             {[1, 2, 3, 4].map((idx) => slide[idx] && (
-              <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedProduct(slide[idx])}>
+              <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
                 <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="h-full w-2/5 object-contain shrink-0" />
                 <div className="flex flex-col justify-center min-w-0">
                   <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].name}</p>
@@ -409,6 +417,15 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   const [apiProducts, setApiProducts] = useState(null)
   const [storeInfo, setStoreInfo] = useState(null)
   const [loading, setLoading] = useState(!!store.userId)
+
+  // Registrar visita a la página
+  useEffect(() => {
+    if (!store.userId) return
+    fetch(`${API}/api/analytics/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: store.userId, event_type: 'page_view' }),
+    }).catch(() => {})
+  }, [store.userId])
 
   // Fetch data from API if store has userId
   useEffect(() => {
@@ -634,7 +651,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
         {/* Contenido principal */}
         <main className="flex-1 flex flex-col gap-8 pt-1 px-6 pb-6 overflow-hidden transition-all duration-300">
           {/* Banner publicitario */}
-          <StoreBanner store={store} products={storeProducts} bannerItems={bannerItems} phone={storePhone} />
+          <StoreBanner store={store} products={storeProducts} bannerItems={bannerItems} phone={storePhone} storeUserId={store.userId} />
           {filteredProducts.length > 0 ? (
             (() => {
               const rows = []
@@ -654,11 +671,11 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     onOpenStore={onOpenStore}
                   />
                   {/* Carrusel 1 después de 2 filas */}
-                  {idx === 1 && carousel1.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} />}
+                  {idx === 1 && carousel1.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
                   {/* Carrusel 2 después de 4 filas */}
-                  {idx === 3 && carousel2.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} />}
+                  {idx === 3 && carousel2.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
                   {/* Carrusel 3 después de 6 filas */}
-                  {idx === 5 && carousel3.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} />}
+                  {idx === 5 && carousel3.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
                 </div>
               ))
             })()

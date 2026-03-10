@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import { getStoreForProduct } from '../data/stores'
 
+const API = import.meta.env.VITE_API || ''
 const DEFAULT_PHONE = '56912345678'
+
+function trackProductClick(product) {
+  const userId = product.user_id
+  if (!userId) return
+  fetch(`${API}/api/analytics/track`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: product.id }),
+  }).catch(() => {})
+}
 
 function getWhatsAppUrl(product, phone) {
   const p = phone ? phone.replace(/[\s+]/g, '') : DEFAULT_PHONE
@@ -198,7 +208,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
           <div className="mt-auto flex items-end justify-between w-full">
             {hidePrice ? (
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => { trackProductClick(product); setShowModal(true) }}
                 className="w-full bg-primary hover:bg-primary-light text-white py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all"
               >
                 Solicitar
@@ -217,7 +227,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => { trackProductClick(product); setShowModal(true) }}
                     className="bg-primary/10 hover:bg-primary hover:text-white text-primary h-7 w-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                   >
                     <span className="material-symbols-outlined text-sm font-bold">visibility</span>

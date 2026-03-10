@@ -7,6 +7,7 @@ const listingsRoutes = require('./routes/listings')
 const uploadRoutes = require('./routes/upload')
 const businessRoutes = require('./routes/business')
 const carouselsRoutes = require('./routes/carousels')
+const analyticsRoutes = require('./routes/analytics')
 
 const app = express()
 const PORT = 3001
@@ -22,6 +23,7 @@ app.use('/api/listings', listingsRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/business', businessRoutes)
 app.use('/api/carousels', carouselsRoutes)
+app.use('/api/analytics', analyticsRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

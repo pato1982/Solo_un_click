@@ -4,9 +4,12 @@ import { NavLink, useLocation } from 'react-router-dom'
 const menuItems = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
-  { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles' },
+  { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles', minPlan: 2 },
   { label: 'Banner', icon: 'photo_library', path: '/admin/banner', minPlan: 3 },
+  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
 ]
+
+const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }
 
 export default function AdminSidebar({ open }) {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -41,11 +44,12 @@ export default function AdminSidebar({ open }) {
             return (
               <button
                 key={item.path}
-                onClick={() => setLockedPopup(item.label)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100 hover:text-primary`}
+                onClick={() => setLockedPopup({ label: item.label, minPlan: item.minPlan })}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-100 hover:text-gray-500 w-full`}
               >
                 <span className="material-symbols-outlined text-xl">{item.icon}</span>
                 {item.label}
+                <span className="material-symbols-outlined text-sm ml-auto">lock</span>
               </button>
             )
           }
@@ -91,9 +95,9 @@ export default function AdminSidebar({ open }) {
               <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center">
                 <span className="material-symbols-outlined text-3xl text-amber-500">workspace_premium</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-800">Contenido exclusivo Premium</h3>
+              <h3 className="text-sm font-bold text-gray-800">Contenido exclusivo {PLAN_NAMES[lockedPopup.minPlan] || 'Premium'}</h3>
               <p className="text-xs text-gray-500 text-center leading-relaxed">
-                La sección <strong className="text-primary">{lockedPopup}</strong> está disponible exclusivamente para usuarios con el <strong>Plan Premium</strong>. Actualiza tu plan para acceder a esta funcionalidad.
+                La sección <strong className="text-primary">{lockedPopup.label}</strong> está disponible a partir del <strong>Plan {PLAN_NAMES[lockedPopup.minPlan] || 'Premium'}</strong>. Actualiza tu plan para acceder a esta funcionalidad.
               </p>
               <button onClick={() => setLockedPopup(null)} className="w-full py-2.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-colors mt-1">
                 Entendido

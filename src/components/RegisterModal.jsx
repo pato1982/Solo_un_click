@@ -9,7 +9,7 @@ const plansList = [
     id: 1,
     name: 'Plan Gratuito',
     neto: 0,
-    max: '5 publicaciones',
+    max: '5 imágenes',
     features: ['Panel de control', 'Visible en página principal', 'Editar información'],
     noFeatures: ['Slogan', 'Producto destacado', 'Página propia', 'Estadísticas'],
     highlight: false,
@@ -18,17 +18,17 @@ const plansList = [
     id: 2,
     name: 'Plan Normal',
     neto: 2990,
-    max: '20 publicaciones',
-    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Slogan', 'Producto destacado', 'Prioridad alta'],
-    noFeatures: ['Página propia', 'Estadísticas'],
+    max: '33 imágenes',
+    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Slogan', 'Producto destacado', 'Prioridad alta', '1 Carrusel (8 items)', 'Página propia'],
+    noFeatures: ['Banner', 'Estadísticas'],
     highlight: false,
   },
   {
     id: 3,
     name: 'Plan Premium',
     neto: 4990,
-    max: '100 publicaciones',
-    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Slogan', 'Producto destacado', 'Prioridad máxima', 'Página propia', 'Carruseles', 'Banner', 'Estadísticas'],
+    max: '134 imágenes',
+    features: ['Panel de control', 'Visible en página principal', 'Editar información', 'Slogan', 'Producto destacado', 'Prioridad máxima', 'Página propia', '3 Carruseles (24 items)', 'Banner (10 items)', 'Estadísticas'],
     noFeatures: [],
     highlight: true,
   },
@@ -407,11 +407,8 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                           <span className="text-xl font-black text-primary">{formatCLP(plan.neto)}</span>
                           <span className="text-[10px] text-slate-400">/ mes</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 leading-tight">
-                          IVA (19%): {formatCLP(Math.round(plan.neto * IVA))}
-                        </div>
-                        <div className="text-xs font-bold text-slate-700">
-                          Total: {formatCLP(Math.round(plan.neto * (1 + IVA)))} / mes
+                        <div className="text-[9px] text-slate-400 leading-tight">
+                          + IVA ({formatCLP(Math.round(plan.neto * IVA))})
                         </div>
                       </div>
                     )}
