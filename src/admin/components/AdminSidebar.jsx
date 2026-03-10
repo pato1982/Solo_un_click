@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
-const menuItems = [
+const menuGeneral = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
   { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles', minPlan: 2 },
   { label: 'Banner', icon: 'photo_library', path: '/admin/banner', minPlan: 3 },
+  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
+]
+
+const menuTurismo = [
+  { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
+  { label: 'Turismo', icon: 'landscape', path: '/admin/turismo' },
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
 ]
 
@@ -14,6 +20,8 @@ const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }
 export default function AdminSidebar({ open }) {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const planId = user.plan_id || 1
+  const tipoCuenta = user.tipo_cuenta || 'general'
+  const menuItems = tipoCuenta === 'turismo' ? menuTurismo : menuGeneral
   const [lockedPopup, setLockedPopup] = useState(null)
   const location = useLocation()
 
