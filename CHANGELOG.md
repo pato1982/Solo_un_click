@@ -42,6 +42,42 @@
 
 ---
 
+## 10 de Marzo 2026 (Sesión 2) - Panel Admin Turismo
+
+### Nueva Sección: Admin Turismo (`AdminTurismo.jsx`)
+- Panel CRUD completo para gestionar negocios de turismo y aventura
+- Misma estética que AdminNegocio: formulario en 2 columnas (datos + horarios)
+- Campos: Nombre, Ubicación, Descripción, WhatsApp, Teléfono, Correo, Dirección, Facebook, Instagram
+- Horarios de atención idénticos a AdminNegocio (7 días, toggle activo/inactivo, apertura y cierre)
+- Tabla/lista de negocios con nombre, ubicación, teléfono, correo y acciones (editar/eliminar)
+- Estado vacío cuando no hay negocios registrados
+- Crear, editar y eliminar negocios de turismo
+
+### Sidebar Dinámico por Tipo de Cuenta
+- Menú del sidebar cambia según `tipo_cuenta` del usuario:
+  - **General:** Mi Negocio, Productos, Carruseles, Banner, Estadísticas
+  - **Turismo:** Mi Negocio, Turismo, Estadísticas
+- Redirección automática: usuarios turismo van a `/admin/turismo` al entrar a `/admin`
+
+### Backend API Turismo (`backend/routes/turismo.js`)
+- `GET /api/turismo` — listar negocios del usuario autenticado
+- `GET /api/turismo/public` — listar todos los negocios activos (público)
+- `POST /api/turismo` — crear nuevo negocio
+- `PUT /api/turismo/:id` — actualizar negocio existente
+- `DELETE /api/turismo/:id` — eliminar negocio
+- Validación: nombre obligatorio, horarios guardados como JSON
+- Ruta registrada en `server.js`
+
+### Base de Datos
+- **Nueva tabla `turismo_negocios`:** id, user_id, nombre, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios (JSON), activo, created_at, updated_at
+- Índices en user_id y activo
+
+### Routing
+- Nueva ruta `/admin/turismo` → `AdminTurismo`
+- `AdminIndex` redirige a `/admin/turismo` si `tipo_cuenta === 'turismo'`
+
+---
+
 ## 10 de Marzo 2026 - Estadísticas, Analytics, Restricciones Plan Gratis y Mejoras UI
 
 ### Nueva Sección: Estadísticas (`AdminEstadisticas.jsx`)

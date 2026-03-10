@@ -12,6 +12,7 @@ const menuGeneral = [
 const menuTurismo = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Turismo', icon: 'landscape', path: '/admin/turismo' },
+  { label: 'Tour', icon: 'tour', path: '/admin/tour' },
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
 ]
 
