@@ -82,6 +82,7 @@ export default function App() {
   const [activeStore, setActiveStore] = useState(null)
   const [sections, setSections] = useState(staticSections)
   const [turismoCategorias, setTurismoCategorias] = useState([])
+  const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
@@ -112,7 +113,9 @@ export default function App() {
               p.categorias.forEach(c => cats.add(c))
             }
           })
-          setTurismoCategorias([...cats].sort())
+          const sorted = [...cats].sort()
+          setTurismoCategorias(sorted)
+          setTurismoCategoriasAll(sorted)
         }
       })
       .catch(err => console.error('Error cargando categorías turismo:', err))
@@ -379,7 +382,11 @@ export default function App() {
               onToggleMap={() => setStoreMapMode(false)}
             />
           ) : currentPage === 'turismo' ? (
-            <TourismPage activeFilter={activeFilter} onClearFilter={() => setActiveFilter(null)} />
+            <TourismPage
+              activeFilter={activeFilter}
+              onClearFilter={() => setActiveFilter(null)}
+              onEmpresaCategorias={(cats) => setTurismoCategorias(cats || turismoCategoriasAll)}
+            />
           ) : activeFilter ? (
             /* Filtro activo: mostrar secciones (filas) que tengan productos de esa subcategoría o categoría */
             (() => {

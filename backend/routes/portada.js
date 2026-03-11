@@ -29,11 +29,18 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// GET /api/portada/public — obtener todas las portadas activas (público)
+// GET /api/portada/public — obtener todas las portadas activas con datos del negocio y plan (público)
 router.get('/public', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_portada WHERE activo = 1 ORDER BY nombre ASC'
+      `SELECT p.id, p.user_id, p.descripcion, p.imagenes, p.categorias,
+              b.nombre_negocio, b.direccion, b.whatsapp, b.telefono, b.correo, b.facebook, b.instagram, b.horarios,
+              u.plan_id
+       FROM turismo_portada p
+       LEFT JOIN businesses b ON b.user_id = p.user_id
+       LEFT JOIN users u ON u.id = p.user_id
+       WHERE p.activo = 1
+       ORDER BY b.nombre_negocio ASC`
     )
 
     for (const row of rows) {
@@ -42,6 +49,9 @@ router.get('/public', async (req, res) => {
       }
       if (row.categorias && typeof row.categorias === 'string') {
         try { row.categorias = JSON.parse(row.categorias) } catch { row.categorias = [] }
+      }
+      if (row.horarios && typeof row.horarios === 'string') {
+        try { row.horarios = JSON.parse(row.horarios) } catch { row.horarios = [] }
       }
     }
 

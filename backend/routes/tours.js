@@ -43,6 +43,26 @@ router.get('/public', async (req, res) => {
   }
 })
 
+// GET /api/tours/public/:userId — listar tours activos de un usuario específico (público)
+router.get('/public/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM turismo_tours WHERE user_id = ? AND activo = 1 ORDER BY nombre ASC',
+      [req.params.userId]
+    )
+
+    for (const row of rows) {
+      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
+      catch { row.imagenes = [] }
+    }
+
+    res.json({ tours: rows })
+  } catch (err) {
+    console.error('Error al obtener tours del usuario:', err)
+    res.status(500).json({ error: 'Error al obtener tours' })
+  }
+})
+
 // POST /api/tours — crear tour (solo Premium)
 router.post('/', authMiddleware, async (req, res) => {
   try {
