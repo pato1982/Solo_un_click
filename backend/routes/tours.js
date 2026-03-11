@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logActivity = require('../logActivity')
 
 const router = express.Router()
 
@@ -91,6 +92,7 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId, nombre.trim(), ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
     )
 
+    await logActivity(req.userId, 'crear', 'tour', result.insertId, { nombre })
     res.status(201).json({ message: 'Tour creado', id: result.insertId })
   } catch (err) {
     console.error('Error al crear tour:', err)
@@ -124,6 +126,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Tour no encontrado' })
     }
 
+    await logActivity(req.userId, 'editar', 'tour', parseInt(req.params.id), { nombre })
     res.json({ message: 'Tour actualizado' })
   } catch (err) {
     console.error('Error al actualizar tour:', err)
@@ -143,6 +146,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Tour no encontrado' })
     }
 
+    await logActivity(req.userId, 'eliminar', 'tour', parseInt(req.params.id))
     res.json({ message: 'Tour eliminado' })
   } catch (err) {
     console.error('Error al eliminar tour:', err)

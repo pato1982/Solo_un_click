@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logActivity = require('../logActivity')
 
 const router = express.Router()
 
@@ -150,6 +151,7 @@ router.post('/', authMiddleware, async (req, res) => {
       )
     }
 
+    await logActivity(req.userId, 'crear', 'listing', listingId, { tipo, nombre, seccion })
     res.status(201).json({ message: 'Publicación creada', id: listingId })
   } catch (err) {
     console.error('Error al crear listing:', err)
@@ -199,6 +201,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       )
     }
 
+    await logActivity(req.userId, 'editar', 'listing', parseInt(id), { tipo, nombre, seccion })
     res.json({ message: 'Publicación actualizada' })
   } catch (err) {
     console.error('Error al editar listing:', err)
@@ -219,6 +222,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     // Eliminar (CASCADE borra imágenes, tallas y medidas)
     await pool.query('DELETE FROM listings WHERE id = ?', [id])
 
+    await logActivity(req.userId, 'eliminar', 'listing', parseInt(id))
     res.json({ message: 'Publicación eliminada' })
   } catch (err) {
     console.error('Error al eliminar listing:', err)

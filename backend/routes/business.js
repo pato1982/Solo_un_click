@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logActivity = require('../logActivity')
 
 const router = express.Router()
 
@@ -80,6 +81,7 @@ router.post('/', authMiddleware, async (req, res) => {
       )
     }
 
+    await logActivity(req.userId, existing.length > 0 ? 'editar' : 'crear', 'business', null, { nombre_negocio })
     res.json({ message: 'Datos del negocio guardados' })
   } catch (err) {
     console.error('Error al guardar negocio:', err)

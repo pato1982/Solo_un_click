@@ -205,6 +205,15 @@ function CompanyDetail({ company, onBack }) {
   const [selectedTour, setSelectedTour] = useState(null)
   const [pagina, setPagina] = useState(null)
 
+  // Registrar visita a la página de turismo
+  useEffect(() => {
+    if (!company.userId) return
+    fetch(`${API}/api/analytics/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: company.userId, event_type: 'page_view', pagina: 'turismo' }),
+    }).catch(() => {})
+  }, [company.userId])
+
   useEffect(() => {
     // Cargar tours y datos de página en paralelo, filtrados por userId
     Promise.all([

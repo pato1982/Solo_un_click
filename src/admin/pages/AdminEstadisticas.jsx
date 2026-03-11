@@ -107,6 +107,7 @@ export default function AdminEstadisticas() {
   const [portada, setPortada] = useState(null)
   const [visitas, setVisitas] = useState(EMPTY_CHART)
   const [clicks, setClicks] = useState(EMPTY_CHART)
+  const [resumen, setResumen] = useState({ visitas_mes: 0, visitantes_unicos: 0, por_pagina: {} })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -123,6 +124,7 @@ export default function AdminEstadisticas() {
           if (portadaData.portada) setPortada(portadaData.portada)
           if (statsData.visitas?.length) setVisitas(statsData.visitas)
           if (statsData.clicks?.length) setClicks(statsData.clicks)
+          if (statsData.resumen) setResumen(statsData.resumen)
         })
         .catch(err => console.error('Error:', err))
         .finally(() => setLoading(false))
@@ -135,6 +137,7 @@ export default function AdminEstadisticas() {
           if (listData.listings) setListings(listData.listings)
           if (statsData.visitas?.length) setVisitas(statsData.visitas)
           if (statsData.clicks?.length) setClicks(statsData.clicks)
+          if (statsData.resumen) setResumen(statsData.resumen)
         })
         .catch(err => console.error('Error:', err))
         .finally(() => setLoading(false))
@@ -385,6 +388,56 @@ export default function AdminEstadisticas() {
           <p className="text-[9px] text-gray-400 mb-2">Últimos 6 meses — página principal y tu página</p>
           <div className="bg-gray-50 rounded-lg border border-gray-100 p-1 overflow-hidden">
             <LineChart data={clicks} />
+          </div>
+        </div>
+
+        {/* Resumen de visitas del mes */}
+        <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg text-primary">groups</span>
+            Resumen de visitas — Mes actual
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-indigo-50 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-xl text-indigo-600">visibility</span>
+              </div>
+              <div>
+                <span className="text-2xl font-black text-indigo-600 leading-none">{resumen.visitas_mes}</span>
+                <p className="text-[10px] font-semibold text-gray-500 leading-tight">Visitas totales</p>
+              </div>
+            </div>
+            <div className="bg-emerald-50 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-xl text-emerald-600">person</span>
+              </div>
+              <div>
+                <span className="text-2xl font-black text-emerald-600 leading-none">{resumen.visitantes_unicos}</span>
+                <p className="text-[10px] font-semibold text-gray-500 leading-tight">Visitantes únicos</p>
+              </div>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-xl text-amber-600">web</span>
+              </div>
+              <div>
+                {Object.keys(resumen.por_pagina).length > 0 ? (
+                  <div className="flex flex-col gap-0.5">
+                    {Object.entries(resumen.por_pagina).map(([pag, total]) => (
+                      <div key={pag} className="flex items-center gap-2">
+                        <span className="text-sm font-black text-amber-600">{total}</span>
+                        <span className="text-[10px] text-gray-500 capitalize">{pag}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-2xl font-black text-amber-600 leading-none">0</span>
+                    <p className="text-[10px] font-semibold text-gray-500 leading-tight">Por página</p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logActivity = require('../logActivity')
 
 const router = express.Router()
 
@@ -78,6 +79,7 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId, (nombre || '').trim() || null, descripcion || null, imagenesJson, categoriasJson]
     )
 
+    await logActivity(req.userId, 'crear', 'portada', result.insertId, { nombre })
     res.status(201).json({ message: 'Portada creada', id: result.insertId })
   } catch (err) {
     console.error('Error al crear portada:', err)
@@ -103,6 +105,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Portada no encontrada' })
     }
 
+    await logActivity(req.userId, 'editar', 'portada', parseInt(req.params.id), { nombre })
     res.json({ message: 'Portada actualizada' })
   } catch (err) {
     console.error('Error al actualizar portada:', err)
@@ -122,6 +125,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Portada no encontrada' })
     }
 
+    await logActivity(req.userId, 'eliminar', 'portada', parseInt(req.params.id))
     res.json({ message: 'Portada eliminada' })
   } catch (err) {
     console.error('Error al eliminar portada:', err)

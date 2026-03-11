@@ -423,7 +423,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     if (!store.userId) return
     fetch(`${API}/api/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: store.userId, event_type: 'page_view' }),
+      body: JSON.stringify({ user_id: store.userId, event_type: 'page_view', pagina: 'tienda' }),
     }).catch(() => {})
   }, [store.userId])
 

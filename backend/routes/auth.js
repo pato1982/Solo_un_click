@@ -45,6 +45,18 @@ router.post('/register', async (req, res) => {
     // Generar token
     const token = jwt.sign({ id: result.insertId, email }, JWT_SECRET, { expiresIn: '7d' })
 
+    // Registrar primera sesión
+    try {
+      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
+      const userAgent = req.headers['user-agent'] || ''
+      await pool.query(
+        'INSERT INTO user_sessions (user_id, ip_address, user_agent) VALUES (?, ?, ?)',
+        [result.insertId, ip, userAgent]
+      )
+    } catch (sessErr) {
+      console.error('Error registrando sesión:', sessErr)
+    }
+
     res.status(201).json({
       message: 'Usuario registrado',
       token,
@@ -82,6 +94,18 @@ router.post('/login', async (req, res) => {
 
     // Generar token
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' })
+
+    // Registrar sesión en user_sessions
+    try {
+      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
+      const userAgent = req.headers['user-agent'] || ''
+      await pool.query(
+        'INSERT INTO user_sessions (user_id, ip_address, user_agent) VALUES (?, ?, ?)',
+        [user.id, ip, userAgent]
+      )
+    } catch (sessErr) {
+      console.error('Error registrando sesión:', sessErr)
+    }
 
     res.json({
       message: 'Login exitoso',
