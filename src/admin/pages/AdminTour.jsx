@@ -31,7 +31,8 @@ export default function AdminTour() {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => {
-        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return null }
+        if (r.status === 401 && token !== 'dev-token') { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return null }
+        if (!r.ok) return { tours: [] }
         return r.json()
       })
       .then(data => { if (data) setTours(data.tours || []) })

@@ -25,7 +25,8 @@ export default function AdminPortada() {
     const headers = { Authorization: `Bearer ${token}` }
 
     const safeFetch = (url) => fetch(url, { headers }).then(r => {
-      if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
+      if (r.status === 401 && token !== 'dev-token') { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
+      if (!r.ok) return {}
       return r.json()
     })
 
