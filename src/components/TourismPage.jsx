@@ -19,7 +19,7 @@ export const companies = [
   {
     name: 'Volcán Villarrica Expediciones',
     images: [IMG_KAYAK, IMG_CANOPY, IMG_VOLCANO],
-    subcategories: ['Volcanes', 'Trekking', 'Aventura'],
+    subcategories: ['Volcanes', 'Trekking', 'Aventura', 'Nieve', 'Naturaleza', 'Fotografía', 'Deportivo', 'Familiar', 'Nocturno'],
     description: 'Somos líderes en ascensos al volcán Villarrica con más de 15 años de experiencia. Nuestros guías certificados te acompañan en una aventura única hacia la cumbre del volcán más activo de Sudamérica. Incluimos equipamiento completo, transporte y seguro.',
     rating: 4.9,
     location: 'Pucón, Araucanía',
@@ -46,7 +46,7 @@ export const companies = [
   {
     name: 'Trancura Rafting Aventura',
     images: [IMG_VOLCANO, IMG_KAYAK, IMG_CANOPY],
-    subcategories: ['Rafting', 'Aventura', 'Nocturno'],
+    subcategories: ['Rafting', 'Aventura', 'Nocturno', 'Acuático', 'Deportivo', 'Familiar', 'Naturaleza', 'Fotografía', 'Adrenalina'],
     description: 'Vive la adrenalina del rafting en el río Trancura con recorridos de clase III y IV. Ideal para familias y grupos de amigos. Contamos con equipos de última generación, fotógrafo en cada salida y guías bilingües con certificación internacional.',
     rating: 4.8,
     location: 'Río Trancura, Pucón',
@@ -73,7 +73,7 @@ export const companies = [
   {
     name: 'Termas del Bosque Nativo',
     images: [IMG_CANOPY, IMG_VOLCANO, IMG_KAYAK],
-    subcategories: ['Termas', 'Spa', 'Trekking', 'Gastronomía'],
+    subcategories: ['Termas', 'Spa', 'Trekking', 'Gastronomía', 'Relax', 'Naturaleza', 'Familiar', 'Nocturno', 'Cultural'],
     description: 'Relájate en nuestras piscinas termales rodeadas de bosque nativo milenario. Ofrecemos circuito de aguas calientes y frías, masajes terapéuticos, aromaterapia y gastronomía local. Un refugio de paz en el corazón de la Araucanía.',
     rating: 5.0,
     location: 'Coñaripe, Araucanía',
@@ -100,7 +100,7 @@ export const companies = [
   {
     name: 'Canopy Bosque Aventura',
     images: [IMG_KAYAK, IMG_VOLCANO, IMG_CANOPY],
-    subcategories: ['Aventura', 'Naturaleza', 'Nocturno'],
+    subcategories: ['Aventura', 'Naturaleza', 'Nocturno', 'Deportivo', 'Familiar', 'Adrenalina', 'Trekking', 'Fotografía', 'Cultural'],
     description: 'Recorre 11 plataformas de canopy sobre el bosque nativo con vistas espectaculares al volcán Villarrica. Circuitos para todos los niveles, desde principiantes hasta expertos. Actividad segura apta desde los 6 años.',
     rating: 4.7,
     location: 'Huilo-Huilo, Araucanía',
@@ -127,7 +127,7 @@ export const companies = [
   {
     name: 'Kayak Lago Villarrica',
     images: [IMG_VOLCANO, IMG_CANOPY, IMG_KAYAK],
-    subcategories: ['Lagos', 'Aventura', 'Naturaleza'],
+    subcategories: ['Lagos', 'Aventura', 'Naturaleza', 'Acuático', 'Familiar', 'Deportivo', 'Relax', 'Fotografía', 'Nocturno'],
     description: 'Explora las aguas cristalinas del lago Villarrica en kayak. Ofrecemos tours guiados al amanecer y atardecer, clases para principiantes y arriendo de equipos. Descubre playas escondidas y rincones únicos del lago.',
     rating: 4.6,
     location: 'Lago Villarrica, Pucón',
@@ -154,7 +154,7 @@ export const companies = [
   {
     name: 'Cabalgatas Araucanía',
     images: [IMG_CANOPY, IMG_KAYAK, IMG_VOLCANO],
-    subcategories: ['Cabalgatas', 'Naturaleza', 'Gastronomía'],
+    subcategories: ['Cabalgatas', 'Naturaleza', 'Gastronomía', 'Cultural', 'Familiar', 'Trekking', 'Fotografía', 'Relax', 'Aventura'],
     description: 'Recorre senderos ancestrales a caballo por los bosques y montañas de la Araucanía. Rutas de medio día y día completo con almuerzo campestre incluido. Caballos mansos y guías con profundo conocimiento del territorio mapuche.',
     rating: 4.8,
     location: 'Villarrica, Araucanía',
@@ -181,7 +181,7 @@ export const companies = [
   {
     name: 'Spa Termal Pucón',
     images: [IMG_KAYAK, IMG_CANOPY, IMG_VOLCANO],
-    subcategories: ['Spa', 'Termas', 'Gastronomía', 'Nocturno'],
+    subcategories: ['Spa', 'Termas', 'Gastronomía', 'Nocturno', 'Relax', 'Familiar', 'Cultural', 'Naturaleza', 'Fotografía'],
     description: 'Centro termal premium con piscinas naturales de agua volcánica. Circuitos de hidroterapia, sauna, barro volcánico y masajes relajantes. Disfruta de nuestro restaurant con vista panorámica al volcán y al lago.',
     rating: 4.9,
     location: 'Pucón, Araucanía',
@@ -474,8 +474,18 @@ export default function TourismPage({ activeFilter, onClearFilter }) {
               </div>
             </div>
 
-            <div className="shrink-0">
+            <div className="shrink-0 flex flex-col items-center">
               <CardFan images={company.images} />
+              {company.subcategories && company.subcategories.length > 0 && (
+                <div className="flex flex-wrap justify-center items-center gap-x-1 gap-y-0.5 -mt-2 max-w-[250px]">
+                  {company.subcategories.map((cat, i) => (
+                    <span key={cat} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-[6px] text-slate-300">●</span>}
+                      <span className="text-[9px] text-slate-400 font-medium">{cat}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

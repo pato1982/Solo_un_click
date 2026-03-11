@@ -13,8 +13,13 @@ router.get('/', authMiddleware, async (req, res) => {
     )
 
     const portada = rows[0] || null
-    if (portada && portada.imagenes && typeof portada.imagenes === 'string') {
-      portada.imagenes = JSON.parse(portada.imagenes)
+    if (portada) {
+      if (portada.imagenes && typeof portada.imagenes === 'string') {
+        try { portada.imagenes = JSON.parse(portada.imagenes) } catch { portada.imagenes = [] }
+      }
+      if (portada.categorias && typeof portada.categorias === 'string') {
+        try { portada.categorias = JSON.parse(portada.categorias) } catch { portada.categorias = [] }
+      }
     }
 
     res.json({ portada })
@@ -33,7 +38,10 @@ router.get('/public', async (req, res) => {
 
     for (const row of rows) {
       if (row.imagenes && typeof row.imagenes === 'string') {
-        row.imagenes = JSON.parse(row.imagenes)
+        try { row.imagenes = JSON.parse(row.imagenes) } catch { row.imagenes = [] }
+      }
+      if (row.categorias && typeof row.categorias === 'string') {
+        try { row.categorias = JSON.parse(row.categorias) } catch { row.categorias = [] }
       }
     }
 
@@ -47,16 +55,17 @@ router.get('/public', async (req, res) => {
 // POST /api/portada — crear portada
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { nombre, descripcion, imagenes } = req.body
+    const { nombre, descripcion, imagenes, categorias } = req.body
 
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
+    const categoriasJson = categorias ? JSON.stringify(categorias) : '[]'
 
     // INSERT con ON DUPLICATE KEY para evitar race condition (user_id es UNIQUE)
     const [result] = await pool.query(
-      `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes)
-       VALUES (?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes)`,
-      [req.userId, (nombre || '').trim() || null, descripcion || null, imagenesJson]
+      `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes, categorias)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes), categorias=VALUES(categorias)`,
+      [req.userId, (nombre || '').trim() || null, descripcion || null, imagenesJson, categoriasJson]
     )
 
     res.status(201).json({ message: 'Portada creada', id: result.insertId })
@@ -69,14 +78,15 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /api/portada/:id — actualizar portada
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { nombre, descripcion, imagenes } = req.body
+    const { nombre, descripcion, imagenes, categorias } = req.body
 
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
+    const categoriasJson = categorias ? JSON.stringify(categorias) : '[]'
 
     const [result] = await pool.query(
-      `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?
+      `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?, categorias=?
        WHERE id=? AND user_id=?`,
-      [(nombre || '').trim() || null, descripcion || null, imagenesJson, req.params.id, req.userId]
+      [(nombre || '').trim() || null, descripcion || null, imagenesJson, categoriasJson, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
+// Categorías de ejemplo (luego vendrán de una tabla)
+const CATEGORIAS_EJEMPLO = [
+  'Aventura', 'Naturaleza', 'Cultural', 'Gastronómico',
+  'Nocturno', 'Familiar', 'Deportivo', 'Relax',
+  'Fotografía', 'Trekking', 'Acuático', 'Nieve',
+]
+
 const emptyForm = {
   descripcion: '',
   imagenes: [null, null, null],
@@ -16,6 +23,9 @@ export default function AdminPortada() {
   const [activeTab, setActiveTab] = useState(0)
   const [portadaId, setPortadaId] = useState(null)
   const [nombreNegocio, setNombreNegocio] = useState('')
+  const [categorias, setCategorias] = useState([])
+  const [savingCats, setSavingCats] = useState(false)
+  const [savedCats, setSavedCats] = useState(false)
   const fileRefs = [useRef(null), useRef(null), useRef(null)]
 
   const token = localStorage.getItem('token')
@@ -42,6 +52,7 @@ export default function AdminPortada() {
           const p = portadaData.portada
           const imgs = p.imagenes || []
           setPortadaId(p.id)
+          setCategorias(p.categorias || [])
           setForm({
             descripcion: p.descripcion || '',
             imagenes: [imgs[0] || null, imgs[1] || null, imgs[2] || null],
@@ -77,6 +88,52 @@ export default function AdminPortada() {
       setSaved(false)
     }
     reader.readAsDataURL(file)
+  }
+
+  const toggleCategoria = (cat) => {
+    setCategorias(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    )
+    setSavedCats(false)
+  }
+
+  const handleSaveCategorias = async () => {
+    setSavingCats(true)
+    try {
+      const body = {
+        nombre: nombreNegocio || 'Mi emprendimiento',
+        descripcion: form.descripcion,
+        imagenes: [],
+        categorias,
+      }
+
+      // Si ya hay portada, usar PUT; si no, POST
+      if (portadaId) {
+        // Solo actualizar categorias via PUT
+        const currentImgs = form.imagenes.filter(img => typeof img === 'string')
+        body.imagenes = currentImgs
+        await fetch(`${API}/api/portada/${portadaId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body)
+        })
+      } else {
+        const res = await fetch(`${API}/api/portada`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body)
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.id) setPortadaId(data.id)
+        }
+      }
+      setSavedCats(true)
+      setTimeout(() => setSavedCats(false), 3000)
+    } catch (err) {
+      console.error('Error guardando categorías:', err)
+    }
+    setSavingCats(false)
   }
 
   const removeImage = (index) => {
@@ -120,6 +177,7 @@ export default function AdminPortada() {
         nombre: nombreNegocio || 'Mi emprendimiento',
         descripcion: form.descripcion,
         imagenes: finalUrls.filter(Boolean),
+        categorias,
       }
 
       const url = portadaId ? `${API}/api/portada/${portadaId}` : `${API}/api/portada`
@@ -239,6 +297,49 @@ export default function AdminPortada() {
 
           {/* Columna derecha — Info */}
           <div className="flex-1 flex flex-col gap-4">
+            {/* Categorías */}
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 mb-2">Categorías</label>
+              <div className="grid grid-cols-4 gap-2">
+                {CATEGORIAS_EJEMPLO.map((cat) => {
+                  const activa = categorias.includes(cat)
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => toggleCategoria(cat)}
+                      className={`py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center gap-1 ${
+                        activa
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      }`}
+                    >
+                      {activa && <span className="material-symbols-outlined text-xs">check</span>}
+                      {cat}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={handleSaveCategorias}
+                  disabled={savingCats || savedCats}
+                  className={`font-bold px-5 py-2 rounded-lg transition-all text-xs flex items-center gap-1.5 disabled:opacity-90 ${
+                    savedCats
+                      ? 'bg-green-500 text-white'
+                      : 'bg-primary text-white hover:bg-primary/90'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-sm">{savedCats ? 'check_circle' : 'save'}</span>
+                  {savingCats ? 'Guardando...' : savedCats ? 'Guardado' : 'Guardar categorías'}
+                </button>
+                {categorias.length > 0 && !savedCats && (
+                  <span className="text-[10px] text-gray-400">{categorias.length} seleccionada{categorias.length !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+            </div>
+
             {/* Descripción */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Descripción</label>
@@ -280,6 +381,13 @@ export default function AdminPortada() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 max-w-2xl">
             <div className="flex-1">
               <h3 className="text-lg font-black text-primary mb-1">{nombreNegocio || 'Nombre de Mi Negocio'}</h3>
+              {categorias.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {categorias.map(cat => (
+                    <span key={cat} className="bg-primary/10 text-primary text-[9px] font-semibold px-2 py-0.5 rounded-full">{cat}</span>
+                  ))}
+                </div>
+              )}
               <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-3">
                 {form.descripcion || 'Descripción de tu negocio...'}
               </p>
