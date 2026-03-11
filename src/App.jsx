@@ -127,8 +127,8 @@ export default function App() {
       })
       .catch(err => console.error('Error cargando categorías turismo:', err))
 
-    // Cargar categorías de producto, servicio y arriendo desde la BD
-    fetch(`${API}/api/categorias?tipo=producto,servicio,arriendo`)
+    // Cargar categorías del sidebar: solo las que tienen productos publicados
+    fetch(`${API}/api/categorias/sidebar`)
       .then(r => r.json())
       .then(data => {
         if (data.categorias) setSidebarCategorias(data.categorias)

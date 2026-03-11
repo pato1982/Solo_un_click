@@ -53,4 +53,46 @@ router.get('/', async (req, res) => {
   }
 })
 
+// GET /api/categorias/sidebar — solo categorías que tienen listings activos (para sidebar público)
+router.get('/sidebar', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT DISTINCT l.tipo, l.categoria, l.subcategoria
+      FROM listings l
+      WHERE l.activo = 1
+        AND l.categoria IS NOT NULL
+        AND l.categoria != ''
+        AND l.carousel_posicion IS NULL
+        AND l.banner_orden IS NULL
+      ORDER BY l.tipo, l.categoria, l.subcategoria
+    `)
+
+    // Agrupar: tipo → categoría → [subcategorías]
+    const tipoMap = { producto: 'producto', servicio: 'servicio', arriendo: 'arriendo' }
+    const catMap = new Map()
+
+    rows.forEach(row => {
+      const key = `${row.tipo}|${row.categoria}`
+      if (!catMap.has(key)) {
+        catMap.set(key, {
+          nombre: row.categoria,
+          tipo: row.tipo,
+          subcategorias: [],
+        })
+      }
+      if (row.subcategoria) {
+        const cat = catMap.get(key)
+        if (!cat.subcategorias.some(s => s.nombre === row.subcategoria)) {
+          cat.subcategorias.push({ nombre: row.subcategoria })
+        }
+      }
+    })
+
+    res.json({ categorias: [...catMap.values()] })
+  } catch (err) {
+    console.error('Error obteniendo categorías sidebar:', err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
 module.exports = router
