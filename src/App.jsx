@@ -12,7 +12,7 @@ import SectionPage from './components/SectionPage'
 import StoresPage from './components/StoresPage'
 import EventsPage from './components/EventsPage'
 import StorePage, { StoreFooter } from './components/StorePage'
-import { sections as staticSections } from './data/products'
+// import { sections as staticSections } from './data/products'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -24,10 +24,10 @@ const SECTION_TITLES = {
   tecnologia: 'Tecnología',
   servicios: 'Servicios',
   arriendos: 'Arriendos',
-  turismo: 'Tendencia',
+  tendencia: 'Tendencia',
 }
 
-const SECTION_ORDER = ['destacados', 'ofertas', 'arriendos', 'novedades', 'servicios', 'liquidacion', 'turismo', 'tecnologia']
+const SECTION_ORDER = ['destacados', 'ofertas', 'arriendos', 'novedades', 'servicios', 'liquidacion', 'tendencia', 'tecnologia']
 
 function mapListingToProduct(l) {
   return {
@@ -42,7 +42,8 @@ function mapListingToProduct(l) {
     badge: l.badge,
     badgeColor: l.badge ? 'bg-primary text-white' : null,
     rating: null,
-    category: l.tipo === 'producto' ? 'productos' : l.tipo === 'servicio' ? 'servicios' : l.tipo === 'arriendo' ? 'arriendos' : 'turismo',
+    category: l.tipo === 'producto' ? 'productos' : l.tipo === 'servicio' ? 'servicios' : l.tipo === 'arriendo' ? 'arriendos' : 'otros',
+    categoria: l.categoria,
     subcategory: l.subcategoria,
     tipo: l.tipo,
     medidas: l.medidas,
@@ -63,14 +64,12 @@ function buildSectionsFromAPI(listings) {
     grouped[sec].push(mapListingToProduct(l))
   })
 
-  return SECTION_ORDER
-    .filter((id) => grouped[id] && grouped[id].length > 0)
-    .map((id) => ({
-      id,
-      title: SECTION_TITLES[id] || id,
-      hidePrice: id === 'servicios',
-      items: grouped[id],
-    }))
+  return SECTION_ORDER.map((id) => ({
+    id,
+    title: SECTION_TITLES[id] || id,
+    hidePrice: id === 'servicios',
+    items: grouped[id] || [],
+  }))
 }
 
 export default function App() {
@@ -80,10 +79,11 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
   const [activeStore, setActiveStore] = useState(null)
-  const [sections, setSections] = useState(staticSections)
+  const [sections, setSections] = useState([])
   const [turismoCategorias, setTurismoCategorias] = useState([])
   const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
   const [listingSubcategorias, setListingSubcategorias] = useState([])
+  const [sidebarCategorias, setSidebarCategorias] = useState([])
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
@@ -94,11 +94,8 @@ export default function App() {
     fetch(`${API}/api/listings`)
       .then(r => r.json())
       .then(data => {
-        if (data.listings && data.listings.length > 0) {
-          const apiSections = buildSectionsFromAPI(data.listings)
-          if (apiSections.length > 0) {
-            setSections(apiSections)
-          }
+        {
+          setSections(buildSectionsFromAPI(data.listings || []))
           // Extraer subcategorías únicas con su tipo para el sidebar dinámico
           const subsMap = new Map()
           data.listings.forEach(l => {
@@ -129,6 +126,14 @@ export default function App() {
         }
       })
       .catch(err => console.error('Error cargando categorías turismo:', err))
+
+    // Cargar categorías de producto, servicio y arriendo desde la BD
+    fetch(`${API}/api/categorias?tipo=producto,servicio,arriendo`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.categorias) setSidebarCategorias(data.categorias)
+      })
+      .catch(err => console.error('Error cargando categorías sidebar:', err))
   }, [])
 
   const handleLoginSuccess = (userData) => {
@@ -373,6 +378,7 @@ export default function App() {
           onCategorySelect={handleCategorySelect}
           turismoCategorias={turismoCategorias}
           listingSubcategorias={listingSubcategorias}
+          sidebarCategorias={sidebarCategorias}
         />
 
         <main className="flex-1 flex flex-col gap-8 p-6 overflow-hidden transition-all duration-300">

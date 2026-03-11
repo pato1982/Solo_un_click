@@ -52,6 +52,11 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
         <div className="flex-1 h-px bg-slate-200"></div>
         <button onClick={onViewAll} className="text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
+      {items.length === 0 ? (
+        <div className="flex items-center justify-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+          <p className="text-xs text-gray-400">Próximamente</p>
+        </div>
+      ) : (
       <div className="flex gap-4 py-1 px-1">
         {/* Primera tarjeta fija */}
         {firstItem && (
@@ -93,6 +98,7 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

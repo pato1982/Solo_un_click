@@ -2,13 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
-// Categorías de ejemplo (luego vendrán de una tabla)
-const CATEGORIAS_EJEMPLO = [
-  'Aventura', 'Naturaleza', 'Cultural', 'Gastronómico',
-  'Nocturno', 'Familiar', 'Deportivo', 'Relax',
-  'Fotografía', 'Trekking', 'Acuático', 'Nieve',
-]
-
 const emptyForm = {
   descripcion: '',
   imagenes: [null, null, null],
@@ -23,6 +16,7 @@ export default function AdminPortada() {
   const [activeTab, setActiveTab] = useState(0)
   const [portadaId, setPortadaId] = useState(null)
   const [nombreNegocio, setNombreNegocio] = useState('')
+  const [categoriasDB, setCategoriasDB] = useState([])
   const [categorias, setCategorias] = useState([])
   const [savingCats, setSavingCats] = useState(false)
   const [savedCats, setSavedCats] = useState(false)
@@ -43,10 +37,16 @@ export default function AdminPortada() {
     Promise.all([
       safeFetch(`${API}/api/portada`),
       safeFetch(`${API}/api/business`),
+      safeFetch(`${API}/api/categorias?tipo=turismo`),
     ])
-      .then(([portadaData, businessData]) => {
+      .then(([portadaData, businessData, catsData]) => {
         if (businessData.business) {
           setNombreNegocio(businessData.business.nombre_negocio || '')
+        }
+        if (catsData.categorias) {
+          // Extraer todas las subcategorías de turismo como lista plana
+          const subs = catsData.categorias.flatMap(c => c.subcategorias.map(s => s.nombre))
+          setCategoriasDB(subs.length > 0 ? subs : catsData.categorias.map(c => c.nombre))
         }
         if (portadaData.portada) {
           const p = portadaData.portada
@@ -301,7 +301,7 @@ export default function AdminPortada() {
             <div>
               <label className="block text-[11px] font-semibold text-gray-600 mb-2">Categorías</label>
               <div className="grid grid-cols-4 gap-2">
-                {CATEGORIAS_EJEMPLO.map((cat) => {
+                {categoriasDB.map((cat) => {
                   const activa = categorias.includes(cat)
                   return (
                     <button

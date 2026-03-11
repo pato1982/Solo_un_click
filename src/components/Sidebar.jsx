@@ -6,154 +6,8 @@ const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10
 const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full'
 const subBtnClass = 'flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50'
 
-const hierarchicalContent = {
-  productos: {
-    title: 'Productos',
-    categories: [
-      {
-        icon: 'weekend', label: 'Muebles',
-        subcategories: ['Sillas', 'Escritorios'],
-      },
-      {
-        icon: 'computer', label: 'Computacion',
-        subcategories: ['Tecnología', 'Laptops', 'Monitores', 'Memorias', 'Impresoras'],
-      },
-      {
-        icon: 'headphones', label: 'Audio',
-        subcategories: ['Parlantes', 'Audífonos'],
-      },
-      {
-        icon: 'videocam', label: 'Video',
-        subcategories: ['Cámaras'],
-      },
-      {
-        icon: 'keyboard', label: 'Perifericos',
-        subcategories: ['Teclados', 'Accesorios', 'Redes'],
-      },
-      {
-        icon: 'bolt', label: 'Energia',
-        subcategories: ['Cargadores', 'Cables'],
-      },
-      {
-        icon: 'lightbulb', label: 'Iluminacion',
-        subcategories: ['Iluminación'],
-      },
-      {
-        icon: 'smart_display', label: 'Dispositivos',
-        subcategories: ['Tablets', 'Smartwatch'],
-      },
-      {
-        icon: 'backpack', label: 'Transporte',
-        subcategories: ['Mochilas', 'Maletas', 'Bolsos'],
-      },
-      {
-        icon: 'phone_iphone', label: 'Celulares',
-        subcategories: ['Smartphones', 'Fundas', 'Protectores'],
-      },
-      {
-        icon: 'sports_esports', label: 'Gaming',
-        subcategories: ['Consolas', 'Controles', 'Juegos'],
-      },
-      {
-        icon: 'photo_camera', label: 'Fotografía',
-        subcategories: ['Cámaras Foto', 'Lentes', 'Trípodes'],
-      },
-      {
-        icon: 'kitchen', label: 'Hogar',
-        subcategories: ['Electrodomésticos', 'Cocina', 'Aspiradoras'],
-      },
-      {
-        icon: 'checkroom', label: 'Ropa',
-        subcategories: ['Hombre', 'Mujer', 'Niños', 'Calzado'],
-      },
-      {
-        icon: 'handyman', label: 'Herramientas',
-        subcategories: ['Eléctricas', 'Manuales', 'Jardín'],
-      },
-      {
-        icon: 'local_grocery_store', label: 'Alimentos',
-        subcategories: ['Despensa', 'Bebidas', 'Congelados'],
-      },
-      {
-        icon: 'self_care', label: 'Salud',
-        subcategories: ['Cuidado Personal', 'Suplementos', 'Belleza'],
-      },
-      {
-        icon: 'child_care', label: 'Bebés',
-        subcategories: ['Coches', 'Cunas', 'Juguetes Bebé'],
-      },
-      {
-        icon: 'menu_book', label: 'Librería',
-        subcategories: ['Libros', 'Útiles Escolares', 'Arte'],
-      },
-    ],
-  },
-}
-
-// Contenido plano para turismo, locales, eventos y arriendos (sin jerarquía)
+// Solo locales y eventos siguen con datos locales
 const flatContent = {
-  servicios: {
-    title: 'Servicios',
-    items: [
-      { icon: 'electric_bolt', label: 'Electricidad' },
-      { icon: 'plumbing', label: 'Gasfitería' },
-      { icon: 'format_paint', label: 'Pintura' },
-      { icon: 'yard', label: 'Jardinería' },
-      { icon: 'cleaning_services', label: 'Aseo' },
-      { icon: 'handyman', label: 'Carpintería' },
-      { icon: 'construction', label: 'Construcción' },
-      { icon: 'roofing', label: 'Techumbres' },
-      { icon: 'thermostat', label: 'Aislación' },
-      { icon: 'local_shipping', label: 'Fletes' },
-      { icon: 'school', label: 'Clases' },
-      { icon: 'build', label: 'Mantención' },
-      { icon: 'support_agent', label: 'Soporte' },
-      { icon: 'lock', label: 'Cerrajería' },
-      { icon: 'content_cut', label: 'Peluquería' },
-      { icon: 'local_laundry_service', label: 'Lavandería' },
-      { icon: 'pets', label: 'Mascotas' },
-      { icon: 'pest_control', label: 'Plagas' },
-    ],
-  },
-  arriendos: {
-    title: 'Arriendos',
-    items: [
-      { icon: 'home', label: 'Casas' },
-      { icon: 'apartment', label: 'Departamentos' },
-      { icon: 'cabin', label: 'Cabañas' },
-      { icon: 'bed', label: 'Habitaciones' },
-      { icon: 'chair', label: 'Amoblados' },
-      { icon: 'storefront', label: 'Locales' },
-      { icon: 'work', label: 'Oficinas' },
-      { icon: 'desktop_windows', label: 'Coworking' },
-      { icon: 'warehouse', label: 'Bodegas' },
-      { icon: 'landscape', label: 'Parcelas' },
-      { icon: 'terrain', label: 'Terrenos' },
-      { icon: 'grass', label: 'Campos' },
-      { icon: 'outdoor_grill', label: 'Quinchos' },
-      { icon: 'event', label: 'Salones' },
-      { icon: 'directions_car', label: 'Automóviles' },
-      { icon: 'local_shipping', label: 'Camionetas' },
-      { icon: 'airport_shuttle', label: 'Furgones' },
-      { icon: 'local_parking', label: 'Estacionamientos' },
-      { icon: 'directions_bike', label: 'Bicicletas' },
-      { icon: 'two_wheeler', label: 'Motos' },
-      { icon: 'electric_scooter', label: 'Scooters' },
-      { icon: 'sailing', label: 'Botes' },
-      { icon: 'kayaking', label: 'Kayaks' },
-      { icon: 'speed', label: 'Lanchas' },
-      { icon: 'surfing', label: 'Tablas' },
-      { icon: 'fitness_center', label: 'Equipos Deportivos' },
-      { icon: 'sports_tennis', label: 'Canchas' },
-      { icon: 'pool', label: 'Piscinas' },
-      { icon: 'agriculture', label: 'Maquinaria' },
-      { icon: 'construction', label: 'Herramientas' },
-      { icon: 'bolt', label: 'Generadores' },
-      { icon: 'camping', label: 'Carpas' },
-      { icon: 'forest', label: 'Camping' },
-      { icon: 'ac_unit', label: 'Equipos Nieve' },
-    ],
-  },
   locales: {
     title: 'Negocios',
     items: storeCategories,
@@ -187,15 +41,20 @@ const TURISMO_ICON_MAP = {
   'Adrenalina': 'bolt',
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [] }) {
+const SIDEBAR_TITLES = {
+  productos: 'Productos',
+  servicios: 'Servicios',
+  arriendos: 'Arriendos',
+}
+
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [] }) {
   const [expandedCat, setExpandedCat] = useState(null)
 
   if (!activeNav) return null
 
-  const isHierarchical = !!hierarchicalContent[activeNav]
-  let panel = isHierarchical ? hierarchicalContent[activeNav] : flatContent[activeNav]
+  let panel = null
 
-  // Turismo: categorías dinámicas desde la BD
+  // Turismo: categorías dinámicas desde portadas
   if (activeNav === 'turismo') {
     panel = {
       title: 'Turismo',
@@ -205,36 +64,31 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
       })),
     }
   }
-
-  // Productos, servicios, arriendos: mostrar solo subcategorías reales de la BD
-  if ((activeNav === 'productos' || activeNav === 'servicios' || activeNav === 'arriendos') && listingSubcategorias.length > 0) {
-    // Buscar subcategorías para este tipo de navegación
+  // Productos, servicios, arriendos: categorías desde la BD con subcategorías
+  else if (activeNav === 'productos' || activeNav === 'servicios' || activeNav === 'arriendos') {
     const tipoMap = { productos: 'producto', servicios: 'servicio', arriendos: 'arriendo' }
-    const subs = listingSubcategorias
-      .filter(s => s.tipo === tipoMap[activeNav])
-      .map(s => s.sub)
+    const tipo = tipoMap[activeNav]
+    const catsDelTipo = sidebarCategorias.filter(c => c.tipo === tipo)
 
-    // Convertir a lista plana dinámica (sin jerarquía hardcodeada)
-    const ICON_MAP = {}
-    // Extraer iconos del contenido hardcodeado si existe
-    if (isHierarchical && panel.categories) {
-      panel.categories.forEach(cat => {
-        cat.subcategories.forEach(sub => { ICON_MAP[sub] = cat.icon })
-      })
+    if (catsDelTipo.length > 0) {
+      panel = {
+        title: SIDEBAR_TITLES[activeNav],
+        categories: catsDelTipo.map(c => ({
+          icon: 'category',
+          label: c.nombre,
+          subcategories: c.subcategorias.map(s => s.nombre),
+        })),
+      }
+    } else {
+      panel = {
+        title: SIDEBAR_TITLES[activeNav],
+        items: [],
+      }
     }
-    if (!isHierarchical && panel.items) {
-      panel.items.forEach(item => { ICON_MAP[item.label] = item.icon })
-    }
-
-    const uniqueSubs = [...new Set(subs)].sort()
-    panel = {
-      title: panel.title,
-      items: uniqueSubs.map(label => ({
-        icon: ICON_MAP[label] || 'category',
-        label,
-      })),
-    }
-    // Ya no es jerárquico, es plano
+  }
+  // Locales y eventos: datos locales
+  else if (flatContent[activeNav]) {
+    panel = flatContent[activeNav]
   }
 
   if (!panel) return null
@@ -291,10 +145,10 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
                   </div>
                 )
               })
-            ) : (
+            ) : panel.items && panel.items.length > 0 ? (
               panel.items.map((item) => (
                 <button
-                  key={item.icon}
+                  key={item.label}
                   className={`${btnClass} ${activeFilter === item.label ? 'bg-white/20 text-white font-bold' : ''}`}
                   onClick={() => onFilterSelect && onFilterSelect(item.label)}
                 >
@@ -302,6 +156,8 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
                   <span>{item.label}</span>
                 </button>
               ))
+            ) : (
+              <p className="text-[10px] text-white/30 text-center py-3">Sin categorías aún</p>
             )}
           </div>
           <div className="mt-3 pt-3 border-t border-white/20">

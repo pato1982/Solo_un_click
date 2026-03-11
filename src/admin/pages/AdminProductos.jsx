@@ -8,6 +8,7 @@ const allTabs = [
   { id: 'novedades', label: 'Novedades', requiere: 'vende_productos' },
   { id: 'liquidacion', label: 'Liquidación', requiere: 'vende_productos' },
   { id: 'tecnologia', label: 'Tecnología', requiere: 'vende_productos' },
+  { id: 'tendencia', label: 'Tendencia', requiere: 'vende_productos' },
   { id: 'servicios', label: 'Servicios', requiere: 'ofrece_servicios' },
   { id: 'arriendos', label: 'Arriendos', requiere: 'ofrece_arriendos' },
 ]
@@ -17,6 +18,7 @@ const emptyForm = {
   descripcion: '',
   precio: '',
   precioOriginal: '',
+  categoria: '',
   subcategoria: '',
   badge: '',
   tipo: '',
@@ -140,6 +142,7 @@ export default function AdminProductos() {
 
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || 'destacados')
   const [productos, setProductos] = useState([])
+  const [categoriasDB, setCategoriasDB] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -148,13 +151,24 @@ export default function AdminProductos() {
   const [deleteId, setDeleteId] = useState(null)
   const fileInputRef = useRef(null)
 
-  // Cargar productos desde API
+  // Construir tipos para fetch de categorías según permisos
+  const tiposUsuario = [
+    user.vende_productos && 'producto',
+    user.ofrece_servicios && 'servicio',
+    user.ofrece_arriendos && 'arriendo',
+  ].filter(Boolean)
+
+  // Cargar productos y categorías desde API
   useEffect(() => {
-    fetch(`${API}/api/listings/mine`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
+    const catUrl = tiposUsuario.length > 0
+      ? `${API}/api/categorias?tipo=${tiposUsuario.join(',')}`
+      : null
+
+    Promise.all([
+      fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
+    ])
+      .then(([data, catsData]) => {
         if (data.listings) {
           setProductos(data.listings.map(l => ({
             id: l.id,
@@ -163,6 +177,7 @@ export default function AdminProductos() {
             descripcion: l.descripcion,
             precio: l.precio,
             precioOriginal: l.precio_original,
+            categoria: l.categoria || '',
             subcategoria: l.subcategoria,
             badge: l.badge,
             tipo: l.tipo,
@@ -172,6 +187,9 @@ export default function AdminProductos() {
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null,
             imagenUrl: l.imagen,
           })))
+        }
+        if (catsData.categorias) {
+          setCategoriasDB(catsData.categorias)
         }
       })
       .catch(err => console.error('Error cargando productos:', err))
@@ -251,6 +269,7 @@ export default function AdminProductos() {
         descripcion: formData.descripcion,
         precio: Math.round(Number(formData.precio)) || 0,
         precio_original: formData.precioOriginal ? Math.round(Number(formData.precioOriginal)) : null,
+        categoria: formData.categoria,
         subcategoria: formData.subcategoria,
         badge: formData.badge,
         genero: formData.genero || null,
@@ -288,6 +307,7 @@ export default function AdminProductos() {
             descripcion: l.descripcion,
             precio: l.precio,
             precioOriginal: l.precio_original,
+            categoria: l.categoria || '',
             subcategoria: l.subcategoria,
             badge: l.badge,
             tipo: l.tipo,
@@ -345,6 +365,7 @@ export default function AdminProductos() {
       descripcion: prod.descripcion,
       precio: String(prod.precio),
       precioOriginal: prod.precioOriginal ? String(prod.precioOriginal) : '',
+      categoria: prod.categoria || '',
       subcategoria: prod.subcategoria,
       badge: prod.badge || '',
       tipo: prod.tipo || '',
@@ -539,10 +560,10 @@ export default function AdminProductos() {
                   <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -553,9 +574,25 @@ export default function AdminProductos() {
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Etiqueta</label>
                     <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
+                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      <option value="">Seleccionar categoría</option>
+                      {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
+                        <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <input type="text" name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Notebooks" />
+                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      <option value="">Seleccionar subcategoría</option>
+                      {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
+                        <option key={s.id} value={s.nombre}>{s.nombre}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

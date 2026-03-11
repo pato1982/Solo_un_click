@@ -8,7 +8,7 @@ const TALLAS_ROPA = ['2','4','6','8','10','12','14','16','XS','S','M','L','XL','
 const TALLAS_ACCESORIOS = ['XS','S','M','L','XL','Único']
 
 const emptyForm = {
-  nombre: '', descripcion: '', precio: '', precioOriginal: '', subcategoria: '', badge: '', tipo: 'producto',
+  nombre: '', descripcion: '', precio: '', precioOriginal: '', categoria: '', subcategoria: '', badge: '', tipo: 'producto',
   attrMedidas: false, tallasTipo: '', tallasSeleccion: [],
   medidasAlto: '', medidasAncho: '', medidasProfundidad: '', genero: '',
   imagen: null, imagenPreview: null, imagenPos: { x: 0, y: 0 }, imagenScale: 1, imagenNaturalW: 0, imagenNaturalH: 0,
@@ -91,6 +91,7 @@ export default function AdminCarruseles() {
 
   const [activeTab, setActiveTab] = useState(1)
   const [items, setItems] = useState([])
+  const [categoriasDB, setCategoriasDB] = useState([])
   const [totalProductos, setTotalProductos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -129,13 +130,23 @@ export default function AdminCarruseles() {
     setActiveTab(pos)
   }
 
+  // Construir tipos para fetch de categorías
+  const tiposUsuario = [
+    user.vende_productos && 'producto',
+    user.ofrece_servicios && 'servicio',
+    user.ofrece_arriendos && 'arriendo',
+  ].filter(Boolean)
+
   // Cargar items desde API
   useEffect(() => {
     if (!esNormal) { setLoading(false); return }
+    const catUrl = tiposUsuario.length > 0 ? `${API}/api/categorias?tipo=${tiposUsuario.join(',')}` : null
     Promise.all([
       fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       fetch(`${API}/api/carousels`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-    ]).then(([listData, carData]) => {
+      catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
+    ]).then(([listData, carData, catsData]) => {
+      if (catsData.categorias) setCategoriasDB(catsData.categorias)
       if (listData.listings) {
         // Contar productos que NO son de carrusel
         setTotalProductos(listData.listings.filter(l => !l.carousel_posicion).length)
@@ -206,7 +217,7 @@ export default function AdminCarruseles() {
         nombre: formData.nombre, descripcion: formData.descripcion,
         precio: Math.round(Number(formData.precio)) || 0,
         precio_original: formData.precioOriginal ? Math.round(Number(formData.precioOriginal)) : null,
-        subcategoria: formData.subcategoria, badge: formData.badge, genero: formData.genero || null,
+        categoria: formData.categoria, subcategoria: formData.subcategoria, badge: formData.badge, genero: formData.genero || null,
         imagen: imagenUrl,
         tallas: formData.tallasTipo ? { tipo: formData.tallasTipo, seleccion: formData.tallasSeleccion } : null,
         medidas: formData.attrMedidas ? { alto: formData.medidasAlto, ancho: formData.medidasAncho, profundidad: formData.medidasProfundidad } : null,
@@ -259,7 +270,7 @@ export default function AdminCarruseles() {
     setFormData({
       nombre: prod.nombre, descripcion: prod.descripcion,
       precio: String(prod.precio), precioOriginal: prod.precioOriginal ? String(prod.precioOriginal) : '',
-      subcategoria: prod.subcategoria, badge: prod.badge || '', tipo: prod.tipo || 'producto',
+      categoria: prod.categoria || '', subcategoria: prod.subcategoria, badge: prod.badge || '', tipo: prod.tipo || 'producto',
       attrMedidas: !!prod.medidas, tallasTipo: prod.tallas?.tipo || '', tallasSeleccion: prod.tallas?.seleccion || [],
       medidasAlto: prod.medidas?.alto || '', medidasAncho: prod.medidas?.ancho || '', medidasProfundidad: prod.medidas?.profundidad || '',
       genero: prod.genero || '', imagen: null, imagenPreview: prod.imagenPreview || null,
@@ -469,22 +480,39 @@ export default function AdminCarruseles() {
                   <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
-                      <option value="producto">Productos</option>
-                      <option value="servicio">Servicios</option>
-                      <option value="arriendo">Arriendos</option>
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      <option value="">Seleccionar</option>
+                      {user.vende_productos && <option value="producto">Productos</option>}
+                      {user.ofrece_servicios && <option value="servicio">Servicios</option>}
+                      {user.ofrece_arriendos && <option value="arriendo">Arriendos</option>}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Etiqueta</label>
                     <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
+                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      <option value="">Seleccionar categoría</option>
+                      {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
+                        <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <input type="text" name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Notebooks" />
+                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      <option value="">Seleccionar subcategoría</option>
+                      {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
+                        <option key={s.id} value={s.nombre}>{s.nombre}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
