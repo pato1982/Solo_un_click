@@ -1,5 +1,133 @@
 # Registro de Cambios - Solo a un Click
 
+## 11 de Marzo 2026 (tarde) - Categorías dinámicas BD, página principal conectada, admin con selects reales
+
+### Endpoint `/api/categorias` (NUEVO)
+- `GET /api/categorias?tipo=turismo` — categorías con subcategorías por tipo
+- Soporte multi-tipo: `?tipo=producto,servicio,arriendo` (separados por coma)
+- Agrupa subcategorías bajo cada categoría
+- Registrado en server.js
+
+### Admin Portada Turismo — Categorías desde BD
+- Eliminado array hardcodeado `CATEGORIAS_EJEMPLO`
+- Ahora carga categorías tipo=turismo desde `/api/categorias?tipo=turismo`
+- Chips de selección muestran subcategorías reales de la BD
+
+### Admin Productos/Carruseles/Banner — Categorías y subcategorías dinámicas
+- Nuevos selects: **Categoría** y **Subcategoría** (reemplazan el input de texto libre)
+- Categorías se cargan desde BD filtradas por permisos del usuario:
+  - Si marcó `vende_productos` → ve categorías tipo=producto
+  - Si marcó `ofrece_servicios` → ve categorías tipo=servicio
+  - Si marcó `ofrece_arriendos` → ve categorías tipo=arriendo
+  - Si marcó varias → ve las categorías de todas las que marcó
+- Al cambiar **Tipo** se resetea categoría y subcategoría
+- Al cambiar **Categoría** se resetea subcategoría
+- Subcategorías filtradas según la categoría seleccionada
+- Campo `categoria` agregado al body de INSERT/UPDATE en backend
+- Pestaña "Tendencia" agregada en AdminProductos
+
+### Columna `categoria` en tabla `listings`
+- `ALTER TABLE listings ADD COLUMN categoria VARCHAR(100) DEFAULT NULL AFTER precio_original`
+- Ya ejecutado en servidor
+
+### Backend Listings — Filtro feed principal
+- `GET /api/listings` ahora excluye items de carrusel (`carousel_posicion IS NULL`) y banner (`banner_orden IS NULL`)
+- Evita que productos de carrusel/banner aparezcan duplicados en las secciones de la página principal
+
+### Página Principal — 8 secciones conectadas a BD
+- Eliminado fallback a datos estáticos (`staticSections` de products.js)
+- Las 8 secciones siempre se muestran con sus títulos aunque estén vacías
+- ProductCarousel muestra "Próximamente" en secciones sin productos
+- Sección "Tendencia" renombrada (antes era "turismo", ahora es independiente)
+- Campo `categoria` incluido en el mapeo de listings
+
+### Sidebar Público — Categorías reales desde BD
+- Eliminados ~70 items hardcodeados (productos, servicios, arriendos)
+- Ahora carga desde `/api/categorias?tipo=producto,servicio,arriendo`
+- Muestra jerarquía real: Categoría → Subcategorías (expandible)
+- Si no hay categorías en BD para un tipo → "Sin categorías aún"
+- Turismo, Locales y Eventos no cambian
+
+### 8 secciones de la página principal
+1. **Productos Destacados** (destacados)
+2. **Productos en Ofertas** (ofertas)
+3. **Arriendos** (arriendos)
+4. **Novedades** (novedades)
+5. **Servicios** (servicios)
+6. **Productos en Liquidación** (liquidacion)
+7. **Tendencia** (tendencia) — ya no relacionada con turismo
+8. **Tecnología** (tecnologia)
+
+Intercalados: Banner (después de fila 2), Eventos (después de fila 3), Tiendas (después de fila 5)
+
+---
+
+## 11 de Marzo 2026 - Admin Mi Página, Sidebar dinámico, Categorías BD y Turismo Fix
+
+### Admin Mi Página (`AdminPagina.jsx`) — Solo Premium
+- Nueva sección en panel admin turismo para gestionar las filas de la página premium
+- Dos pestañas: "Imagen + Texto Superior" e "Imagen + Texto Inferior"
+- Cada pestaña: upload de imagen + campo título + textarea texto
+- Vista previa en tiempo real de cómo se verá en la página premium
+- Botón guardar con feedback verde "Guardado" por 3 segundos
+- Conectado a BD: carga datos existentes, upload de imágenes vía /api/upload, POST/PUT a /api/pagina
+- Fix dev-token 401 incluido
+- Sidebar admin: nueva entrada "Mi Página" con icono web, bloqueada para plan gratis
+
+### Backend Mi Página (`routes/pagina.js`)
+- `GET /api/pagina` — datos del usuario autenticado
+- `GET /api/pagina/public/:userId` — datos públicos por userId
+- `POST /api/pagina` — crear con ON DUPLICATE KEY UPDATE (1 registro por usuario)
+- `PUT /api/pagina/:id` — actualizar con validación Premium y user_id
+
+### Página Premium Conectada a turismo_pagina
+- CompanyDetail carga en paralelo tours + datos de página (`/api/pagina/public/:userId`)
+- Fila superior: imagen, título y texto desde turismo_pagina (fallback a portada)
+- Fila inferior: imagen, título y texto desde turismo_pagina + datos de contacto
+- Sin cruce de datos: todo filtrado por userId de cada empresa
+
+### Nueva tabla MySQL: `turismo_pagina`
+- Columnas: id, user_id (UNIQUE), titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior, created_at, updated_at
+
+### Sidebar Dinámico desde BD
+- Sidebar productos/servicios/arriendos muestra solo subcategorías que existen en listings reales
+- Sin datos en BD = sidebar vacío (ya no muestra categorías hardcodeadas de ejemplo)
+- Subcategorías extraídas de listings con tipo (producto/servicio/arriendo) para filtrar por sección
+- Iconos heredados del mapeo hardcodeado cuando existe, genérico si no
+
+### Turismo Header Fix
+- Click en "Turismo" en el header ya no saca de la página al hacer doble clic
+- Si ya estás en turismo: limpia filtros, vuelve a lista principal y scroll arriba
+
+### Tablas de Categorías y Subcategorías
+- Nuevas tablas: `categorias` (tipo, nombre, icono, orden) y `subcategorias` (categoria_id FK, nombre, orden)
+- UNIQUE constraints para evitar duplicados
+- CASCADE en FK: borrar categoría elimina sus subcategorías
+- **Categorías pobladas (hasta letra H):**
+  1. Accesorios para Vehículos (22 subcategorías)
+  2. Agro (19 subcategorías)
+  3. Alimentos y Bebidas (6 subcategorías)
+  4. Mascotas (26 subcategorías)
+  5. Antigüedades y Colecciones (9 subcategorías)
+  6. Arte, Librería y Cordonería (4 subcategorías)
+  7. Autos, Motos y Otros (8 subcategorías)
+  8. Bebés (15 subcategorías)
+  9. Belleza y Cuidado Personal (13 subcategorías)
+  10. Cámaras y Accesorios (11 subcategorías)
+  11. Celulares y Telefonía (10 subcategorías)
+  12. Computación (20 subcategorías)
+  13. Consolas y Videojuegos (7 subcategorías)
+  14. Construcción (11 subcategorías)
+  15. Deportes y Fitness (40 subcategorías)
+  16. Electrodomésticos (8 subcategorías)
+  17. Electrónica, Audio y Video (15 subcategorías)
+  18. Entradas para Eventos (6 subcategorías)
+  19. Herramientas (9 subcategorías)
+  20. Hogar y Muebles (12 subcategorías)
+- **PENDIENTE:** Continuar poblando desde la letra I en adelante
+
+---
+
 ## Conexiones y Credenciales
 > Las credenciales (SSH, MySQL, GitHub token) están en `CREDENCIALES.md` (no sube a git)
 
