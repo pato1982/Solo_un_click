@@ -1,5 +1,61 @@
 # Registro de Cambios - Solo a un Click
 
+## 11 de Marzo 2026 (noche) - 4 tablas nuevas: page_visits, user_sessions, activity_log, password_resets
+
+### page_visits — Tracking de visitas con IP
+- `POST /api/analytics/track` ahora inserta en `page_visits` cuando `event_type=page_view`
+- Registra: user_id (dueño del negocio), visitor_ip, pagina ('tienda' o 'turismo')
+- `GET /api/analytics/stats` ahora lee visitas desde `page_visits` (no analytics)
+- Nuevos datos en stats: `resumen.visitas_mes`, `resumen.visitantes_unicos`, `resumen.por_pagina`
+- `StorePage.jsx` envía `pagina: 'tienda'` en tracking
+- `TourismPage.jsx` CompanyDetail registra visita con `pagina: 'turismo'`
+- `AdminEstadisticas.jsx` nueva sección "Resumen de visitas — Mes actual" con 3 tarjetas:
+  - Visitas totales del mes
+  - Visitantes únicos (por IP)
+  - Desglose por tipo de página
+
+### user_sessions — Registro de cada login
+- `auth.js` login inserta en `user_sessions` (user_id, ip_address, user_agent)
+- `auth.js` register también registra primera sesión
+- Error en sesión no bloquea login/register (try/catch separado)
+
+### activity_log — Log de acciones de administradores
+- Nuevo helper `backend/logActivity.js`: `logActivity(userId, accion, entidad, entidadId, detalles)`
+- Acciones: 'crear', 'editar', 'eliminar'
+- Entidades: 'listing', 'tour', 'portada', 'business'
+- Conectado a:
+  - `listings.js`: crear/editar/eliminar publicaciones
+  - `tours.js`: crear/editar/eliminar tours
+  - `portada.js`: crear/editar/eliminar portada
+  - `business.js`: crear/editar negocio
+
+### password_resets — Recuperación de contraseña
+- Nueva ruta `/api/password-reset` con 3 endpoints:
+  - `POST /request` — genera token de 1h, invalida anteriores, no revela si email existe
+  - `POST /validate` — verifica validez del token
+  - `POST /reset` — cambia contraseña con token válido (mín 6 chars)
+- Registrada en `server.js`
+- TODO: configurar nodemailer + SMTP para envío real de emails
+- TODO: crear UI "Olvidé mi contraseña" en frontend
+
+### Archivos nuevos
+- `backend/logActivity.js`
+- `backend/routes/passwordReset.js`
+
+### Archivos modificados
+- `backend/routes/analytics.js` — page_visits insert + stats desde page_visits
+- `backend/routes/auth.js` — user_sessions en login y register
+- `backend/routes/business.js` — logActivity
+- `backend/routes/listings.js` — logActivity
+- `backend/routes/portada.js` — logActivity
+- `backend/routes/tours.js` — logActivity
+- `backend/server.js` — ruta passwordReset
+- `src/admin/pages/AdminEstadisticas.jsx` — sección resumen visitas
+- `src/components/StorePage.jsx` — pagina: 'tienda' en tracking
+- `src/components/TourismPage.jsx` — tracking visita turismo
+
+---
+
 ## 11 de Marzo 2026 (tarde) - Categorías dinámicas BD, página principal conectada, admin con selects reales
 
 ### Endpoint `/api/categorias` (NUEVO)
