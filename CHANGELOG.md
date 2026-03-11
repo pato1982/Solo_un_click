@@ -1,5 +1,21 @@
 # Registro de Cambios - Solo a un Click
 
+## 11 de Marzo 2026 (noche 3) - Sidebar público conectado a productos reales
+
+### Sidebar muestra solo categorías con productos publicados
+- Nuevo endpoint `GET /api/categorias/sidebar`: consulta DISTINCT categorías/subcategorías desde la tabla `listings` (activo=1, categoria NOT NULL, excluye carrusel y banner)
+- `App.jsx`: sidebar ahora usa `/api/categorias/sidebar` en vez de `/api/categorias`
+- Si no hay productos publicados → sidebar muestra "Sin categorías aún"
+- Cuando un admin crea un producto con categoría X y subcategoría Y, esas aparecen automáticamente en el sidebar público
+- Se eliminó la dependencia de la tabla de referencia `categorias` para el sidebar público (esa tabla sigue usándose en los paneles admin para los selects de categoría/subcategoría)
+
+### Nginx — Fix caché
+- `index.html` ahora tiene headers `no-cache, no-store, must-revalidate` para que el navegador siempre cargue el JS más reciente
+- Eliminada config `default` duplicada que podía interferir
+- Assets JS/CSS siguen con caché de 30d (tienen hash en el nombre)
+
+---
+
 ## 11 de Marzo 2026 (noche 2) - UI recuperación de contraseña + nodemailer
 
 ### Mailer (backend/mailer.js) — NUEVO
