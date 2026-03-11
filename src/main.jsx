@@ -8,14 +8,14 @@ import AdminNegocio from './admin/pages/AdminNegocio'
 import AdminCarruseles from './admin/pages/AdminCarruseles'
 import AdminBanner from './admin/pages/AdminBanner'
 import AdminEstadisticas from './admin/pages/AdminEstadisticas'
-import AdminTurismo from './admin/pages/AdminTurismo'
 import AdminTour from './admin/pages/AdminTour'
+import AdminPortada from './admin/pages/AdminPortada'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
 function AdminIndex() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  if (user.tipo_cuenta === 'turismo') return <Navigate to="/admin/turismo" replace />
+  if (user.tipo_cuenta === 'turismo') return <Navigate to="/admin/tour" replace />
   return <AdminProductos />
 }
 
@@ -30,7 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="carruseles" element={<AdminCarruseles />} />
           <Route path="banner" element={<AdminBanner />} />
           <Route path="estadisticas" element={<AdminEstadisticas />} />
-          <Route path="turismo" element={<AdminTurismo />} />
+          <Route path="portada" element={<AdminPortada />} />
           <Route path="tour" element={<AdminTour />} />
         </Route>
         <Route path="/*" element={<App />} />

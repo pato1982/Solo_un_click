@@ -13,9 +13,8 @@ router.get('/', authMiddleware, async (req, res) => {
     )
 
     for (const row of rows) {
-      if (row.horarios && typeof row.horarios === 'string') {
-        row.horarios = JSON.parse(row.horarios)
-      }
+      try { if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios) }
+      catch { row.horarios = [] }
     }
 
     res.json({ negocios: rows })
@@ -33,9 +32,8 @@ router.get('/public', async (req, res) => {
     )
 
     for (const row of rows) {
-      if (row.horarios && typeof row.horarios === 'string') {
-        row.horarios = JSON.parse(row.horarios)
-      }
+      try { if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios) }
+      catch { row.horarios = [] }
     }
 
     res.json({ negocios: rows })
@@ -52,6 +50,12 @@ router.post('/', authMiddleware, async (req, res) => {
 
     if (!nombre || !nombre.trim()) {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
+    }
+
+    // Verificar que el usuario no tenga ya un negocio
+    const [existing] = await pool.query('SELECT id FROM turismo_negocios WHERE user_id = ?', [req.userId])
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Ya existe un negocio, usa PUT para actualizar' })
     }
 
     const horariosJson = horarios ? JSON.stringify(horarios) : null
@@ -113,6 +117,25 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar turismo:', err)
     res.status(500).json({ error: 'Error al eliminar negocio de turismo' })
+  }
+})
+
+// PATCH /api/turismo/:id/toggle — activar/desactivar negocio
+router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'UPDATE turismo_negocios SET activo = NOT activo WHERE id = ? AND user_id = ?',
+      [req.params.id, req.userId]
+    )
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Negocio no encontrado' })
+    }
+
+    res.json({ message: 'Estado del negocio actualizado' })
+  } catch (err) {
+    console.error('Error al cambiar estado del negocio:', err)
+    res.status(500).json({ error: 'Error al cambiar estado del negocio' })
   }
 })
 

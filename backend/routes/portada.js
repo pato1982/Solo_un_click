@@ -1,0 +1,131 @@
+const express = require('express')
+const pool = require('../db')
+const { authMiddleware } = require('./auth')
+
+const router = express.Router()
+
+// GET /api/portada — obtener portada del usuario autenticado
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM turismo_portada WHERE user_id = ? LIMIT 1',
+      [req.userId]
+    )
+
+    const portada = rows[0] || null
+    if (portada && portada.imagenes && typeof portada.imagenes === 'string') {
+      portada.imagenes = JSON.parse(portada.imagenes)
+    }
+
+    res.json({ portada })
+  } catch (err) {
+    console.error('Error al obtener portada:', err)
+    res.status(500).json({ error: 'Error al obtener portada' })
+  }
+})
+
+// GET /api/portada/public — obtener todas las portadas activas (público)
+router.get('/public', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM turismo_portada WHERE activo = 1 ORDER BY nombre ASC'
+    )
+
+    for (const row of rows) {
+      if (row.imagenes && typeof row.imagenes === 'string') {
+        row.imagenes = JSON.parse(row.imagenes)
+      }
+    }
+
+    res.json({ portadas: rows })
+  } catch (err) {
+    console.error('Error al obtener portadas públicas:', err)
+    res.status(500).json({ error: 'Error al obtener portadas' })
+  }
+})
+
+// POST /api/portada — crear portada
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { nombre, descripcion, imagenes } = req.body
+
+    const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
+
+    // INSERT con ON DUPLICATE KEY para evitar race condition (user_id es UNIQUE)
+    const [result] = await pool.query(
+      `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes)`,
+      [req.userId, (nombre || '').trim() || null, descripcion || null, imagenesJson]
+    )
+
+    res.status(201).json({ message: 'Portada creada', id: result.insertId })
+  } catch (err) {
+    console.error('Error al crear portada:', err)
+    res.status(500).json({ error: 'Error al crear portada' })
+  }
+})
+
+// PUT /api/portada/:id — actualizar portada
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { nombre, descripcion, imagenes } = req.body
+
+    const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
+
+    const [result] = await pool.query(
+      `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?
+       WHERE id=? AND user_id=?`,
+      [(nombre || '').trim() || null, descripcion || null, imagenesJson, req.params.id, req.userId]
+    )
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Portada no encontrada' })
+    }
+
+    res.json({ message: 'Portada actualizada' })
+  } catch (err) {
+    console.error('Error al actualizar portada:', err)
+    res.status(500).json({ error: 'Error al actualizar portada' })
+  }
+})
+
+// DELETE /api/portada/:id — eliminar portada
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'DELETE FROM turismo_portada WHERE id = ? AND user_id = ?',
+      [req.params.id, req.userId]
+    )
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Portada no encontrada' })
+    }
+
+    res.json({ message: 'Portada eliminada' })
+  } catch (err) {
+    console.error('Error al eliminar portada:', err)
+    res.status(500).json({ error: 'Error al eliminar portada' })
+  }
+})
+
+// PATCH /api/portada/:id/toggle — activar/desactivar portada
+router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'UPDATE turismo_portada SET activo = NOT activo WHERE id = ? AND user_id = ?',
+      [req.params.id, req.userId]
+    )
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Portada no encontrada' })
+    }
+
+    res.json({ message: 'Estado de la portada actualizado' })
+  } catch (err) {
+    console.error('Error al cambiar estado de la portada:', err)
+    res.status(500).json({ error: 'Error al cambiar estado de la portada' })
+  }
+})
+
+module.exports = router

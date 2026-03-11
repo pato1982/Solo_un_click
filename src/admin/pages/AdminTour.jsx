@@ -30,8 +30,11 @@ export default function AdminTour() {
     fetch(`${API}/api/tours`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
-      .then(data => setTours(data.tours || []))
+      .then(r => {
+        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return null }
+        return r.json()
+      })
+      .then(data => { if (data) setTours(data.tours || []) })
       .catch(err => console.error('Error cargando tours:', err))
       .finally(() => setLoading(false))
   }
@@ -201,6 +204,12 @@ export default function AdminTour() {
               {/* Info */}
               <div className="p-3 flex-1 flex flex-col">
                 <h3 className="text-sm font-bold text-gray-800 truncate">{tour.nombre}</h3>
+                {tour.ubicacion && (
+                  <p className="text-[10px] text-gray-400 flex items-center gap-0.5 mt-0.5">
+                    <span className="material-symbols-outlined text-xs">location_on</span>
+                    {tour.ubicacion}
+                  </p>
+                )}
                 {tour.detalle && (
                   <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">{tour.detalle}</p>
                 )}
@@ -248,7 +257,7 @@ export default function AdminTour() {
           className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex flex-col items-center justify-center gap-2 p-8 min-h-[180px] cursor-pointer group"
         >
           <span className="material-symbols-outlined text-4xl text-gray-300 group-hover:text-primary transition-colors">add_circle</span>
-          <span className="text-sm font-semibold text-gray-400 group-hover:text-primary transition-colors">+ Agregar producto</span>
+          <span className="text-sm font-semibold text-gray-400 group-hover:text-primary transition-colors">+ Agregar tour</span>
         </button>
       </div>
 

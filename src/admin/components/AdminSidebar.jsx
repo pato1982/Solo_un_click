@@ -11,9 +11,9 @@ const menuGeneral = [
 
 const menuTurismo = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
-  { label: 'Turismo', icon: 'landscape', path: '/admin/turismo' },
-  { label: 'Tour', icon: 'tour', path: '/admin/tour' },
-  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
+  { label: 'Portada', icon: 'home', path: '/admin/portada' },
+  { label: 'Tour', icon: 'tour', path: '/admin/tour', minPlan: 3 },
+  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas', minPlan: 3 },
 ]
 
 const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }

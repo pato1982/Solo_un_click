@@ -91,9 +91,11 @@ export default function AdminEstadisticas() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
   const planId = user.plan_id || 1
+  const esTurismo = user.tipo_cuenta === 'turismo'
 
   // Filtrar secciones según permisos del usuario
   const secciones = ALL_SECCIONES.filter(sec => {
+    if (esTurismo) return false
     if (sec.requiere === 'vende_productos') return user.vende_productos
     if (sec.requiere === 'ofrece_servicios') return user.ofrece_servicios
     if (sec.requiere === 'ofrece_arriendos') return user.ofrece_arriendos
@@ -101,30 +103,49 @@ export default function AdminEstadisticas() {
   })
 
   const [listings, setListings] = useState([])
+  const [tours, setTours] = useState([])
+  const [portada, setPortada] = useState(null)
   const [visitas, setVisitas] = useState(EMPTY_CHART)
   const [clicks, setClicks] = useState(EMPTY_CHART)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${API}/api/analytics/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-    ])
-      .then(([listData, statsData]) => {
-        if (listData.listings) setListings(listData.listings)
-        if (statsData.visitas?.length) setVisitas(statsData.visitas)
-        if (statsData.clicks?.length) setClicks(statsData.clicks)
-      })
-      .catch(err => console.error('Error:', err))
-      .finally(() => setLoading(false))
+    const headers = { Authorization: `Bearer ${token}` }
+
+    if (esTurismo) {
+      Promise.all([
+        fetch(`${API}/api/tours`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/portada`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/analytics/stats`, { headers }).then(r => r.json()),
+      ])
+        .then(([toursData, portadaData, statsData]) => {
+          if (toursData.tours) setTours(toursData.tours)
+          if (portadaData.portada) setPortada(portadaData.portada)
+          if (statsData.visitas?.length) setVisitas(statsData.visitas)
+          if (statsData.clicks?.length) setClicks(statsData.clicks)
+        })
+        .catch(err => console.error('Error:', err))
+        .finally(() => setLoading(false))
+    } else {
+      Promise.all([
+        fetch(`${API}/api/listings/mine`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/analytics/stats`, { headers }).then(r => r.json()),
+      ])
+        .then(([listData, statsData]) => {
+          if (listData.listings) setListings(listData.listings)
+          if (statsData.visitas?.length) setVisitas(statsData.visitas)
+          if (statsData.clicks?.length) setClicks(statsData.clicks)
+        })
+        .catch(err => console.error('Error:', err))
+        .finally(() => setLoading(false))
+    }
   }, [])
 
-  // Contar por tipo
+  // --- Datos comercio ---
   const productos = listings.filter(l => !l.carousel_posicion && !l.banner_orden)
   const carruselItems = listings.filter(l => l.carousel_posicion)
   const bannerItems = listings.filter(l => l.banner_orden)
 
-  // Contar por sección (solo productos normales)
   const conteoSecciones = {}
   secciones.forEach(s => { conteoSecciones[s.id] = 0 })
   productos.forEach(l => {
@@ -135,13 +156,20 @@ export default function AdminEstadisticas() {
   const maxProd = PLAN_LIMITS[planId] || 5
   const maxCarousel = PLAN_CAROUSEL[planId] || 0
   const maxBanner = PLAN_BANNER[planId] || 0
-  const totalMax = maxProd + maxCarousel + maxBanner
-  const totalUsado = listings.length
+  const totalMax = esTurismo ? 12 : maxProd + maxCarousel + maxBanner
+  const totalUsado = esTurismo ? tours.length : listings.length
 
   const pctProd = Math.min((productos.length / maxProd) * 100, 100)
   const pctCarousel = maxCarousel > 0 ? Math.min((carruselItems.length / maxCarousel) * 100, 100) : 0
   const pctBanner = maxBanner > 0 ? Math.min((bannerItems.length / maxBanner) * 100, 100) : 0
   const pctTotal = Math.min((totalUsado / totalMax) * 100, 100)
+
+  // --- Datos turismo ---
+  const totalImagenesTours = tours.reduce((acc, t) => acc + (t.imagenes ? t.imagenes.length : 0), 0)
+  const portadaImagenes = portada?.imagenes ? portada.imagenes.length : 0
+  const pctTours = Math.min((tours.length / 12) * 100, 100)
+  const pctImgTours = Math.min((totalImagenesTours / 36) * 100, 100)
+  const pctPortada = Math.min((portadaImagenes / 3) * 100, 100)
 
   if (loading) return <div className="flex items-center justify-center py-20"><span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span></div>
 
@@ -155,27 +183,67 @@ export default function AdminEstadisticas() {
       <div className="grid grid-cols-2 gap-5">
         {/* KPIs */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg text-primary">inventory_2</span>
-            Productos por sección
-          </h2>
-          <div className="grid grid-cols-3 gap-3">
-            {secciones.map(sec => {
-              const c = COLOR_MAP[sec.color]
-              const count = conteoSecciones[sec.id]
-              return (
-                <div key={sec.id} className={`${c.bg} rounded-xl p-3 flex items-center gap-3`}>
-                  <div className={`w-10 h-10 rounded-lg ${c.icon} flex items-center justify-center shrink-0`}>
-                    <span className={`material-symbols-outlined text-xl ${c.text}`}>{sec.icon}</span>
+          {esTurismo ? (
+            <>
+              <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-primary">tour</span>
+                Resumen de turismo
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-purple-50 rounded-xl p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl text-purple-600">tour</span>
                   </div>
                   <div>
-                    <span className={`text-xl font-black ${c.text} leading-none`}>{count}</span>
-                    <p className="text-[10px] font-semibold text-gray-500 leading-tight">{sec.label}</p>
+                    <span className="text-xl font-black text-purple-600 leading-none">{tours.length}</span>
+                    <p className="text-[10px] font-semibold text-gray-500 leading-tight">Tours</p>
                   </div>
                 </div>
-              )
-            })}
-          </div>
+                <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl text-blue-600">photo_library</span>
+                  </div>
+                  <div>
+                    <span className="text-xl font-black text-blue-600 leading-none">{totalImagenesTours}</span>
+                    <p className="text-[10px] font-semibold text-gray-500 leading-tight">Imgs Tours</p>
+                  </div>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl text-amber-600">home</span>
+                  </div>
+                  <div>
+                    <span className="text-xl font-black text-amber-600 leading-none">{portadaImagenes}</span>
+                    <p className="text-[10px] font-semibold text-gray-500 leading-tight">Imgs Portada</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-primary">inventory_2</span>
+                Productos por sección
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                {secciones.map(sec => {
+                  const c = COLOR_MAP[sec.color]
+                  const count = conteoSecciones[sec.id]
+                  return (
+                    <div key={sec.id} className={`${c.bg} rounded-xl p-3 flex items-center gap-3`}>
+                      <div className={`w-10 h-10 rounded-lg ${c.icon} flex items-center justify-center shrink-0`}>
+                        <span className={`material-symbols-outlined text-xl ${c.text}`}>{sec.icon}</span>
+                      </div>
+                      <div>
+                        <span className={`text-xl font-black ${c.text} leading-none`}>{count}</span>
+                        <p className="text-[10px] font-semibold text-gray-500 leading-tight">{sec.label}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Barras de uso */}
@@ -184,68 +252,116 @@ export default function AdminEstadisticas() {
             <span className="material-symbols-outlined text-lg text-primary">donut_small</span>
             Uso del plan
           </h2>
-          <div className="space-y-3">
-            {/* Publicaciones */}
-            <div>
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[11px] font-semibold text-gray-600">Publicaciones</span>
-                <span className="text-[11px] font-bold text-primary">{productos.length} / {maxProd}</span>
+          {esTurismo ? (
+            <div className="space-y-3">
+              {/* Tours */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Tours</span>
+                  <span className="text-[11px] font-bold text-primary">{tours.length} / 12</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${pctTours >= 90 ? 'bg-red-500' : pctTours >= 70 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${pctTours}%` }} />
+                </div>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-500 ${pctProd >= 90 ? 'bg-red-500' : pctProd >= 70 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${pctProd}%` }} />
-              </div>
-            </div>
 
-            {/* Carrusel */}
-            <div>
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[11px] font-semibold text-gray-600">Carrusel</span>
-                {maxCarousel > 0
-                  ? <span className="text-[11px] font-bold text-primary">{carruselItems.length} / {maxCarousel}</span>
-                  : <span className="text-[9px] font-semibold text-gray-400">No disponible</span>
-                }
+              {/* Imágenes de tours */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Imágenes de tours</span>
+                  <span className="text-[11px] font-bold text-primary">{totalImagenesTours} / 36</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${pctImgTours >= 90 ? 'bg-red-500' : pctImgTours >= 70 ? 'bg-amber-500' : 'bg-accent'}`} style={{ width: `${pctImgTours}%` }} />
+                </div>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                {maxCarousel > 0 ? (
-                  <div className={`h-full rounded-full transition-all duration-500 ${pctCarousel >= 90 ? 'bg-red-500' : pctCarousel >= 70 ? 'bg-amber-500' : 'bg-accent'}`} style={{ width: `${pctCarousel}%` }} />
-                ) : (
-                  <div className="h-full rounded-full bg-gray-200" style={{ width: '100%' }} />
-                )}
-              </div>
-            </div>
 
-            {/* Banner */}
-            <div>
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[11px] font-semibold text-gray-600">Banner</span>
-                {maxBanner > 0
-                  ? <span className="text-[11px] font-bold text-primary">{bannerItems.length} / {maxBanner}</span>
-                  : <span className="text-[9px] font-semibold text-gray-400">No disponible</span>
-                }
+              {/* Portada */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Portada</span>
+                  <span className="text-[11px] font-bold text-primary">{portadaImagenes} / 3</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${pctPortada >= 90 ? 'bg-red-500' : pctPortada >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${pctPortada}%` }} />
+                </div>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                {maxBanner > 0 ? (
-                  <div className={`h-full rounded-full transition-all duration-500 ${pctBanner >= 90 ? 'bg-red-500' : pctBanner >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${pctBanner}%` }} />
-                ) : (
-                  <div className="h-full rounded-full bg-gray-200" style={{ width: '100%' }} />
-                )}
-              </div>
-            </div>
 
-            {/* Total */}
-            <div className="border-t border-gray-100 pt-3">
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-xs font-bold text-gray-800">Total</span>
-                <span className="text-xs font-black text-primary">{totalUsado} / {totalMax}</span>
+              {/* Total */}
+              <div className="border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-bold text-gray-800">Total imágenes</span>
+                  <span className="text-xs font-black text-primary">{totalImagenesTours + portadaImagenes} / 39</span>
+                </div>
+                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 bg-primary`} style={{ width: `${Math.min(((totalImagenesTours + portadaImagenes) / 39) * 100, 100)}%` }} />
+                </div>
               </div>
-              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-500 ${pctTotal >= 90 ? 'bg-red-500' : pctTotal >= 70 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${pctTotal}%` }} />
-              </div>
-              <p className="text-[9px] text-gray-400 mt-1 text-right">
-                {totalMax - totalUsado > 0 ? `${totalMax - totalUsado} imágenes disponibles` : 'Límite alcanzado'}
-              </p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Publicaciones */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Publicaciones</span>
+                  <span className="text-[11px] font-bold text-primary">{productos.length} / {maxProd}</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${pctProd >= 90 ? 'bg-red-500' : pctProd >= 70 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${pctProd}%` }} />
+                </div>
+              </div>
+
+              {/* Carrusel */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Carrusel</span>
+                  {maxCarousel > 0
+                    ? <span className="text-[11px] font-bold text-primary">{carruselItems.length} / {maxCarousel}</span>
+                    : <span className="text-[9px] font-semibold text-gray-400">No disponible</span>
+                  }
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  {maxCarousel > 0 ? (
+                    <div className={`h-full rounded-full transition-all duration-500 ${pctCarousel >= 90 ? 'bg-red-500' : pctCarousel >= 70 ? 'bg-amber-500' : 'bg-accent'}`} style={{ width: `${pctCarousel}%` }} />
+                  ) : (
+                    <div className="h-full rounded-full bg-gray-200" style={{ width: '100%' }} />
+                  )}
+                </div>
+              </div>
+
+              {/* Banner */}
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Banner</span>
+                  {maxBanner > 0
+                    ? <span className="text-[11px] font-bold text-primary">{bannerItems.length} / {maxBanner}</span>
+                    : <span className="text-[9px] font-semibold text-gray-400">No disponible</span>
+                  }
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  {maxBanner > 0 ? (
+                    <div className={`h-full rounded-full transition-all duration-500 ${pctBanner >= 90 ? 'bg-red-500' : pctBanner >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${pctBanner}%` }} />
+                  ) : (
+                    <div className="h-full rounded-full bg-gray-200" style={{ width: '100%' }} />
+                  )}
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-bold text-gray-800">Total</span>
+                  <span className="text-xs font-black text-primary">{totalUsado} / {totalMax}</span>
+                </div>
+                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${pctTotal >= 90 ? 'bg-red-500' : pctTotal >= 70 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${pctTotal}%` }} />
+                </div>
+                <p className="text-[9px] text-gray-400 mt-1 text-right">
+                  {totalMax - totalUsado > 0 ? `${totalMax - totalUsado} imágenes disponibles` : 'Límite alcanzado'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Gráfico de barras — Visitas a la página */}
@@ -264,7 +380,7 @@ export default function AdminEstadisticas() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 overflow-hidden">
           <h2 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-accent">touch_app</span>
-            Clicks en productos
+            {esTurismo ? 'Clicks en tu tarjeta' : 'Clicks en productos'}
           </h2>
           <p className="text-[9px] text-gray-400 mb-2">Últimos 6 meses — página principal y tu página</p>
           <div className="bg-gray-50 rounded-lg border border-gray-100 p-1 overflow-hidden">

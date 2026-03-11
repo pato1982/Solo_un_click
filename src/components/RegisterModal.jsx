@@ -34,6 +34,27 @@ const plansList = [
   },
 ]
 
+const plansListTurismo = [
+  {
+    id: 1,
+    name: 'Plan Gratuito',
+    neto: 0,
+    max: '3 imágenes',
+    features: ['Panel de control', 'Info del negocio', 'Portada (3 imágenes)', 'Tarjeta en página turismo', 'Dirección y horarios'],
+    noFeatures: ['Página propia premium', 'Tours (36 imágenes)', 'Estadísticas'],
+    highlight: false,
+  },
+  {
+    id: 3,
+    name: 'Plan Premium',
+    neto: 3990,
+    max: '39 imágenes',
+    features: ['Panel de control', 'Info del negocio', 'Portada (3 imágenes)', 'Tarjeta en página turismo', 'Dirección y horarios', 'Página propia premium', 'Tours (36 imágenes)', 'Estadísticas'],
+    noFeatures: [],
+    highlight: true,
+  },
+]
+
 export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSuccess }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -128,7 +149,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className={`bg-white rounded-2xl shadow-2xl w-full overflow-hidden ${step === 3 ? 'max-w-2xl' : 'max-w-sm'} transition-all duration-300`} onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-white rounded-2xl shadow-2xl w-full overflow-hidden ${step === 3 ? (form.tipo_cuenta === 'turismo' ? 'max-w-lg' : 'max-w-2xl') : 'max-w-sm'} transition-all duration-300`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-primary px-6 py-4 flex items-center justify-between">
           <h2 className="text-white font-bold text-lg flex items-center gap-2">
@@ -368,8 +389,8 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
           {/* PASO 3: Selección de plan */}
           {step === 3 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                {plansList.map((plan) => (
+              <div className={`grid gap-3 ${form.tipo_cuenta === 'turismo' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {(form.tipo_cuenta === 'turismo' ? plansListTurismo : plansList).map((plan) => (
                   <button
                     key={plan.id}
                     type="button"
@@ -413,7 +434,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
                       </div>
                     )}
 
-                    <span className="text-[11px] font-bold text-primary/70 mt-1">{plan.max}</span>
+                    {plan.max && <span className="text-[11px] font-bold text-primary/70 mt-1">{plan.max}</span>}
 
                     <div className="mt-3 space-y-1">
                       {plan.features.map((f) => (

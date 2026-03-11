@@ -32,13 +32,17 @@ export default function AdminNegocio() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
-  const tieneSlogan = user.plan_id && user.plan_id >= 2
+  const esTurismo = user.tipo_cuenta === 'turismo'
+  const tieneSlogan = !esTurismo && user.plan_id && user.plan_id >= 2
 
   useEffect(() => {
     fetch(`${API}/api/business`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
+        return r.json()
+      })
       .then(data => {
         if (data.business) {
           setForm({

@@ -13,9 +13,8 @@ router.get('/', authMiddleware, async (req, res) => {
     )
 
     for (const row of rows) {
-      if (row.imagenes && typeof row.imagenes === 'string') {
-        row.imagenes = JSON.parse(row.imagenes)
-      }
+      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
+      catch { row.imagenes = [] }
     }
 
     res.json({ tours: rows })
@@ -33,9 +32,8 @@ router.get('/public', async (req, res) => {
     )
 
     for (const row of rows) {
-      if (row.imagenes && typeof row.imagenes === 'string') {
-        row.imagenes = JSON.parse(row.imagenes)
-      }
+      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
+      catch { row.imagenes = [] }
     }
 
     res.json({ tours: rows })
@@ -45,9 +43,20 @@ router.get('/public', async (req, res) => {
   }
 })
 
-// POST /api/tours — crear tour
+// POST /api/tours — crear tour (solo Premium)
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    // Validar plan Premium y límite de 12 tours
+    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
+    if (!userRows.length || userRows[0].plan_id < 3) {
+      return res.status(403).json({ error: 'Se requiere Plan Premium para crear tours' })
+    }
+
+    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ?', [req.userId])
+    if (countRows[0].total >= 12) {
+      return res.status(400).json({ error: 'Máximo 12 tours permitidos' })
+    }
+
     const { nombre, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
     if (!nombre || !nombre.trim()) {
@@ -69,9 +78,14 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// PUT /api/tours/:id — actualizar tour
+// PUT /api/tours/:id — actualizar tour (solo Premium)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
+    if (!userRows.length || userRows[0].plan_id < 3) {
+      return res.status(403).json({ error: 'Se requiere Plan Premium para editar tours' })
+    }
+
     const { nombre, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
     if (!nombre || !nombre.trim()) {
@@ -113,6 +127,25 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar tour:', err)
     res.status(500).json({ error: 'Error al eliminar tour' })
+  }
+})
+
+// PATCH /api/tours/:id/toggle — activar/desactivar tour
+router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'UPDATE turismo_tours SET activo = NOT activo WHERE id = ? AND user_id = ?',
+      [req.params.id, req.userId]
+    )
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Tour no encontrado' })
+    }
+
+    res.json({ message: 'Estado del tour actualizado' })
+  } catch (err) {
+    console.error('Error al cambiar estado del tour:', err)
+    res.status(500).json({ error: 'Error al cambiar estado del tour' })
   }
 })
 
