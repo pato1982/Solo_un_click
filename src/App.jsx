@@ -81,6 +81,7 @@ export default function App() {
   const [storeMapMode, setStoreMapMode] = useState(false)
   const [activeStore, setActiveStore] = useState(null)
   const [sections, setSections] = useState(staticSections)
+  const [turismoCategorias, setTurismoCategorias] = useState([])
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
@@ -99,6 +100,22 @@ export default function App() {
         }
       })
       .catch(err => console.error('Error cargando listings:', err))
+
+    // Cargar categorías de turismo desde portadas activas
+    fetch(`${API}/api/portada/public`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.portadas) {
+          const cats = new Set()
+          data.portadas.forEach(p => {
+            if (p.categorias && Array.isArray(p.categorias)) {
+              p.categorias.forEach(c => cats.add(c))
+            }
+          })
+          setTurismoCategorias([...cats].sort())
+        }
+      })
+      .catch(err => console.error('Error cargando categorías turismo:', err))
   }, [])
 
   const handleLoginSuccess = (userData) => {
@@ -341,6 +358,7 @@ export default function App() {
           activeFilter={activeFilter}
           onMapClick={() => setStoreMapMode(true)}
           onCategorySelect={handleCategorySelect}
+          turismoCategorias={turismoCategorias}
         />
 
         <main className="flex-1 flex flex-col gap-8 p-6 overflow-hidden transition-all duration-300">

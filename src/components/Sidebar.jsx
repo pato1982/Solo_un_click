@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { sections } from '../data/products'
-import { companies } from './TourismPage'
 import { storeCategories } from './StoresPage'
 import { eventCategories } from './EventsPage'
 
@@ -175,39 +174,49 @@ const flatContent = {
     title: 'Eventos',
     items: eventCategories,
   },
-  turismo: {
-    title: 'Turismo',
-    items: (() => {
-      const iconMap = {
-        'Aventura': 'kayaking',
-        'Cabalgatas': 'pets',
-        'Gastronomia': 'restaurant',
-        'Lagos': 'water',
-        'Naturaleza': 'forest',
-        'Nocturno': 'nightlife',
-        'Rafting': 'rowing',
-        'Spa': 'spa',
-        'Termas': 'pool',
-        'Trekking': 'hiking',
-        'Volcanes': 'terrain',
-      }
-      const subs = new Set()
-      companies.forEach((c) => c.subcategories.forEach((s) => subs.add(s)))
-      return [...subs].sort().map((label) => ({
-        icon: iconMap[label] || 'tour',
-        label,
-      }))
-    })(),
-  },
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect }) {
+const TURISMO_ICON_MAP = {
+  'Aventura': 'kayaking',
+  'Cabalgatas': 'pets',
+  'Gastronómico': 'restaurant',
+  'Gastronomía': 'restaurant',
+  'Lagos': 'water',
+  'Naturaleza': 'forest',
+  'Nocturno': 'nightlife',
+  'Rafting': 'rowing',
+  'Spa': 'spa',
+  'Termas': 'pool',
+  'Trekking': 'hiking',
+  'Volcanes': 'terrain',
+  'Cultural': 'museum',
+  'Familiar': 'family_restroom',
+  'Deportivo': 'sports_soccer',
+  'Relax': 'self_improvement',
+  'Fotografía': 'photo_camera',
+  'Acuático': 'pool',
+  'Nieve': 'ac_unit',
+  'Adrenalina': 'bolt',
+}
+
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [] }) {
   const [expandedCat, setExpandedCat] = useState(null)
 
   if (!activeNav) return null
 
   const isHierarchical = !!hierarchicalContent[activeNav]
-  const panel = isHierarchical ? hierarchicalContent[activeNav] : flatContent[activeNav]
+  let panel = isHierarchical ? hierarchicalContent[activeNav] : flatContent[activeNav]
+
+  // Turismo: categorías dinámicas desde la BD
+  if (activeNav === 'turismo') {
+    panel = {
+      title: 'Turismo',
+      items: turismoCategorias.map(label => ({
+        icon: TURISMO_ICON_MAP[label] || 'tour',
+        label,
+      })),
+    }
+  }
 
   if (!panel) return null
 
