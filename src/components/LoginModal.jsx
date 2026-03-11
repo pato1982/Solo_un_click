@@ -1,9 +1,210 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const API = import.meta.env.VITE_API || ''
+
+function ForgotPasswordView({ onBack }) {
+  const [step, setStep] = useState('email') // email | reset | done
+  const [email, setEmail] = useState('')
+  const [token, setToken] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Detectar token en URL al montar
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const resetToken = params.get('reset')
+    if (resetToken) {
+      setToken(resetToken)
+      setStep('reset')
+      // Limpiar URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  const handleRequestReset = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/api/password-reset/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Error al procesar solicitud')
+      } else {
+        setSuccess(data.message)
+      }
+    } catch {
+      setError('Error de conexión')
+    }
+    setLoading(false)
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/api/password-reset/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Error al cambiar contraseña')
+      } else {
+        setStep('done')
+      }
+    } catch {
+      setError('Error de conexión')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <>
+      <div className="bg-primary px-6 py-4 flex items-center justify-between">
+        <h2 className="text-white font-bold text-lg flex items-center gap-2">
+          <span className="material-symbols-outlined">lock_reset</span>
+          {step === 'done' ? 'Listo' : step === 'reset' ? 'Nueva contraseña' : 'Recuperar contraseña'}
+        </h2>
+        <button onClick={onBack} className="text-white/70 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div className="p-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-base">error</span>
+            {error}
+          </div>
+        )}
+
+        {step === 'email' && !success && (
+          <form onSubmit={handleRequestReset} className="space-y-4">
+            <p className="text-sm text-gray-500">Ingresa tu email y te enviaremos instrucciones para restablecer tu contraseña.</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                placeholder="tu@email.com"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Enviando...' : 'Enviar instrucciones'}
+            </button>
+            <button type="button" onClick={onBack} className="w-full text-sm text-gray-500 hover:text-primary transition-colors">
+              Volver al login
+            </button>
+          </form>
+        )}
+
+        {step === 'email' && success && (
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <span className="material-symbols-outlined text-3xl text-green-600">mark_email_read</span>
+            </div>
+            <p className="text-sm text-gray-600">{success}</p>
+            <p className="text-xs text-gray-400">Revisa tu bandeja de entrada y spam.</p>
+            <button onClick={onBack} className="text-sm text-primary font-bold hover:underline">
+              Volver al login
+            </button>
+          </div>
+        )}
+
+        {step === 'reset' && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <p className="text-sm text-gray-500">Ingresa tu nueva contraseña.</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nueva contraseña</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Confirmar contraseña</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                placeholder="Repite la contraseña"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Cambiando...' : 'Cambiar contraseña'}
+            </button>
+          </form>
+        )}
+
+        {step === 'done' && (
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <span className="material-symbols-outlined text-3xl text-green-600">check_circle</span>
+            </div>
+            <p className="text-sm font-semibold text-gray-700">Contraseña actualizada</p>
+            <p className="text-xs text-gray-400">Ya puedes iniciar sesión con tu nueva contraseña.</p>
+            <button onClick={onBack} className="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+              Ir a login
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
 
 export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgot, setShowForgot] = useState(false)
+
+  // Si hay ?reset= en la URL, abrir directamente el formulario de reset
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reset')) {
+      setShowForgot(true)
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -11,7 +212,7 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -37,65 +238,80 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="bg-primary px-6 py-4 flex items-center justify-between">
-          <h2 className="text-white font-bold text-lg flex items-center gap-2">
-            <span className="material-symbols-outlined">login</span>
-            Ingresar
-          </h2>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
-              <span className="material-symbols-outlined text-base">error</span>
-              {error}
+        {showForgot ? (
+          <ForgotPasswordView onBack={() => setShowForgot(false)} />
+        ) : (
+          <>
+            {/* Header */}
+            <div className="bg-primary px-6 py-4 flex items-center justify-between">
+              <h2 className="text-white font-bold text-lg flex items-center gap-2">
+                <span className="material-symbols-outlined">login</span>
+                Ingresar
+              </h2>
+              <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-              placeholder="tu@email.com"
-            />
-          </div>
+            {/* Formulario */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">error</span>
+                  {error}
+                </div>
+              )}
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Contraseña</label>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-              placeholder="Tu contraseña"
-            />
-          </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  placeholder="tu@email.com"
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-gray-600">Contraseña</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(true)}
+                    className="text-[11px] text-primary/70 hover:text-primary font-medium transition-colors"
+                  >
+                    Olvidé mi contraseña
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  placeholder="Tu contraseña"
+                />
+              </div>
 
-          <p className="text-center text-sm text-gray-500">
-            ¿No tienes cuenta?{' '}
-            <button type="button" onClick={onSwitchToRegister} className="text-primary font-bold hover:underline">
-              Regístrate
-            </button>
-          </p>
-        </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Ingresando...' : 'Ingresar'}
+              </button>
+
+              <p className="text-center text-sm text-gray-500">
+                ¿No tienes cuenta?{' '}
+                <button type="button" onClick={onSwitchToRegister} className="text-primary font-bold hover:underline">
+                  Regístrate
+                </button>
+              </p>
+            </form>
+          </>
+        )}
       </div>
     </div>
   )

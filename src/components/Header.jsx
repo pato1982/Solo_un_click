@@ -6,7 +6,10 @@ import { searchIndex } from '../data/searchIndex'
 
 export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onSearchSelect, user, onLoginSuccess, onLogout }) {
   const [showPlans, setShowPlans] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
+  const [showLogin, setShowLogin] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return !!params.get('reset')
+  })
   const [showRegister, setShowRegister] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])

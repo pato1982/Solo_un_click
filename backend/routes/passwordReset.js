@@ -2,6 +2,7 @@ const express = require('express')
 const crypto = require('crypto')
 const bcrypt = require('bcryptjs')
 const pool = require('../db')
+const { sendPasswordResetEmail } = require('../mailer')
 
 const router = express.Router()
 
@@ -35,9 +36,11 @@ router.post('/request', async (req, res) => {
       [user.id, token, expiresAt]
     )
 
-    // TODO: Enviar email con nodemailer cuando se configure
-    // Por ahora, loguear el token para testing
-    console.log(`[PASSWORD RESET] Token para ${email}: ${token}`)
+    // Enviar email (si SMTP está configurado, sino solo loguea)
+    const sent = await sendPasswordResetEmail(email, user.nombre, token)
+    if (!sent) {
+      console.log(`[PASSWORD RESET] Email no enviado (SMTP no configurado). Token para ${email}: ${token}`)
+    }
 
     res.json({ message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña' })
   } catch (err) {
