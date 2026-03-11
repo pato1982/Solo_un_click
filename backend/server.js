@@ -11,6 +11,7 @@ const analyticsRoutes = require('./routes/analytics')
 const turismoRoutes = require('./routes/turismo')
 const toursRoutes = require('./routes/tours')
 const portadaRoutes = require('./routes/portada')
+const paginaRoutes = require('./routes/pagina')
 
 const app = express()
 const PORT = 3001
@@ -30,6 +31,7 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/turismo', turismoRoutes)
 app.use('/api/tours', toursRoutes)
 app.use('/api/portada', portadaRoutes)
+app.use('/api/pagina', paginaRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

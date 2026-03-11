@@ -10,6 +10,7 @@ import AdminBanner from './admin/pages/AdminBanner'
 import AdminEstadisticas from './admin/pages/AdminEstadisticas'
 import AdminTour from './admin/pages/AdminTour'
 import AdminPortada from './admin/pages/AdminPortada'
+import AdminPagina from './admin/pages/AdminPagina'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="estadisticas" element={<AdminEstadisticas />} />
           <Route path="portada" element={<AdminPortada />} />
           <Route path="tour" element={<AdminTour />} />
+          <Route path="pagina" element={<AdminPagina />} />
         </Route>
         <Route path="/*" element={<App />} />
       </Routes>

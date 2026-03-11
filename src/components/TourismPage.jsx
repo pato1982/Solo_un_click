@@ -135,17 +135,96 @@ function SchedulePopup({ horarios, onClose }) {
 /* =========================================
    Página premium de una empresa
    ========================================= */
+function TourModal({ tour, onClose }) {
+  const [activeImg, setActiveImg] = useState(0)
+  const imgs = (tour.imagenes || []).map(img => `${API}${img}`).filter(Boolean)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 truncate">{tour.nombre}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+            <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
+          </button>
+        </div>
+
+        {/* Imágenes con pestañas */}
+        {imgs.length > 0 && (
+          <div className="px-4 pt-3">
+            <img src={imgs[activeImg] || imgs[0]} alt={tour.nombre} className="w-full h-56 object-cover rounded-lg" />
+            {imgs.length > 1 && (
+              <div className="flex justify-center gap-2 mt-2">
+                {imgs.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={`w-2 h-2 rounded-full transition-colors ${activeImg === i ? 'bg-primary' : 'bg-gray-300'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="p-4 flex flex-col gap-3">
+          {tour.ubicacion && (
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-accent text-sm">location_on</span>
+              <span className="text-xs text-slate-500">{tour.ubicacion}</span>
+            </div>
+          )}
+          {tour.detalle && (
+            <p className="text-xs text-slate-500 leading-relaxed">{tour.detalle}</p>
+          )}
+          {(tour.precio || tour.precio_antes) && (
+            <div className="flex items-center gap-3 pt-1">
+              {tour.precio_antes && (
+                <span className="text-xs text-slate-400 line-through">
+                  ${Number(tour.precio_antes).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+                </span>
+              )}
+              {tour.precio && (
+                <span className="text-lg font-black text-primary">
+                  ${Number(tour.precio).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CompanyDetail({ company, onBack }) {
   const [tours, setTours] = useState([])
   const [loadingTours, setLoadingTours] = useState(true)
+  const [selectedTour, setSelectedTour] = useState(null)
+  const [pagina, setPagina] = useState(null)
 
   useEffect(() => {
-    fetch(`${API}/api/tours/public/${company.userId}`)
-      .then(r => r.json())
-      .then(data => setTours(data.tours || []))
-      .catch(err => console.error('Error cargando tours:', err))
+    // Cargar tours y datos de página en paralelo, filtrados por userId
+    Promise.all([
+      fetch(`${API}/api/tours/public/${company.userId}`).then(r => r.json()),
+      fetch(`${API}/api/pagina/public/${company.userId}`).then(r => r.json()),
+    ])
+      .then(([toursData, paginaData]) => {
+        setTours(toursData.tours || [])
+        setPagina(paginaData.pagina || null)
+      })
+      .catch(err => console.error('Error cargando datos:', err))
       .finally(() => setLoadingTours(false))
   }, [company.userId])
+
+  const imgSup = pagina?.imagen_superior ? `${API}${pagina.imagen_superior}` : company.images[0]
+  const imgInf = pagina?.imagen_inferior ? `${API}${pagina.imagen_inferior}` : company.images[1]
+  const tituloSup = pagina?.titulo_superior || 'Sobre Nosotros'
+  const textoSup = pagina?.texto_superior || company.description || 'Sin descripción'
+  const tituloInf = pagina?.titulo_inferior || 'Datos de la Empresa'
+  const textoInf = pagina?.texto_inferior || null
 
   return (
     <div className="flex flex-col gap-8 relative pb-16">
@@ -158,21 +237,22 @@ function CompanyDetail({ company, onBack }) {
 
       {/* Fila 1: Imagen izquierda + Texto derecho */}
       <div className="flex flex-col md:flex-row gap-6 items-center">
-        {company.images[0] && (
+        {imgSup && (
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={company.images[0]} alt={company.name} className="w-full h-64 object-cover" />
+            <img src={imgSup} alt={company.name} className="w-full h-64 object-cover" />
           </div>
         )}
-        <div className={company.images[0] ? 'md:w-1/2 flex flex-col' : 'w-full flex flex-col'}>
-          <h3 className="text-sm font-black text-primary mb-2">Sobre Nosotros</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">{company.description || 'Sin descripción'}</p>
+        <div className={imgSup ? 'md:w-1/2 flex flex-col' : 'w-full flex flex-col'}>
+          <h3 className="text-sm font-black text-primary mb-2">{tituloSup}</h3>
+          <p className="text-xs text-slate-500 leading-relaxed">{textoSup}</p>
         </div>
       </div>
 
-      {/* Fila 2: Imagen derecha (si hay segunda) + Datos empresa */}
+      {/* Fila 2: Datos empresa + Imagen derecha */}
       <div className="flex flex-col md:flex-row gap-6 items-center">
         <div className="md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-5 pl-8">
-          <h3 className="text-sm font-black text-primary mb-4">Datos de la Empresa</h3>
+          <h3 className="text-sm font-black text-primary mb-4">{tituloInf}</h3>
+          {textoInf && <p className="text-xs text-slate-500 leading-relaxed mb-4">{textoInf}</p>}
           <div className="flex flex-col gap-3">
             {company.direccion && (
               <div className="flex items-center gap-2">
@@ -211,8 +291,6 @@ function CompanyDetail({ company, onBack }) {
                 </div>
               </div>
             )}
-
-            {/* Redes sociales */}
             {(company.facebook || company.instagram) && (
               <div className="mt-3 pt-3 border-t border-slate-100">
                 <h4 className="text-xs font-black text-accent mb-2 uppercase tracking-widest">Síguenos</h4>
@@ -232,14 +310,14 @@ function CompanyDetail({ company, onBack }) {
             )}
           </div>
         </div>
-        {company.images[1] && (
+        {imgInf && (
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={company.images[1]} alt={company.name} className="w-full h-64 object-cover" />
+            <img src={imgInf} alt={company.name} className="w-full h-64 object-cover" />
           </div>
         )}
       </div>
 
-      {/* Fila 3: Tours / Panoramas */}
+      {/* Fila 3: Tours / Panoramas — solo imagen + nombre */}
       <div>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-1 h-5 bg-accent rounded-full"></div>
@@ -254,53 +332,37 @@ function CompanyDetail({ company, onBack }) {
         ) : tours.length === 0 ? (
           <p className="text-center text-slate-400 text-xs py-6">Esta empresa aún no ha publicado tours.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {tours.map((tour) => {
               const imgIdx = tour.imagen_principal || 0
               const imagen = tour.imagenes && tour.imagenes[imgIdx]
                 ? `${API}${tour.imagenes[imgIdx]}`
                 : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
               return (
-                <div key={tour.id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                <div
+                  key={tour.id}
+                  onClick={() => setSelectedTour(tour)}
+                  className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                >
                   {imagen ? (
-                    <img src={imagen} alt={tour.nombre} className="w-full h-36 object-cover" />
+                    <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
-                    <div className="w-full h-36 bg-slate-50 flex items-center justify-center">
+                    <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
                       <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
                     </div>
                   )}
-                  <div className="p-3">
-                    <h4 className="text-xs font-bold text-slate-700 truncate">{tour.nombre}</h4>
-                    {tour.ubicacion && (
-                      <p className="text-[10px] text-slate-400 flex items-center gap-0.5 mt-0.5">
-                        <span className="material-symbols-outlined text-[10px]">location_on</span>
-                        {tour.ubicacion}
-                      </p>
-                    )}
-                    {tour.detalle && (
-                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{tour.detalle}</p>
-                    )}
-                    {(tour.precio || tour.precio_antes) && (
-                      <div className="flex items-center gap-2 mt-2">
-                        {tour.precio_antes && (
-                          <span className="text-[10px] text-slate-400 line-through">
-                            ${Number(tour.precio_antes).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
-                          </span>
-                        )}
-                        {tour.precio && (
-                          <span className="text-sm font-black text-primary">
-                            ${Number(tour.precio).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-[11px] font-semibold text-slate-600 text-center py-2 px-1 truncate">{tour.nombre}</p>
                 </div>
               )
             })}
           </div>
         )}
       </div>
+
+      {/* Modal detalle tour */}
+      {selectedTour && (
+        <TourModal tour={selectedTour} onClose={() => setSelectedTour(null)} />
+      )}
 
       {/* Botón flotante volver */}
       <FloatingButton label="Volver a Turismo" icon="arrow_back" onClick={onBack} />
