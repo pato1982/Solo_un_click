@@ -1,22 +1,10 @@
 import { useState } from 'react'
-import { sections } from '../data/products'
 import { storeCategories } from './StoresPage'
 import { eventCategories } from './EventsPage'
 
 const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-normal text-white/50 hover:text-white w-full text-left'
 const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full'
 const subBtnClass = 'flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50'
-
-// Recopilar subcategorías que realmente existen en los datos por categoría
-const existingSubcategories = {}
-sections.forEach((section) => {
-  section.items.forEach((item) => {
-    if (item.category) {
-      if (!existingSubcategories[item.category]) existingSubcategories[item.category] = new Set()
-      existingSubcategories[item.category].add(item.subcategory)
-    }
-  })
-})
 
 const hierarchicalContent = {
   productos: {
@@ -199,7 +187,7 @@ const TURISMO_ICON_MAP = {
   'Adrenalina': 'bolt',
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [] }) {
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [] }) {
   const [expandedCat, setExpandedCat] = useState(null)
 
   if (!activeNav) return null
@@ -216,6 +204,37 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
         label,
       })),
     }
+  }
+
+  // Productos, servicios, arriendos: mostrar solo subcategorías reales de la BD
+  if ((activeNav === 'productos' || activeNav === 'servicios' || activeNav === 'arriendos') && listingSubcategorias.length > 0) {
+    // Buscar subcategorías para este tipo de navegación
+    const tipoMap = { productos: 'producto', servicios: 'servicio', arriendos: 'arriendo' }
+    const subs = listingSubcategorias
+      .filter(s => s.tipo === tipoMap[activeNav])
+      .map(s => s.sub)
+
+    // Convertir a lista plana dinámica (sin jerarquía hardcodeada)
+    const ICON_MAP = {}
+    // Extraer iconos del contenido hardcodeado si existe
+    if (isHierarchical && panel.categories) {
+      panel.categories.forEach(cat => {
+        cat.subcategories.forEach(sub => { ICON_MAP[sub] = cat.icon })
+      })
+    }
+    if (!isHierarchical && panel.items) {
+      panel.items.forEach(item => { ICON_MAP[item.label] = item.icon })
+    }
+
+    const uniqueSubs = [...new Set(subs)].sort()
+    panel = {
+      title: panel.title,
+      items: uniqueSubs.map(label => ({
+        icon: ICON_MAP[label] || 'category',
+        label,
+      })),
+    }
+    // Ya no es jerárquico, es plano
   }
 
   if (!panel) return null
@@ -238,7 +257,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
             )}
           </div>
           <div className="flex flex-col gap-0 max-h-[330px] overflow-y-auto sidebar-scroll pr-1">
-            {isHierarchical ? (
+            {panel.categories ? (
               panel.categories.map((cat) => {
                 const isExpanded = expandedCat === cat.label
                 const visibleSubs = cat.subcategories

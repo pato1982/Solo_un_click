@@ -83,6 +83,7 @@ export default function App() {
   const [sections, setSections] = useState(staticSections)
   const [turismoCategorias, setTurismoCategorias] = useState([])
   const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
+  const [listingSubcategorias, setListingSubcategorias] = useState([])
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
@@ -98,6 +99,15 @@ export default function App() {
           if (apiSections.length > 0) {
             setSections(apiSections)
           }
+          // Extraer subcategorías únicas con su tipo para el sidebar dinámico
+          const subsMap = new Map()
+          data.listings.forEach(l => {
+            if (l.subcategoria) {
+              const key = `${l.tipo}|${l.subcategoria}`
+              if (!subsMap.has(key)) subsMap.set(key, { tipo: l.tipo, sub: l.subcategoria })
+            }
+          })
+          setListingSubcategorias([...subsMap.values()])
         }
       })
       .catch(err => console.error('Error cargando listings:', err))
@@ -141,9 +151,9 @@ export default function App() {
       return
     }
     if (nav === 'turismo') {
-      if (currentPage === 'turismo' && activeSidebar === 'turismo') {
-        setCurrentPage(null)
-        setActiveSidebar(null)
+      if (currentPage === 'turismo') {
+        // Ya estamos en turismo: volver a la lista principal y scroll arriba
+        setActiveSidebar('turismo')
         setActiveSection(null)
         setActiveFilter(null)
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -362,6 +372,7 @@ export default function App() {
           onMapClick={() => setStoreMapMode(true)}
           onCategorySelect={handleCategorySelect}
           turismoCategorias={turismoCategorias}
+          listingSubcategorias={listingSubcategorias}
         />
 
         <main className="flex-1 flex flex-col gap-8 p-6 overflow-hidden transition-all duration-300">
