@@ -1,5 +1,48 @@
 # Registro de Cambios - Solo a un Click
 
+## 11 de Marzo 2026 (noche 2) - UI recuperación de contraseña + nodemailer
+
+### Mailer (backend/mailer.js) — NUEVO
+- Transporter SMTP configurable vía env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SITE_URL
+- Default: Gmail SMTP (smtp.gmail.com:587)
+- `sendPasswordResetEmail(email, nombre, token)` — email HTML con branding Solo a un Click
+- Botón "Restablecer contraseña" enlaza a `SITE_URL?reset=TOKEN`
+- Si SMTP no está configurado, loguea token en consola (testing)
+
+### passwordReset.js — Conectado a mailer
+- `POST /request` ahora envía email real si SMTP está configurado
+- Fallback: loguea token en consola para testing sin email
+
+### LoginModal.jsx — Reescrito con flujo de recuperación
+- Nuevo componente `ForgotPasswordView` con 3 pasos:
+  1. **Email**: formulario para solicitar reset, muestra confirmación con icono
+  2. **Nueva contraseña**: dos campos (contraseña + confirmar), validación mín 6 chars
+  3. **Éxito**: confirmación visual con botón "Ir a login"
+- Detecta `?reset=TOKEN` en URL para abrir directamente el paso 2
+- Limpia URL después de leer el token
+- Link "Olvidé mi contraseña" al lado del label de contraseña
+
+### Header.jsx — Auto-abrir login si hay ?reset=
+- Si URL contiene `?reset=`, abre LoginModal automáticamente al cargar
+
+### Dependencias
+- `nodemailer ^6.9.8` agregado a backend/package.json
+- Instalado en servidor de producción
+
+### Para activar emails reales
+Configurar variables de entorno en el servidor:
+```bash
+pm2 set soloaunclick-api:SMTP_USER tu_email@gmail.com
+pm2 set soloaunclick-api:SMTP_PASS tu_app_password
+```
+O crear `/var/www/soloaunclick/backend/.env` con:
+```
+SMTP_USER=tu_email@gmail.com
+SMTP_PASS=tu_app_password_de_google
+```
+
+---
+
 ## 11 de Marzo 2026 (noche) - 4 tablas nuevas: page_visits, user_sessions, activity_log, password_resets
 
 ### page_visits — Tracking de visitas con IP
