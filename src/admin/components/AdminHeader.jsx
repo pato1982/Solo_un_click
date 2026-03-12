@@ -117,22 +117,25 @@ function ProfileModal({ onClose }) {
 
     // Quitar opciones dentro de comercio
     if (tipoCuenta === 'general') {
-      if (user.vende_productos && !vendeProductos && counts?.productos > 0) {
-        deleteDetails.push(`${counts.productos} productos`)
+      if (user.vende_productos && !vendeProductos) {
+        const n = counts?.productos || 0
+        deleteDetails.push(n > 0 ? `${n} productos (publicaciones, carrusel y banner)` : 'Sección de Productos y todos sus datos futuros')
         deleteTipos.push('producto')
       }
-      if (user.ofrece_servicios && !ofreceServicios && counts?.servicios > 0) {
-        deleteDetails.push(`${counts.servicios} servicios`)
+      if (user.ofrece_servicios && !ofreceServicios) {
+        const n = counts?.servicios || 0
+        deleteDetails.push(n > 0 ? `${n} servicios publicados` : 'Sección de Servicios y todos sus datos futuros')
         deleteTipos.push('servicio')
       }
-      if (user.ofrece_arriendos && !ofreceArriendos && counts?.arriendos > 0) {
-        deleteDetails.push(`${counts.arriendos} arriendos`)
+      if (user.ofrece_arriendos && !ofreceArriendos) {
+        const n = counts?.arriendos || 0
+        deleteDetails.push(n > 0 ? `${n} arriendos publicados` : 'Sección de Arriendos y todos sus datos futuros')
         deleteTipos.push('arriendo')
       }
-      if (deleteDetails.length > 0) {
-        const nombres = deleteDetails.join(', ')
+      if (deleteTipos.length > 0) {
+        const nombres = deleteTipos.map(t => t === 'producto' ? 'Productos' : t === 'servicio' ? 'Servicios' : 'Arriendos').join(', ')
         return {
-          message: `Al desactivar estas opciones se eliminarán los registros asociados sin poder recuperarlos.`,
+          message: `Al desmarcar ${nombres} se eliminarán todos los datos ingresados en esas secciones incluyendo publicaciones, tarjetas de carrusel y banner asociadas, sin poder recuperarlos.`,
           details: deleteDetails,
           deleteTipos,
         }
