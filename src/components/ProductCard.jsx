@@ -60,7 +60,7 @@ function ProductModal({ product, hidePrice, onClose }) {
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div
-        className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
+        className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón cerrar */}
@@ -85,7 +85,7 @@ function ProductModal({ product, hidePrice, onClose }) {
           {/* Info - lado derecho */}
           <div className="md:w-[50%] p-3 flex flex-col">
             {/* 1. Nombre - 2 líneas fijas */}
-            <div className="min-h-[36px] flex items-start justify-center">
+            <div className="min-h-[36px] flex items-start justify-center shrink-0">
               <h3 className="text-sm font-black text-primary text-center line-clamp-2 leading-[18px]">
                 {(() => {
                   const words = product.name.split(' ')
@@ -95,13 +95,15 @@ function ProductModal({ product, hidePrice, onClose }) {
               </h3>
             </div>
 
-            {/* 2. Descripción - hasta 5 líneas fijas */}
-            <div className="min-h-[60px] mt-1.5">
-              <p className="text-[10px] text-slate-500 leading-[12px] line-clamp-5">{product.description}</p>
+            {/* 2. Descripción - centrada verticalmente, scroll si es muy larga */}
+            <div className="flex-1 flex items-center min-h-0 my-1">
+              <div className="w-full max-h-full overflow-y-auto">
+                <p className="text-[10px] text-slate-500 leading-relaxed text-center">{product.description}</p>
+              </div>
             </div>
 
             {/* 3. Zona variable: Tallas y/o Medidas */}
-            <div className="flex-1 mt-1.5 space-y-1.5">
+            <div className="shrink-0 mt-1.5 space-y-1.5">
               {product.tallas && product.tallas.seleccion?.length > 0 && (
                 <div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">
@@ -162,7 +164,7 @@ function ProductModal({ product, hidePrice, onClose }) {
             </div>
 
             {/* 4. Penúltima línea: Precio actual (izq) - Precio anterior (der) */}
-            <div className="pt-1.5 border-t border-slate-100 mt-1.5 flex items-center justify-between">
+            <div className="pt-1.5 border-t border-slate-100 mt-1.5 flex items-center justify-between shrink-0">
               {!hidePrice ? (
                 <>
                   <p className="text-sm font-black text-primary">

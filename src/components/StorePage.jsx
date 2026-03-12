@@ -107,8 +107,8 @@ function MarqueeModal({ product, phone, onClose }) {
           <div className="md:w-[50%] h-44 md:h-auto shrink-0 p-1">
             <img src={product.image} alt={product.alt || product.name} className="w-full h-full object-cover rounded-tr-xl bg-slate-100" />
           </div>
-          <div className="md:w-[50%] p-3 flex flex-col flex-1 overflow-y-auto">
-            <h3 className="text-sm font-black text-primary text-center mb-2 line-clamp-2">
+          <div className="md:w-[50%] p-3 flex flex-col flex-1">
+            <h3 className="text-sm font-black text-primary text-center mb-2 shrink-0 line-clamp-2">
               {(() => {
                 const words = product.name.split(' ')
                 if (words.length <= 2) return product.name
@@ -116,14 +116,18 @@ function MarqueeModal({ product, phone, onClose }) {
               })()}
             </h3>
             {product.badge && (
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center mb-2 shrink-0">
                 <span className="text-[9px] font-bold bg-primary text-white px-2 py-0.5 rounded-full">{product.badge}</span>
               </div>
             )}
-            <p className="text-[10px] text-slate-500 leading-relaxed mb-2">{product.description}</p>
+            <div className="flex-1 flex items-center min-h-0 my-1">
+              <div className="w-full max-h-full overflow-y-auto">
+                <p className="text-[10px] text-slate-500 leading-relaxed text-center">{product.description}</p>
+              </div>
+            </div>
 
             {product.tallas && product.tallas.seleccion && product.tallas.seleccion.length > 0 && (
-              <div className="mb-2">
+              <div className="mb-2 shrink-0">
                 <p className="text-[9px] font-bold text-slate-600 mb-1">Tallas disponibles:</p>
                 <div className="flex flex-wrap gap-1">
                   {product.tallas.seleccion.map((t) => (
@@ -134,7 +138,7 @@ function MarqueeModal({ product, phone, onClose }) {
             )}
 
             {product.medidas && (product.medidas.alto || product.medidas.ancho || product.medidas.profundidad) && (
-              <div className="mb-2">
+              <div className="mb-2 shrink-0">
                 <p className="text-[9px] font-bold text-slate-600 mb-1">Medidas:</p>
                 <div className="flex gap-2 text-[9px] text-slate-500">
                   {product.medidas.alto && <span>Alto: {product.medidas.alto}cm</span>}
@@ -145,10 +149,10 @@ function MarqueeModal({ product, phone, onClose }) {
             )}
 
             {product.genero && (
-              <p className="text-[9px] text-slate-400 mb-2">Género: {product.genero}</p>
+              <p className="text-[9px] text-slate-400 mb-2 shrink-0">Género: {product.genero}</p>
             )}
 
-            <div className="mt-auto pt-2 flex items-center gap-2">
+            <div className="pt-2 flex items-center gap-2 shrink-0">
               {product.originalPrice && (
                 <p className="text-[10px] font-bold text-slate-400 line-through">
                   ${product.originalPrice.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
@@ -628,12 +632,12 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {/* Carrusel 1 después de 2 filas */}
-                  {idx === 1 && carousel1.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
-                  {/* Carrusel 2 después de 4 filas */}
-                  {idx === 3 && carousel2.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
-                  {/* Carrusel 3 después de 6 filas */}
-                  {idx === 5 && carousel3.length > 0 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
+                  {/* Carrusel 1: visible con 12+ productos */}
+                  {idx === 1 && carousel1.length > 0 && storeProducts.length >= 12 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
+                  {/* Carrusel 2: visible con 32+ productos */}
+                  {idx === 3 && carousel2.length > 0 && storeProducts.length >= 32 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
+                  {/* Carrusel 3: visible con 52+ productos */}
+                  {idx === 5 && carousel3.length > 0 && storeProducts.length >= 52 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
                 </div>
               ))
             })()

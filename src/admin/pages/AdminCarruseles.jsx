@@ -101,6 +101,7 @@ export default function AdminCarruseles() {
   const [deleteId, setDeleteId] = useState(null)
   const [carouselNames, setCarouselNames] = useState(['Carrusel 1', 'Carrusel 2', 'Carrusel 3'])
   const [saved, setSaved] = useState(false)
+  const [showInfoPopup, setShowInfoPopup] = useState(true)
   const fileInputRef = useRef(null)
 
   // Tabs visibles según plan
@@ -304,6 +305,49 @@ export default function AdminCarruseles() {
           Administra los productos de tus {esPremium ? '3 carruseles' : 'carrusel'} (máx. {MAX_ITEMS} por carrusel)
         </p>
       </div>
+
+      {/* Popup informativo de requisitos de visualización */}
+      {showInfoPopup && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={() => setShowInfoPopup(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-primary">info</span>
+            </div>
+            <h3 className="text-sm font-bold text-gray-800">¿Cuándo se visualizan los carruseles?</h3>
+            <div className="text-xs text-gray-500 text-center leading-relaxed space-y-2">
+              <p>Los carruseles aparecen en tu página cuando tienes suficientes productos cargados en la sección <strong className="text-primary">Productos</strong>:</p>
+              {esPremium ? (
+                <div className="bg-gray-50 rounded-lg p-3 text-left space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
+                    <span><strong>Carrusel 1:</strong> a partir de <strong className="text-primary">12 productos</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
+                    <span><strong>Carrusel 2:</strong> a partir de <strong className="text-primary">32 productos</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
+                    <span><strong>Carrusel 3:</strong> a partir de <strong className="text-primary">52 productos</strong></span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 justify-center">
+                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
+                    <span><strong>Carrusel 1:</strong> a partir de <strong className="text-primary">12 productos</strong></span>
+                  </div>
+                </div>
+              )}
+              <p className="text-[10px] text-gray-400">Las tarjetas del carrusel no cuentan como productos del plan.</p>
+            </div>
+            <button onClick={() => setShowInfoPopup(false)} className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-colors mt-1">
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Tabs */}

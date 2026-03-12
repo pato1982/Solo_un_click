@@ -60,6 +60,76 @@ function mapListingToProduct(l) {
   }
 }
 
+// Mezcla ponderada: Premium 3 slots, Normal 2, Gratis 1 por ronda
+// Round-robin entre negocios del mismo tier, producto aleatorio de cada uno
+function mixProductsByPlan(products) {
+  if (products.length <= 1) return products
+
+  // Agrupar por user_id (negocio)
+  const byUser = {}
+  products.forEach(p => {
+    const uid = p.user_id || 0
+    if (!byUser[uid]) byUser[uid] = { plan: p.owner_plan_id || 1, items: [] }
+    byUser[uid].items.push(p)
+  })
+
+  // Mezclar productos de cada negocio aleatoriamente
+  Object.values(byUser).forEach(u => {
+    for (let i = u.items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [u.items[i], u.items[j]] = [u.items[j], u.items[i]]
+    }
+  })
+
+  // Separar negocios por tier
+  const tiers = { 3: [], 2: [], 1: [] }
+  Object.values(byUser).forEach(u => {
+    const tier = u.plan >= 3 ? 3 : u.plan === 2 ? 2 : 1
+    tiers[tier].push({ items: [...u.items], idx: 0 })
+  })
+
+  // Mezclar orden de negocios dentro de cada tier
+  Object.values(tiers).forEach(arr => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+  })
+
+  // Pesos por tier: Premium 3, Normal 2, Gratis 1
+  const weights = { 3: 3, 2: 2, 1: 1 }
+  const result = []
+  const totalProducts = products.length
+  const tierPointers = { 3: 0, 2: 0, 1: 0 } // round-robin pointer por tier
+
+  while (result.length < totalProducts) {
+    let added = false
+    for (const tier of [3, 2, 1]) {
+      const businesses = tiers[tier]
+      if (businesses.length === 0) continue
+      const slots = weights[tier]
+      for (let s = 0; s < slots && result.length < totalProducts; s++) {
+        // Round-robin entre negocios del tier
+        let attempts = 0
+        while (attempts < businesses.length) {
+          const biz = businesses[tierPointers[tier] % businesses.length]
+          tierPointers[tier]++
+          if (biz.idx < biz.items.length) {
+            result.push(biz.items[biz.idx])
+            biz.idx++
+            added = true
+            break
+          }
+          attempts++
+        }
+      }
+    }
+    if (!added) break
+  }
+
+  return result
+}
+
 function buildSectionsFromAPI(listings) {
   const grouped = {}
   listings.forEach((l) => {
@@ -72,7 +142,7 @@ function buildSectionsFromAPI(listings) {
     id,
     title: SECTION_TITLES[id] || id,
     hidePrice: id === 'servicios',
-    items: grouped[id] || [],
+    items: mixProductsByPlan(grouped[id] || []),
   }))
 }
 
