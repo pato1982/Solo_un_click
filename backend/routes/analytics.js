@@ -80,10 +80,10 @@ router.get('/stats', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
-    // Generar array de últimos 6 meses con valores (rellenar meses sin datos con 0)
+    // Generar array de últimos 5 meses + mes actual + mes siguiente
     const meses = []
     const now = new Date()
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 5; i >= -1; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       meses.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'))
     }
