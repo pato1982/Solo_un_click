@@ -148,7 +148,7 @@ function authMiddleware(req, res, next) {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT u.id, u.nombre, u.email, u.tipo_cuenta, u.telefono, u.comuna,
+      `SELECT u.id, u.nombre, u.email, u.tipo_cuenta, u.telefono, u.comuna, u.direccion,
               u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos,
               u.plan_id, u.activo, u.created_at,
               p.nombre as plan_nombre, p.max_listings, p.tiene_pagina,
@@ -167,6 +167,209 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error en /me:', err)
     res.status(500).json({ error: 'Error al obtener usuario' })
+  }
+})
+
+// GET /api/auth/profile/counts — contar registros por tipo antes de eliminar
+router.get('/profile/counts', authMiddleware, async (req, res) => {
+  try {
+    const uid = req.userId
+    const [productos] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'producto'])
+    const [servicios] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'servicio'])
+    const [arriendos] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'arriendo'])
+    const [tours] = await pool.query('SELECT COUNT(*) as c FROM turismo_tours WHERE user_id = ?', [uid])
+    const [portada] = await pool.query('SELECT COUNT(*) as c FROM turismo_portada WHERE user_id = ?', [uid])
+    const [pagina] = await pool.query('SELECT COUNT(*) as c FROM turismo_pagina WHERE user_id = ?', [uid])
+    const [negocio] = await pool.query('SELECT COUNT(*) as c FROM businesses WHERE user_id = ?', [uid])
+    const [carousels] = await pool.query('SELECT COUNT(*) as c FROM carousels WHERE user_id = ?', [uid])
+
+    res.json({
+      productos: productos[0].c,
+      servicios: servicios[0].c,
+      arriendos: arriendos[0].c,
+      tours: tours[0].c,
+      portada: portada[0].c,
+      pagina: pagina[0].c,
+      negocio: negocio[0].c,
+      carousels: carousels[0].c,
+    })
+  } catch (err) {
+    console.error('Error contando registros:', err)
+    res.status(500).json({ error: 'Error al contar registros' })
+  }
+})
+
+// Función auxiliar para eliminar imágenes de listings del servidor
+const fs = require('fs')
+const path = require('path')
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
+
+async function deleteListingsByType(userId, tipo) {
+  // Obtener IDs de listings a eliminar
+  const [listings] = await pool.query('SELECT id FROM listings WHERE user_id = ? AND tipo = ?', [userId, tipo])
+  if (listings.length === 0) return 0
+
+  const ids = listings.map(l => l.id)
+
+  // Obtener URLs de imágenes para borrar archivos
+  const [images] = await pool.query(`SELECT url FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+  for (const img of images) {
+    const filePath = path.join(UPLOAD_DIR, path.basename(img.url))
+    try { fs.unlinkSync(filePath) } catch (e) { /* archivo ya no existe */ }
+  }
+
+  // Eliminar registros relacionados
+  await pool.query(`DELETE FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+  await pool.query(`DELETE FROM listing_sizes WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+  await pool.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+  await pool.query(`DELETE FROM listings WHERE id IN (${ids.map(() => '?').join(',')})`, ids)
+
+  return ids.length
+}
+
+async function deleteAllCommerceData(userId) {
+  // Eliminar todos los listings (productos, servicios, arriendos)
+  const [listings] = await pool.query('SELECT id FROM listings WHERE user_id = ?', [userId])
+  if (listings.length > 0) {
+    const ids = listings.map(l => l.id)
+    const [images] = await pool.query(`SELECT url FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+    for (const img of images) {
+      const filePath = path.join(UPLOAD_DIR, path.basename(img.url))
+      try { fs.unlinkSync(filePath) } catch (e) {}
+    }
+    await pool.query(`DELETE FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+    await pool.query(`DELETE FROM listing_sizes WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+    await pool.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+    await pool.query('DELETE FROM listings WHERE user_id = ?', [userId])
+  }
+
+  // Eliminar carruseles e imágenes de carrusel
+  const [carousels] = await pool.query('SELECT id FROM carousels WHERE user_id = ?', [userId])
+  if (carousels.length > 0) {
+    const cIds = carousels.map(c => c.id)
+    const [cImages] = await pool.query(`SELECT imagen_url FROM carousel_images WHERE carousel_id IN (${cIds.map(() => '?').join(',')})`, cIds)
+    for (const img of cImages) {
+      const filePath = path.join(UPLOAD_DIR, path.basename(img.imagen_url))
+      try { fs.unlinkSync(filePath) } catch (e) {}
+    }
+    await pool.query(`DELETE FROM carousel_images WHERE carousel_id IN (${cIds.map(() => '?').join(',')})`, cIds)
+    await pool.query('DELETE FROM carousels WHERE user_id = ?', [userId])
+  }
+
+  // Eliminar negocio
+  await pool.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+}
+
+async function deleteAllTurismData(userId) {
+  // Eliminar tours e imágenes
+  const [tours] = await pool.query('SELECT imagenes FROM turismo_tours WHERE user_id = ?', [userId])
+  for (const t of tours) {
+    if (t.imagenes) {
+      try {
+        const imgs = JSON.parse(t.imagenes)
+        for (const img of imgs) {
+          const filePath = path.join(UPLOAD_DIR, path.basename(img))
+          try { fs.unlinkSync(filePath) } catch (e) {}
+        }
+      } catch (e) {}
+    }
+  }
+  await pool.query('DELETE FROM turismo_tours WHERE user_id = ?', [userId])
+
+  // Eliminar portada e imágenes
+  const [portadas] = await pool.query('SELECT imagenes FROM turismo_portada WHERE user_id = ?', [userId])
+  for (const p of portadas) {
+    if (p.imagenes) {
+      try {
+        const imgs = JSON.parse(p.imagenes)
+        for (const img of imgs) {
+          const filePath = path.join(UPLOAD_DIR, path.basename(img))
+          try { fs.unlinkSync(filePath) } catch (e) {}
+        }
+      } catch (e) {}
+    }
+  }
+  await pool.query('DELETE FROM turismo_portada WHERE user_id = ?', [userId])
+
+  // Eliminar página e imágenes
+  const [paginas] = await pool.query('SELECT imagen_superior, imagen_inferior FROM turismo_pagina WHERE user_id = ?', [userId])
+  for (const p of paginas) {
+    for (const img of [p.imagen_superior, p.imagen_inferior]) {
+      if (img) {
+        const filePath = path.join(UPLOAD_DIR, path.basename(img))
+        try { fs.unlinkSync(filePath) } catch (e) {}
+      }
+    }
+  }
+  await pool.query('DELETE FROM turismo_pagina WHERE user_id = ?', [userId])
+
+  // Eliminar negocio
+  await pool.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+}
+
+// PUT /api/auth/profile — actualizar tipo de cuenta y plan, con eliminación de datos
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id, delete_tipos } = req.body
+    const uid = req.userId
+
+    // Obtener estado actual del usuario
+    const [currentRows] = await pool.query('SELECT * FROM users WHERE id = ?', [uid])
+    if (currentRows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' })
+    const current = currentRows[0]
+
+    // Eliminar datos de tipos que se están quitando
+    if (delete_tipos && Array.isArray(delete_tipos)) {
+      for (const tipo of delete_tipos) {
+        if (tipo === 'producto') await deleteListingsByType(uid, 'producto')
+        if (tipo === 'servicio') await deleteListingsByType(uid, 'servicio')
+        if (tipo === 'arriendo') await deleteListingsByType(uid, 'arriendo')
+      }
+    }
+
+    // Si cambia de comercio a turismo, eliminar todo lo de comercio
+    if (tipo_cuenta === 'turismo' && current.tipo_cuenta === 'general') {
+      await deleteAllCommerceData(uid)
+    }
+
+    // Si cambia de turismo a comercio, eliminar todo lo de turismo
+    if (tipo_cuenta === 'general' && current.tipo_cuenta === 'turismo') {
+      await deleteAllTurismData(uid)
+    }
+
+    // Actualizar campos
+    const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : current.plan_id
+    const tipo = ['general', 'turismo'].includes(tipo_cuenta) ? tipo_cuenta : current.tipo_cuenta
+
+    await pool.query(
+      `UPDATE users SET tipo_cuenta = ?, vende_productos = ?, ofrece_servicios = ?, ofrece_arriendos = ?, plan_id = ? WHERE id = ?`,
+      [
+        tipo,
+        tipo === 'general' ? (vende_productos ? 1 : 0) : 0,
+        tipo === 'general' ? (ofrece_servicios ? 1 : 0) : 0,
+        tipo === 'general' ? (ofrece_arriendos ? 1 : 0) : 0,
+        selectedPlan,
+        uid
+      ]
+    )
+
+    // Devolver usuario actualizado
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nombre, u.email, u.tipo_cuenta, u.telefono, u.comuna, u.direccion,
+              u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos,
+              u.plan_id, u.activo, u.created_at,
+              p.nombre as plan_nombre, p.max_listings, p.tiene_pagina,
+              p.tiene_destacados, p.tiene_estadisticas
+       FROM users u
+       JOIN plans p ON u.plan_id = p.id
+       WHERE u.id = ?`,
+      [uid]
+    )
+
+    res.json({ message: 'Perfil actualizado', user: rows[0] })
+  } catch (err) {
+    console.error('Error actualizando perfil:', err)
+    res.status(500).json({ error: 'Error al actualizar perfil' })
   }
 })
 
