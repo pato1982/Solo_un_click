@@ -443,9 +443,8 @@ export default function App() {
               <div className="flex items-center gap-4">
               {user ? (
                 <>
-                  <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span>
-                    {' '}{user.tipo_cuenta === 'turismo' ? 'Turismo' : user.vende_productos ? 'Productos' : user.ofrece_servicios ? 'Servicios' : user.ofrece_arriendos ? 'Arriendos' : ''}
-                    {' '}<span className="text-white/50">{user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
+                  <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
+                    {' '}<span className="text-white/50">Plan {user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
                   </span>
                   <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
                     <span className="material-symbols-outlined text-xl">dashboard</span>
