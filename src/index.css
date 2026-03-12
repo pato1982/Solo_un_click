@@ -54,7 +54,7 @@ body {
 }
 
 .animate-image-marquee {
-  animation: image-marquee 20s linear infinite;
+  animation: image-marquee 18s linear infinite;
 }
 
 .sidebar-scroll::-webkit-scrollbar {

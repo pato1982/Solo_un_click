@@ -113,11 +113,12 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId]
     )
     const [countRows] = await pool.query(
-      'SELECT COUNT(*) as total FROM listings WHERE user_id = ?',
+      'SELECT COUNT(*) as total FROM listings WHERE user_id = ? AND carousel_posicion IS NULL AND banner_orden IS NULL',
       [req.userId]
     )
 
-    if (countRows[0].total >= userRows[0].max_listings) {
+    // Carruseles y banners no cuentan en el límite del plan
+    if (!carousel_posicion && !banner_orden && countRows[0].total >= userRows[0].max_listings) {
       return res.status(403).json({ error: `Has alcanzado el límite de ${userRows[0].max_listings} publicaciones de tu plan` })
     }
 

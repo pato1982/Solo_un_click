@@ -159,7 +159,10 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           <div className="absolute right-0 flex items-center gap-4">
             {user ? (
               <>
-                <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span></span>
+                <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span>
+                  {' '}{user.tipo_cuenta === 'turismo' ? 'Turismo' : user.vende_productos ? 'Productos' : user.ofrece_servicios ? 'Servicios' : user.ofrece_arriendos ? 'Arriendos' : ''}
+                  {' '}<span className="text-white/50">{user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
+                </span>
                 <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
                   <span className="material-symbols-outlined text-xl">dashboard</span>
                 </a>

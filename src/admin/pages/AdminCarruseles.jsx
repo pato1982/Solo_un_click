@@ -22,6 +22,8 @@ function generateCroppedBlob(src, pos, scale, naturalW, naturalH, size = 400) {
       canvas.width = size; canvas.height = size
       const fitScale = Math.max(size / naturalW, size / naturalH) * scale
       const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, size, size)
       ctx.drawImage(img, pos.x * (size / 208), pos.y * (size / 208), naturalW * fitScale, naturalH * fitScale)
       canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9)
     }
@@ -36,10 +38,12 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   const fitScale = naturalW && naturalH ? Math.max(208 / naturalW, 208 / naturalH) * scale : 1
   const drawW = naturalW * fitScale, drawH = naturalH * fitScale
 
-  const clampPos = useCallback((x, y) => ({
-    x: Math.max(Math.min(0, 208 - drawW), Math.min(0, x)),
-    y: Math.max(Math.min(0, 208 - drawH), Math.min(0, y)),
-  }), [drawW, drawH])
+  const clampPos = useCallback((x, y) => {
+    let minX, maxX, minY, maxY
+    if (drawW >= 208) { minX = 208 - drawW; maxX = 0 } else { minX = 0; maxX = 208 - drawW }
+    if (drawH >= 208) { minY = 208 - drawH; maxY = 0 } else { minY = 0; maxY = 208 - drawH }
+    return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) }
+  }, [drawW, drawH])
 
   const handleStart = (cx, cy) => { dragging.current = true; startPoint.current = { x: cx, y: cy }; startPos.current = { ...pos } }
   const handleMove = useCallback((cx, cy) => {
@@ -61,14 +65,14 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
 
   return (
     <div className="relative">
-      <div className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-gray-100"
+      <div className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-white"
         onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX, e.clientY) }}
         onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}>
         <img src={src} alt="Preview" draggable={false} className="pointer-events-none" style={{ width: drawW, height: drawH, transform: `translate(${pos.x}px, ${pos.y}px)`, maxWidth: 'none' }} />
       </div>
       <div className="flex items-center gap-2 mt-2">
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_out</span>
-        <input type="range" min="1" max="3" step="0.05" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
+        <input type="range" min="0.5" max="1.5" step="0.02" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_in</span>
       </div>
       <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra para ajustar posición</p>
@@ -76,12 +80,8 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
-// Requisitos de productos para desbloquear carruseles
-const CAROUSEL_REQUIREMENTS = {
-  1: { normal: 10, premium: 0 },   // Carrusel 1: plan normal necesita 10 productos, premium siempre
-  2: { normal: null, premium: 30 }, // Carrusel 2: solo premium, necesita 30 productos
-  3: { normal: null, premium: 40 }, // Carrusel 3: solo premium, necesita 40 productos
-}
+// Carruseles disponibles según plan (Normal: 1, Premium: 1,2,3)
+// No requieren cantidad mínima de productos para desbloquearse
 
 export default function AdminCarruseles() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -92,7 +92,6 @@ export default function AdminCarruseles() {
   const [activeTab, setActiveTab] = useState(1)
   const [items, setItems] = useState([])
   const [categoriasDB, setCategoriasDB] = useState([])
-  const [totalProductos, setTotalProductos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -107,24 +106,17 @@ export default function AdminCarruseles() {
   // Tabs visibles según plan
   const visibleTabs = esPremium ? [1, 2, 3] : esNormal ? [1] : []
 
-  // Verificar si un carrusel está desbloqueado
+  // Carruseles siempre desbloqueados según plan (Normal: 1, Premium: 1-3)
   const isCarouselUnlocked = (pos) => {
-    const req = CAROUSEL_REQUIREMENTS[pos]
-    if (esPremium) return req.premium === 0 || totalProductos >= req.premium
-    if (esNormal) return req.normal !== null && totalProductos >= req.normal
+    if (esPremium) return true
+    if (esNormal) return pos === 1
     return false
-  }
-
-  const getRequiredProducts = (pos) => {
-    const req = CAROUSEL_REQUIREMENTS[pos]
-    return esPremium ? req.premium : req.normal
   }
 
   // Manejar click en tab
   const handleTabClick = (pos) => {
     if (!isCarouselUnlocked(pos)) {
-      const required = getRequiredProducts(pos)
-      setShowLockedPopup({ pos, required })
+      setShowLockedPopup({ pos })
       return
     }
     setActiveTab(pos)
@@ -149,7 +141,6 @@ export default function AdminCarruseles() {
       if (catsData.categorias) setCategoriasDB(catsData.categorias)
       if (listData.listings) {
         // Contar productos que NO son de carrusel
-        setTotalProductos(listData.listings.filter(l => !l.carousel_posicion).length)
         setItems(listData.listings.filter(l => l.carousel_posicion).map(l => ({
           id: l.id, carousel: l.carousel_posicion, orden: l.carousel_orden,
           nombre: l.nombre, descripcion: l.descripcion, precio: l.precio, precioOriginal: l.precio_original,
@@ -311,8 +302,6 @@ export default function AdminCarruseles() {
         <h1 className="text-xl font-black text-gray-800">Carruseles</h1>
         <p className="text-xs text-gray-400 mt-0.5">
           Administra los productos de tus {esPremium ? '3 carruseles' : 'carrusel'} (máx. {MAX_ITEMS} por carrusel)
-          <span className="ml-2 text-gray-300">|</span>
-          <span className="ml-2">{totalProductos} producto{totalProductos !== 1 ? 's' : ''} subido{totalProductos !== 1 ? 's' : ''}</span>
         </p>
       </div>
 
@@ -331,7 +320,7 @@ export default function AdminCarruseles() {
                   {unlocked ? (
                     <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${count >= MAX_ITEMS ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>{count}/{MAX_ITEMS}</span>
                   ) : (
-                    <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">{getRequiredProducts(pos)}+ prod.</span>
+                    <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">Premium</span>
                   )}
                 </span>
                 {activeTab === pos && unlocked && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>}
@@ -601,15 +590,11 @@ export default function AdminCarruseles() {
               <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center">
                 <span className="material-symbols-outlined text-3xl text-amber-500">lock</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-800">Carrusel {showLockedPopup.pos} bloqueado</h3>
+              <h3 className="text-sm font-bold text-gray-800">Carrusel {showLockedPopup.pos} no disponible</h3>
               <p className="text-xs text-gray-500 text-center leading-relaxed">
-                Este carrusel se desbloqueará cuando tengas al menos <strong className="text-primary">{showLockedPopup.required} productos</strong> subidos en tu tienda.
-              </p>
-              <p className="text-[10px] text-gray-400">
-                Actualmente tienes {totalProductos} producto{totalProductos !== 1 ? 's' : ''}.
-                {showLockedPopup.required - totalProductos > 0 && (
-                  <span className="ml-1">Te faltan <strong>{showLockedPopup.required - totalProductos}</strong> más.</span>
-                )}
+                {esNormal && showLockedPopup.pos > 1
+                  ? 'Los carruseles 2 y 3 están disponibles solo en el Plan Premium.'
+                  : 'Los carruseles están disponibles a partir del Plan Normal.'}
               </p>
               <button onClick={() => setShowLockedPopup(null)} className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-colors mt-1">
                 Entendido

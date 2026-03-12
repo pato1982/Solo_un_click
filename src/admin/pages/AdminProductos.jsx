@@ -52,6 +52,8 @@ function generateCroppedImage(src, pos, scale, naturalW, naturalH, size = 400) {
       const drawW = naturalW * fitScale
       const drawH = naturalH * fitScale
       const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, size, size)
       ctx.drawImage(img, pos.x * (size / 208), pos.y * (size / 208), drawW, drawH)
       canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9)
     }
@@ -121,7 +123,7 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
     <div className="relative">
       <div
         ref={containerRef}
-        className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-gray-100"
+        className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-white"
         onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX, e.clientY) }}
         onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
       >
@@ -129,7 +131,7 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
       </div>
       <div className="flex items-center gap-2 mt-2">
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_out</span>
-        <input type="range" min="0.5" max="3" step="0.05" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
+        <input type="range" min="0.5" max="1.5" step="0.02" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_in</span>
       </div>
       <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra para ajustar posición</p>
@@ -179,7 +181,7 @@ export default function AdminProductos() {
     ])
       .then(([data, catsData]) => {
         if (data.listings) {
-          setProductos(data.listings.map(l => ({
+          setProductos(data.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(l => ({
             id: l.id,
             seccion: l.seccion || 'destacados',
             nombre: l.nombre,
@@ -227,7 +229,7 @@ export default function AdminProductos() {
             imagenNaturalW: img.naturalWidth,
             imagenNaturalH: img.naturalHeight,
             imagenPos: { x: (208 - drawW) / 2, y: (208 - drawH) / 2 },
-            imagenScale: 1.75,
+            imagenScale: 1,
           }))
         }
         img.src = reader.result
@@ -309,7 +311,7 @@ export default function AdminProductos() {
         })
         const listData = await listRes.json()
         if (listData.listings) {
-          setProductos(listData.listings.map(l => ({
+          setProductos(listData.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(l => ({
             id: l.id,
             seccion: l.seccion || 'destacados',
             nombre: l.nombre,

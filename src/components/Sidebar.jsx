@@ -4,7 +4,7 @@ import { eventCategories } from './EventsPage'
 
 const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full text-left'
 const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full'
-const subBtnClass = 'flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-xs font-normal text-white/50 hover:text-accent'
+const subBtnClass = 'flex items-center gap-2 pl-2 pr-2 py-0.5 rounded-md text-xs font-normal text-white/50 hover:text-accent w-full text-left'
 
 // Solo locales y eventos siguen con datos locales
 const flatContent = {
@@ -99,7 +99,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   }
 
   return (
-    <aside className="hidden md:block shrink-0 w-44 sticky top-[112px] self-start mt-3 ml-1 z-30 mb-6">
+    <aside className="hidden md:block shrink-0 w-max max-w-44 sticky top-[112px] self-start mt-3 ml-1 z-30 mb-6">
       <div className="bg-primary text-white animate-slide-in shadow-lg p-2">
         <div className="border border-accent rounded-lg p-2 pt-3">
           <div className="flex items-center justify-between mb-3">

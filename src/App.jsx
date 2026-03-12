@@ -83,6 +83,7 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
   const [activeStore, setActiveStore] = useState(null)
+  const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
   const [sections, setSections] = useState([])
   const [turismoCategorias, setTurismoCategorias] = useState([])
   const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
@@ -193,16 +194,23 @@ export default function App() {
   }
 
   const goHome = () => {
+    const wasInStore = !!activeStore
+    const savedScroll = scrollBeforeStore
     setCurrentPage(null)
     setActiveSidebar(null)
     setActiveSection(null)
     setActiveFilter(null)
     setStoreMapMode(false)
     setActiveStore(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (wasInStore && savedScroll > 0) {
+      setTimeout(() => window.scrollTo({ top: savedScroll, behavior: 'smooth' }), 50)
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const handleOpenStore = (store) => {
+    setScrollBeforeStore(window.scrollY)
     window.scrollTo({ top: 0 })
     setCurrentPage(null)
     setActiveSidebar(null)
@@ -227,6 +235,7 @@ export default function App() {
               facebook: b.facebook || '',
               instagram: b.instagram || '',
               horarios: b.horarios || [],
+              plan_id: b.plan_id || 1,
             })
           } else {
             setActiveStore(store)
@@ -322,7 +331,7 @@ export default function App() {
               </button>
             </div>
           </div> */}
-          <header className="bg-primary text-white px-6 py-7 shadow-lg border-b-2 border-accent">
+          <header className="bg-primary text-white px-6 py-7 shadow-lg">
             <div className="max-w-7xl mx-auto flex items-center gap-6 relative">
               <button onClick={goHome} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
                 <div className="bg-accent p-1.5 rounded-lg text-primary leading-none">
@@ -355,6 +364,35 @@ export default function App() {
               </label>
             </div>
           </header>
+          <nav className="bg-[#4A2070] px-6 py-1.5 border-y-2 border-accent shadow-md">
+            <div className="max-w-7xl mx-auto flex items-center justify-between relative">
+              <button onClick={goHome} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                Volver
+              </button>
+              <div className="flex items-center gap-4">
+              {user ? (
+                <>
+                  <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span>
+                    {' '}{user.tipo_cuenta === 'turismo' ? 'Turismo' : user.vende_productos ? 'Productos' : user.ofrece_servicios ? 'Servicios' : user.ofrece_arriendos ? 'Arriendos' : ''}
+                    {' '}<span className="text-white/50">{user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
+                  </span>
+                  <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
+                    <span className="material-symbols-outlined text-xl">dashboard</span>
+                  </a>
+                  <button onClick={handleLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
+                    <span className="material-symbols-outlined text-xl">logout</span>
+                  </button>
+                </>
+              ) : (
+                <button onClick={goHome} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
+                  <span className="material-symbols-outlined text-base">home</span>
+                  Inicio
+                </button>
+              )}
+              </div>
+            </div>
+          </nav>
         </div>
 
         <div className="w-full flex flex-1 flex-col md:flex-row">

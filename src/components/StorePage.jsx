@@ -189,7 +189,9 @@ function ImageMarquee({ products, phone, carouselItems, storeUserId }) {
     ? carouselItems
     : products.filter((p) => p.image).slice(0, 8)
   if (items.length === 0) return null
-  const doubled = [...items, ...items]
+  // Solo duplicar si hay suficientes items para llenar el ancho (6+ items)
+  const displayItems = items.length >= 6 ? [...items, ...items] : items
+  const shouldAnimate = items.length >= 6
   const [paused, setPaused] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
 
@@ -201,10 +203,10 @@ function ImageMarquee({ products, phone, carouselItems, storeUserId }) {
         onMouseLeave={() => setPaused(false)}
       >
         <div
-          className="flex gap-3 w-max animate-image-marquee"
+          className={`flex gap-3 ${shouldAnimate ? 'w-max animate-image-marquee' : 'justify-center w-full'}`}
           style={{ animationPlayState: paused ? 'paused' : 'running' }}
         >
-          {doubled.map((product, i) => (
+          {displayItems.map((product, i) => (
             <div
               key={`${product.id}-${i}`}
               className="shrink-0 h-40 rounded-lg bg-white shadow-sm overflow-hidden border border-slate-100 cursor-pointer hover:shadow-md hover:scale-105 transition-all"
@@ -417,6 +419,7 @@ function mapListing(l) {
     medidas: l.medidas,
     genero: l.genero,
     tipo: l.tipo,
+    category: l.categoria,
     subcategory: l.subcategoria,
     seccion: l.seccion,
     carousel_posicion: l.carousel_posicion,
@@ -437,8 +440,6 @@ const SECTION_TITLES = {
 export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeCat, setActiveCat] = useState(null)
   const [activeSub, setActiveSub] = useState(null)
-  const [activeSection, setActiveSection] = useState(null)
-  const [seccionesOpen, setSeccionesOpen] = useState(false)
   const [carouselItems, setCarouselItems] = useState([])
   const [bannerItems, setBannerItems] = useState([])
   const [apiProducts, setApiProducts] = useState(null)
@@ -502,16 +503,14 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     })
   }
 
-  // Categorías: API (dinámicas desde subcategorías) o estáticas
+  // Categorías: dinámicas desde los productos reales (categoria → subcategorias)
   const storeCategories = apiProducts
     ? (() => {
         const catMap = {}
         apiProducts.forEach(p => {
-          if (!p.subcategory) return
-          // Usar tipo como categoría padre
-          const catLabel = p.tipo === 'servicio' ? 'Servicios' : p.tipo === 'arriendo' ? 'Arriendos' : 'Productos'
-          if (!catMap[catLabel]) catMap[catLabel] = new Set()
-          catMap[catLabel].add(p.subcategory)
+          if (!p.category) return
+          if (!catMap[p.category]) catMap[p.category] = new Set()
+          if (p.subcategory) catMap[p.category].add(p.subcategory)
         })
         return Object.entries(catMap).map(([label, subs]) => ({
           label,
@@ -520,59 +519,19 @@ export default function StorePage({ store, onBack, onOpenStore }) {
       })()
     : (store.categories || [])
 
-  // Secciones del store
-  const storeSections = apiProducts
-    ? (() => {
-        const secMap = {}
-        apiProducts.forEach(p => {
-          const sec = p.seccion || 'destacados'
-          if (!secMap[sec]) secMap[sec] = []
-          secMap[sec].push(p)
-        })
-        return Object.entries(secMap).map(([id, items]) => ({
-          id,
-          title: SECTION_TITLES[id] || id,
-          items,
-        }))
-      })()
-    : sections.filter((s) =>
-        s.items.some((item) => store.productIds && store.productIds.includes(item.id))
-      )
-
-  // Filtrar por categoría, subcategoría o sección seleccionada
-  const currentCat = storeCategories.find((c) => c.label === activeCat)
-  const currentSubs = currentCat ? currentCat.subcategories : []
-
+  // Filtrar por categoría o subcategoría seleccionada
   const filteredProducts = storeProducts.filter((p) => {
-    if (activeSection) {
-      if (apiProducts) {
-        return (p.seccion || 'destacados') === activeSection
-      }
-      const sec = sections.find((s) => s.id === activeSection)
-      return sec ? sec.items.some((item) => item.id === p.id) : true
-    }
     if (activeSub) return p.subcategory === activeSub
-    if (currentCat) return currentSubs.includes(p.subcategory)
+    if (activeCat) return p.category === activeCat
     return true
   })
 
   const handleCatClick = (catLabel) => {
-    setActiveSection(null)
     if (activeCat === catLabel) {
       setActiveCat(null)
       setActiveSub(null)
     } else {
       setActiveCat(catLabel)
-      setActiveSub(null)
-    }
-  }
-
-  const handleSectionClick = (sectionId) => {
-    if (activeSection === sectionId) {
-      setActiveSection(null)
-    } else {
-      setActiveSection(sectionId)
-      setActiveCat(null)
       setActiveSub(null)
     }
   }
@@ -588,30 +547,36 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   return (
     <>
       {/* Sidebar con categorías y subcategorías */}
-      <aside className="hidden md:block shrink-0 w-44 sticky top-[92px] self-start mt-3 ml-1 z-30 mb-6">
+      <aside className="hidden md:block shrink-0 w-max max-w-44 sticky top-[92px] self-start mt-3 ml-1 z-30 mb-6">
           <div className="bg-primary text-white animate-slide-in shadow-lg p-2">
             <div className="border border-accent rounded-lg p-2 pt-3">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-black uppercase tracking-tight">{storeName.split(' ')[0]}</h3>
+                <h3 className="text-sm font-black uppercase tracking-tight">Categorías</h3>
               </div>
               <div className="flex flex-col gap-0 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
                 {storeCategories.map((cat) => (
                   <div key={cat.label}>
                     <button
                       onClick={() => handleCatClick(cat.label)}
-                      className={`flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full ${
+                      className={`flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full ${
                         activeCat === cat.label ? 'bg-white/10 text-accent' : ''
                       }`}
                     >
+                      <span className="material-symbols-outlined text-xs" style={{ transition: 'transform 0.2s', transform: activeCat === cat.label ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                        chevron_right
+                      </span>
                       <span className="flex-1 text-left">{cat.label}</span>
                     </button>
-                    <div className="flex flex-col">
+                    <div
+                      className="overflow-hidden transition-all duration-300 flex flex-col"
+                      style={{ maxHeight: activeCat === cat.label ? `${cat.subcategories.length * 36}px` : '0px' }}
+                    >
                       {cat.subcategories.map((sub) => (
                         <button
                           key={sub}
-                          onClick={() => { setActiveCat(cat.label); setActiveSub(sub) }}
-                          className={`flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50 w-full text-left ${
-                            activeSub === sub ? 'text-white font-bold' : ''
+                          onClick={() => { setActiveCat(cat.label); setActiveSub(activeSub === sub ? null : sub) }}
+                          className={`flex items-center gap-2 pl-2 pr-2 py-0.5 rounded-md text-xs font-normal text-white/50 hover:text-accent w-full text-left ${
+                            activeSub === sub ? 'text-white font-medium' : ''
                           }`}
                         >
                           {activeSub === sub
@@ -625,60 +590,26 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                   </div>
                 ))}
               </div>
-              {/* Secciones */}
-              {storeSections.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-white/20">
-                  <button
-                    onClick={() => setSeccionesOpen(!seccionesOpen)}
-                    className={`flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full ${
-                      seccionesOpen ? 'bg-white/10 text-accent' : ''
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-xs" style={{ transition: 'transform 0.2s', transform: seccionesOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                      chevron_right
-                    </span>
-                    <span className="flex-1 text-left">Secciones</span>
-                  </button>
-                  <div
-                    className="overflow-hidden transition-all duration-300"
-                    style={{ maxHeight: seccionesOpen ? `${storeSections.length * 28}px` : '0px' }}
-                  >
-                    {storeSections.map((sec) => (
-                      <button
-                        key={sec.id}
-                        onClick={() => handleSectionClick(sec.id)}
-                        className={`flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50 w-full text-left ${
-                          activeSection === sec.id ? 'text-white font-bold' : ''
-                        }`}
-                      >
-                        {activeSection === sec.id
-                          ? <span className="material-symbols-outlined text-white text-xs shrink-0">check</span>
-                          : <span className="w-1 h-1 rounded-full bg-accent shrink-0"></span>
-                        }
-                        <span className="truncate">{sec.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-3 pt-3 border-t border-white/20">
-                <button
-                  onClick={onBack}
-                  className="w-full bg-accent text-primary py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide hover:brightness-110 transition-all text-center leading-tight flex items-center justify-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-xs">arrow_back</span>
-                  Volver
-                </button>
-              </div>
             </div>
           </div>
         </aside>
 
         {/* Contenido principal */}
-        <main className="flex-1 flex flex-col gap-8 pt-1 px-6 pb-6 overflow-hidden transition-all duration-300">
-          {/* Banner publicitario */}
-          <StoreBanner store={store} products={storeProducts} bannerItems={bannerItems} phone={storePhone} storeUserId={store.userId} />
+        <main className="flex-1 flex flex-col gap-8 pt-4 px-6 pb-6 overflow-hidden transition-all duration-300">
+          {/* Ver todo - cuando hay filtro activo */}
+          {(activeCat || activeSub) && (
+            <button
+              onClick={() => { setActiveCat(null); setActiveSub(null) }}
+              className="flex items-center gap-1.5 text-xs text-primary/60 hover:text-primary transition-colors self-start -mb-4"
+            >
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              <span>Ver todos los productos</span>
+            </button>
+          )}
+          {/* Banner publicitario - solo plan Premium */}
+          {store.plan_id >= 3 && (
+            <StoreBanner store={store} products={storeProducts} bannerItems={bannerItems} phone={storePhone} storeUserId={store.userId} />
+          )}
           {filteredProducts.length > 0 ? (
             (() => {
               const rows = []
@@ -693,7 +624,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               return rows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
-                    title={idx === 0 ? (activeSection ? (storeSections.find(s => s.id === activeSection)?.title || SECTION_TITLES[activeSection] || activeSection) : activeSub || activeCat || 'Todos los productos') : ''}
+                    title={idx === 0 ? (activeSub || activeCat || 'Todos los productos') : ''}
                     items={row}
                     onOpenStore={onOpenStore}
                   />
