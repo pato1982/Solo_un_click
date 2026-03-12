@@ -1,5 +1,50 @@
 # Registro de Cambios - Solo a un Click
 
+## 12 de Marzo 2026 - Límites por plan separados, sidebar categorías reales, nav bar tienda y mejoras UX
+
+### Límites de plan: productos, carruseles y banner separados
+- Backend (`listings.js`): el COUNT de límite del plan solo cuenta productos normales (`carousel_posicion IS NULL AND banner_orden IS NULL`)
+- Carruseles y banners no consumen cuota del plan
+- Límites: Normal = 25 productos + 8 carrusel (1 carrusel), Premium = 100 productos + 24 carrusel (3x8) + 10 banner (2x5)
+- AdminProductos: lista de productos excluye tarjetas de carrusel y banner
+- AdminCarruseles: eliminado sistema de "productos mínimos para desbloquear", carruseles disponibles directamente según plan (Normal: 1, Premium: 1-3)
+
+### Nav bar en página premium (tienda)
+- Nueva barra de navegación bajo el header de la tienda con estilo idéntico a la principal (`bg-[#4A2070]`, `border-y-2 border-accent`)
+- Usuario logueado: muestra "Hola, María Productos Normal" + icono dashboard + icono logout
+- Usuario no logueado: botón "Inicio" para volver
+- Botón "Volver" al lado izquierdo de la nav bar para regresar a la página principal
+- Header principal también muestra tipo de negocio y plan junto al saludo
+
+### Volver desde tienda restaura posición de scroll
+- `scrollBeforeStore` guarda la posición del scroll antes de abrir una tienda
+- Al presionar "Volver", restaura la posición exacta donde estaba la tarjeta que llevó a la tienda
+
+### Sidebar página premium: categorías reales
+- Muestra las categorías reales de los productos (ej: Ropa, Electrónica) en vez de tipos (Productos/Servicios/Arriendos)
+- Subcategorías se despliegan con accordion al hacer click en una categoría
+- Título cambiado de nombre de tienda a "Categorías"
+- Eliminada sección "Secciones" del menú lateral
+- Botón "Volver" movido del sidebar a la nav bar
+
+### Sidebar ancho dinámico
+- Ambos sidebars (principal y tienda) usan `w-max max-w-44` en vez de `w-44` fijo
+- El ancho se ajusta al texto más largo de las categorías
+- Nombres de varias palabras se dividen en dos líneas
+- Subcategorías alineadas al mismo nivel que categorías (`pl-2` en vez de `pl-6`)
+
+### Botón "Ver todos los productos"
+- Aparece entre la nav bar y la primera sección cuando hay filtro activo (categoría o subcategoría)
+- Texto "← Ver todos los productos" limpia filtros al hacer click
+- Margen superior aumentado (`pt-4`) para separar contenido del header
+
+### Carrusel marquee mejorado
+- Velocidad ajustada de 20s a 18s
+- Si hay menos de 6 items: se muestran centrados sin duplicar ni animar
+- Si hay 6+ items: efecto marquee infinito con duplicación
+
+---
+
 ## 11 de Marzo 2026 (noche 3) - Sidebar público conectado a productos reales
 
 ### Sidebar muestra solo categorías con productos publicados
