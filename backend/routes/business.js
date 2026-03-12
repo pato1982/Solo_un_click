@@ -63,6 +63,14 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
+    // Validar URLs de redes sociales
+    if (facebook && !/^https?:\/\/(www\.)?(facebook\.com|fb\.com)\//i.test(facebook)) {
+      return res.status(400).json({ error: 'La URL de Facebook debe ser un enlace válido de facebook.com' })
+    }
+    if (instagram && !/^https?:\/\/(www\.)?instagram\.com\//i.test(instagram) && !/^@[\w.]+$/.test(instagram)) {
+      return res.status(400).json({ error: 'Instagram debe ser una URL de instagram.com o un @usuario' })
+    }
+
     const horariosJson = horarios ? JSON.stringify(horarios) : null
 
     const [existing] = await pool.query('SELECT id FROM businesses WHERE user_id = ?', [req.userId])

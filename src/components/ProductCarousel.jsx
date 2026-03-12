@@ -5,8 +5,9 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
   const scrollRef = useRef(null)
   const intervalRef = useRef(null)
 
-  const firstItem = items[0]
-  const restItems = items.slice(1)
+  // La tarjeta dorada (primera posición) solo para plan Normal o Premium
+  const featuredItem = items.find(p => p.owner_plan_id && p.owner_plan_id >= 2) || null
+  const restItems = featuredItem ? items.filter(p => p !== featuredItem) : items
 
   const scrollOne = useCallback((direction) => {
     if (!scrollRef.current) return
@@ -58,12 +59,23 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
         </div>
       ) : (
       <div className="flex gap-4 py-1 px-1">
-        {/* Primera tarjeta fija */}
-        {firstItem && (
-          <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
-            <ProductCard product={firstItem} hidePrice={hidePrice} isFirst onOpenStore={onOpenStore} />
-          </div>
-        )}
+        {/* Primera tarjeta fija (solo plan Normal/Premium) */}
+        <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
+          {featuredItem ? (
+            <ProductCard product={featuredItem} hidePrice={hidePrice} isFirst onOpenStore={onOpenStore} />
+          ) : (
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm border-2 border-dashed border-amber-400 outline outline-2 outline-amber-400 outline-offset-2 flex flex-col">
+              <div className="relative h-40 pt-2 bg-amber-50/30 flex items-center justify-center">
+                <span className="material-symbols-outlined text-4xl text-amber-300">star</span>
+                <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
+              </div>
+              <div className="px-4 py-3 flex flex-col flex-1 items-center text-center">
+                <h3 className="font-bold text-xs text-amber-400 leading-tight line-clamp-1 mb-1">Destacado</h3>
+                <p className="text-slate-400 text-[10px] line-clamp-2 mb-2">Espacio premium</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Carrusel con el resto */}
         {restItems.length > 0 && (

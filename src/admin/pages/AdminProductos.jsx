@@ -70,9 +70,18 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   const drawH = naturalH * fitScale
 
   const clampPos = useCallback((x, y) => {
-    const minX = Math.min(0, 208 - drawW)
-    const minY = Math.min(0, 208 - drawH)
-    return { x: Math.max(minX, Math.min(0, x)), y: Math.max(minY, Math.min(0, y)) }
+    let minX, maxX, minY, maxY
+    if (drawW >= 208) {
+      minX = 208 - drawW; maxX = 0
+    } else {
+      minX = 0; maxX = 208 - drawW
+    }
+    if (drawH >= 208) {
+      minY = 208 - drawH; maxY = 0
+    } else {
+      minY = 0; maxY = 208 - drawH
+    }
+    return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) }
   }, [drawW, drawH])
 
   const handleStart = (clientX, clientY) => {
@@ -120,7 +129,7 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
       </div>
       <div className="flex items-center gap-2 mt-2">
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_out</span>
-        <input type="range" min="1" max="3" step="0.05" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
+        <input type="range" min="0.5" max="3" step="0.05" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_in</span>
       </div>
       <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra para ajustar posición</p>
@@ -218,7 +227,7 @@ export default function AdminProductos() {
             imagenNaturalW: img.naturalWidth,
             imagenNaturalH: img.naturalHeight,
             imagenPos: { x: (208 - drawW) / 2, y: (208 - drawH) / 2 },
-            imagenScale: 1,
+            imagenScale: 1.75,
           }))
         }
         img.src = reader.result

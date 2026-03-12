@@ -81,8 +81,13 @@ export default function AdminNegocio() {
     setSaved(false)
   }
 
+  const fbValid = !form.facebook || /^https?:\/\/(www\.)?(facebook\.com|fb\.com)\//i.test(form.facebook)
+  const igValid = !form.instagram || /^https?:\/\/(www\.)?instagram\.com\//i.test(form.instagram) || /^@[\w.]+$/.test(form.instagram)
+
   const handleSave = async (e) => {
     e.preventDefault()
+    if (!fbValid) return alert('La URL de Facebook debe ser un enlace válido de facebook.com')
+    if (!igValid) return alert('Instagram debe ser una URL de instagram.com o un @usuario')
     setSaving(true)
     try {
       const res = await fetch(`${API}/api/business`, {
@@ -222,10 +227,11 @@ export default function AdminNegocio() {
                       type="text"
                       value={form.facebook}
                       onChange={(e) => update('facebook', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-                      placeholder="facebook.com/tu-pagina"
+                      className={`w-full border rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none ${!fbValid ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-primary'}`}
+                      placeholder="https://facebook.com/tu-pagina"
                     />
                   </div>
+                  {!fbValid && <p className="text-[10px] text-red-500 mt-0.5">Debe ser un enlace de facebook.com</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Instagram</label>
@@ -235,10 +241,11 @@ export default function AdminNegocio() {
                       type="text"
                       value={form.instagram}
                       onChange={(e) => update('instagram', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                      className={`w-full border rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none ${!igValid ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-primary'}`}
                       placeholder="@tu_instagram"
                     />
                   </div>
+                  {!igValid && <p className="text-[10px] text-red-500 mt-0.5">Debe ser instagram.com/... o @usuario</p>}
                 </div>
               </div>
             </div>

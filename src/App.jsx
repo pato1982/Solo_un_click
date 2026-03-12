@@ -52,6 +52,9 @@ function mapListingToProduct(l) {
     negocio_whatsapp: l.negocio_whatsapp,
     negocio_telefono: l.negocio_telefono,
     negocio_direccion: l.negocio_direccion,
+    negocio_correo: l.negocio_correo,
+    negocio_facebook: l.negocio_facebook,
+    negocio_instagram: l.negocio_instagram,
     nombre_negocio: l.nombre_negocio,
     owner_plan_id: l.owner_plan_id,
   }

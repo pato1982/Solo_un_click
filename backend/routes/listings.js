@@ -14,7 +14,8 @@ router.get('/', async (req, res) => {
       SELECT l.*, li.url as imagen,
              u.nombre as autor_nombre, u.plan_id as owner_plan_id,
              b.nombre_negocio, b.whatsapp as negocio_whatsapp,
-             b.telefono as negocio_telefono, b.direccion as negocio_direccion
+             b.telefono as negocio_telefono, b.direccion as negocio_direccion,
+             b.correo as negocio_correo, b.facebook as negocio_facebook, b.instagram as negocio_instagram
       FROM listings l
       LEFT JOIN listing_images li ON l.id = li.listing_id
       LEFT JOIN users u ON l.user_id = u.id

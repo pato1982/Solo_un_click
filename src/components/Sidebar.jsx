@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { storeCategories } from './StoresPage'
 import { eventCategories } from './EventsPage'
 
-const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-normal text-white/50 hover:text-white w-full text-left'
-const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-xs font-bold text-white/80 hover:text-white w-full'
-const subBtnClass = 'flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-[11px] font-normal text-white/50'
+const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full text-left'
+const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full'
+const subBtnClass = 'flex items-center gap-2 pl-6 pr-2 py-0.5 rounded-md text-xs font-normal text-white/50 hover:text-accent'
 
 // Solo locales y eventos siguen con datos locales
 const flatContent = {
