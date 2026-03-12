@@ -412,6 +412,7 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
 function mapListing(l) {
   return {
     id: l.id,
+    user_id: l.user_id,
     name: l.nombre,
     description: l.descripcion,
     image: l.imagen ? `${API}${l.imagen}` : null,
