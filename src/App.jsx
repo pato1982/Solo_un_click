@@ -211,6 +211,16 @@ export default function App() {
       .catch(err => console.error('Error cargando categorías sidebar:', err))
   }, [])
 
+  // Abrir tienda directamente si viene ?store=userId en la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const storeUserId = params.get('store')
+    if (storeUserId) {
+      window.history.replaceState({}, '', '/')
+      handleOpenStore({ id: `user-${storeUserId}`, userId: parseInt(storeUserId) })
+    }
+  }, [])
+
   const handleLoginSuccess = (userData) => {
     setUser(userData)
   }

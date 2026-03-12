@@ -398,10 +398,12 @@ function ProfileModal({ onClose }) {
 
 export default function AdminHeader({ onToggleSidebar }) {
   const [showProfile, setShowProfile] = useState(false)
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const hasPage = user.plan_id && user.plan_id >= 2
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-primary text-white shadow-lg border-b-2 border-accent">
+      <header className="sticky top-0 z-50 bg-primary text-white shadow-lg">
         <div className="flex items-center h-16 px-6">
           {/* Botón hamburguesa */}
           <button
@@ -440,6 +442,19 @@ export default function AdminHeader({ onToggleSidebar }) {
             </div>
           </a>
         </div>
+
+        {/* Barra "Ver mi página" solo para plan Normal y Premium */}
+        {hasPage && (
+          <div className="bg-[#4A2070] border-t border-white/10 py-1.5 flex justify-center">
+            <a
+              href={`/?store=${user.id}`}
+              className="flex items-center gap-1.5 text-xs font-bold text-accent hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-base">visibility</span>
+              Ver mi página
+            </a>
+          </div>
+        )}
       </header>
 
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
