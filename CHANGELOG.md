@@ -1,5 +1,46 @@
 # Registro de Cambios - Solo a un Click
 
+## 12 de Marzo 2026 (sesión 2) - Mezcla ponderada, popup carruseles, productos de prueba y mejoras UI
+
+### Mezcla ponderada de productos por plan en página principal
+- Nuevo algoritmo `mixProductsByPlan` en `App.jsx`: los productos de cada sección se mezclan ponderando por plan del negocio
+- Pesos por ronda: Premium recibe 3 slots, Normal 2, Gratis 1
+- Round-robin entre negocios del mismo tier para distribución equitativa
+- Selección aleatoria del producto de cada negocio (cambia cada carga)
+- La tarjeta dorada (primer slot de plan>=2) no se altera
+
+### Popup informativo en AdminCarruseles
+- Al entrar a la sección Carruseles del admin aparece un popup con los requisitos de visibilidad
+- Plan Normal: carrusel visible con 12+ productos publicados
+- Plan Premium: carrusel 1 a los 12+, carrusel 2 a los 32+, carrusel 3 a los 52+ productos
+- Popup se puede cerrar con botón "Entendido"
+
+### Modal de producto más ancho
+- `ProductCard.jsx`: modal ampliado de `max-w-md` (448px) a `max-w-lg` (512px)
+- Los iconos de contacto inferiores ya no se cortan
+
+### Descripción centrada verticalmente en modales
+- ProductCard y StorePage: descripción del producto centrada verticalmente con `flex items-center`
+- Scroll automático si el texto es muy largo, manteniendo márgenes con nombre y contenido inferior
+
+### Visibilidad de carruseles en StorePage
+- Carrusel 1 visible con 12+ productos, carrusel 2 con 32+, carrusel 3 con 52+
+- Consistente con los requisitos mostrados en el popup de admin
+
+### Productos de prueba cargados
+- 60 productos reales para `productos.premium@test.cl` (10 por sección: destacados, ofertas, novedades, liquidación, tecnología, tendencia)
+- Cada producto con nombre, descripción, precio, categoría, subcategoría, badge, género, imagen, tallas y/o dimensiones según corresponda
+- 24 productos de carrusel (8 por cada uno de los 3 carruseles) con productos variados de distintas categorías
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña** — falta configurar App Password de Gmail y setear SMTP_USER/SMTP_PASS en el servidor
+- **Poblar categorías desde letra I en adelante** en tabla `categorias`/`subcategorias`
+- Tabla de locales de barrio + panel programador
+- Conectar StoresCarousel/StoresPage a esa tabla
+- Limpiar datos demo del RegisterModal
+
+---
+
 ## 12 de Marzo 2026 - Límites por plan separados, sidebar categorías reales, nav bar tienda y mejoras UX
 
 ### Límites de plan: productos, carruseles y banner separados
