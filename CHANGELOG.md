@@ -1,5 +1,61 @@
 # Registro de Cambios - Solo a un Click
 
+## 12 de Marzo 2026 (sesión 3) - Perfil editable, modal más ancho, tracking de clicks y mejoras admin
+
+### Saludo simplificado en header
+- Muestra solo primer nombre (máx 10 caracteres + "...") + "Plan Premium/Normal/Gratis"
+- Eliminado el tipo de negocio (Productos/Servicios/Arriendos) del saludo
+- Aplicado en página principal (Header.jsx) y página premium (App.jsx nav bar)
+
+### Icono de perfil en panel de administrador
+- Icono de usuario (account_circle) al lado de la hamburguesa en AdminHeader
+- Modal con datos reales de la BD: nombre, correo, teléfono, ubicación, tipo de cuenta, plan, fecha de registro
+- Editable: tipo de cuenta (Comercio/Turismo) con checkboxes Productos/Servicios/Arriendos
+- Editable: plan (Gratis/Normal/Premium) con botones de colores
+- Backend: `PUT /api/auth/profile` actualiza tipo de cuenta y plan + `GET /api/auth/profile/counts` para conteos
+
+### Popup de confirmación al cambiar tipo de cuenta
+- Al desmarcar Productos/Servicios/Arriendos: popup rojo advierte qué datos se eliminarán (publicaciones, carrusel, banner)
+- Al cambiar Comercio → Turismo: elimina TODOS los datos de comercio (listings, imágenes, carruseles, negocio)
+- Al cambiar Turismo → Comercio: elimina TODOS los datos de turismo (tours, portada, página, negocio)
+- Archivos de imágenes eliminados del servidor
+- Backend: funciones `deleteListingsByType`, `deleteAllCommerceData`, `deleteAllTurismData`
+- Muestra conteo de registros existentes junto a cada checkbox
+
+### Botón "Ver mi página" en admin
+- Barra bajo el header del panel admin con link "Ver mi página" centrado
+- Solo visible para plan Normal y Premium (plan_id >= 2)
+- Abre en pestaña nueva (target="_blank") para no salir del admin
+- App.jsx maneja parámetro `?store=userId` para abrir tienda directamente
+
+### Modal de producto más ancho
+- ProductCard modal ampliado de `max-w-md` a `max-w-lg` para que iconos inferiores no se corten
+
+### Fix: tracking de clicks en productos de StorePage
+- `mapListing` en StorePage no incluía `user_id`, impidiendo que `trackProductClick` registrara clicks
+- Corregido: ahora los clicks desde la página de tienda (ojo + carruseles) se registran correctamente en analytics
+
+### Gráficos de estadísticas: mes siguiente visible
+- Los gráficos de visitas y clicks ahora muestran 7 meses: 5 anteriores + mes actual + mes siguiente
+- El mes actual nunca queda como último punto del gráfico
+
+### Backend: campo dirección en /api/auth/me
+- Endpoint `/api/auth/me` ahora incluye `u.direccion` en la consulta
+
+### Productos y carruseles de prueba
+- 60 productos para `productos.premium@test.cl` (10 por sección)
+- 24 productos de carrusel (8 × 3 carruseles) con productos variados
+- Contraseñas de todos los usuarios de prueba reseteadas a `test123`
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña**
+- **Poblar categorías desde letra I en adelante**
+- Tabla de locales de barrio + panel programador
+- Conectar StoresCarousel/StoresPage a esa tabla
+- Limpiar datos demo del RegisterModal
+
+---
+
 ## 12 de Marzo 2026 (sesión 2) - Mezcla ponderada, popup carruseles, productos de prueba y mejoras UI
 
 ### Mezcla ponderada de productos por plan en página principal
