@@ -1,4 +1,4 @@
-export default function Footer() {
+export default function Footer({ onNavigate }) {
   return (
     <footer className="bg-primary text-white pt-8 pb-3 px-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-8">
@@ -22,8 +22,16 @@ export default function Footer() {
             <li><a className="hover:text-accent transition-colors" href="#">Productos</a></li>
             <li><a className="hover:text-accent transition-colors" href="#">Arriendos</a></li>
             <li><a className="hover:text-accent transition-colors" href="#">Servicios</a></li>
-            <li><a className="hover:text-accent transition-colors" href="#">Turismo</a></li>
             <li><a className="hover:text-accent transition-colors" href="#">Negocios</a></li>
+            <li>
+              <a
+                className="hover:text-accent transition-colors cursor-pointer"
+                onClick={(e) => { e.preventDefault(); onNavigate?.('turismo') }}
+                href="#"
+              >
+                Turismo
+              </a>
+            </li>
           </ul>
         </div>
         <div className="px-10">

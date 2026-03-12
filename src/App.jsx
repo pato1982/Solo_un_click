@@ -53,6 +53,7 @@ function mapListingToProduct(l) {
     negocio_telefono: l.negocio_telefono,
     negocio_direccion: l.negocio_direccion,
     nombre_negocio: l.nombre_negocio,
+    owner_plan_id: l.owner_plan_id,
   }
 }
 
@@ -489,7 +490,7 @@ export default function App() {
         </main>
       </div>
 
-      <Footer />
+      <Footer onNavigate={toggleNav} />
     </div>
   )
 }

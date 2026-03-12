@@ -6,7 +6,7 @@ const menuGeneral = [
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
   { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles', minPlan: 2 },
   { label: 'Banner', icon: 'photo_library', path: '/admin/banner', minPlan: 3 },
-  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas' },
+  { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas', minPlan: 3 },
 ]
 
 const menuTurismo = [

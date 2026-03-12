@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
 
     let query = `
       SELECT l.*, li.url as imagen,
-             u.nombre as autor_nombre,
+             u.nombre as autor_nombre, u.plan_id as owner_plan_id,
              b.nombre_negocio, b.whatsapp as negocio_whatsapp,
              b.telefono as negocio_telefono, b.direccion as negocio_direccion
       FROM listings l

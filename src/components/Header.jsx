@@ -160,9 +160,11 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             {user ? (
               <>
                 <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{user.nombre}</span></span>
-                <button onClick={onLogout} className="flex items-center gap-1 text-xs font-bold text-white/90 hover:text-accent transition-colors">
-                  <span className="material-symbols-outlined text-base">logout</span>
-                  Salir
+                <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
+                  <span className="material-symbols-outlined text-xl">dashboard</span>
+                </a>
+                <button onClick={onLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
+                  <span className="material-symbols-outlined text-xl">logout</span>
                 </button>
               </>
             ) : (
