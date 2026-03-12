@@ -448,6 +448,8 @@ export default function AdminHeader({ onToggleSidebar }) {
           <div className="bg-[#4A2070] border-t border-white/10 py-1.5 flex justify-center">
             <a
               href={`/?store=${user.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs font-bold text-accent hover:text-white transition-colors"
             >
               <span className="material-symbols-outlined text-base">visibility</span>
