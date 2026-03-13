@@ -64,7 +64,7 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
     let proyectoCarpetas = []
     try {
       // du --max-depth=1 lista cada subdirectorio + total en una sola pasada
-      const projOutput = await execPromise("du -sb --max-depth=1 /var/www/soloaunclick 2>/dev/null")
+      const projOutput = await execPromise("du -b --max-depth=1 /var/www/soloaunclick 2>/dev/null")
       if (projOutput) {
         const lines = projOutput.split('\n')
         for (const line of lines) {
