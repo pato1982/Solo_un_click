@@ -498,10 +498,11 @@ export default function AdminHeader({ onToggleSidebar }) {
   const [showProfile, setShowProfile] = useState(false)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const hasPage = user.plan_id && user.plan_id >= 2
+  const isProg = (user.rol || 'usuario') === 'programador'
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-primary text-white shadow-lg">
+      <header className={`sticky top-0 z-50 text-white shadow-lg ${isProg ? 'bg-slate-950' : 'bg-primary'}`}>
         <div className="flex items-center h-16 px-6">
           {/* Botón hamburguesa */}
           <button
@@ -512,37 +513,48 @@ export default function AdminHeader({ onToggleSidebar }) {
           </button>
 
           {/* Icono usuario */}
-          <button
-            onClick={() => setShowProfile(true)}
-            className="p-1 rounded-lg hover:bg-white/10 transition-colors ml-1 mr-4"
-            title="Mi perfil"
-          >
-            <span className="material-symbols-outlined text-2xl text-white/70">account_circle</span>
-          </button>
+          {!isProg && (
+            <button
+              onClick={() => setShowProfile(true)}
+              className="p-1 rounded-lg hover:bg-white/10 transition-colors ml-1 mr-4"
+              title="Mi perfil"
+            >
+              <span className="material-symbols-outlined text-2xl text-white/70">account_circle</span>
+            </button>
+          )}
 
-          {/* Panel Admin centrado */}
+          {/* Título centrado */}
           <div className="flex-1 flex items-center justify-center">
-            <span className="text-lg font-bold uppercase tracking-wider text-white">
-              Panel Administrador
-            </span>
+            {isProg ? (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-400 text-base">terminal</span>
+                </div>
+                <span className="text-sm font-black text-emerald-400 uppercase tracking-wider">Panel Programador</span>
+              </div>
+            ) : (
+              <span className="text-lg font-bold uppercase tracking-wider text-white">
+                Panel Administrador
+              </span>
+            )}
           </div>
 
           {/* Logo Solo a un Click a la derecha */}
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-            <div className="bg-accent p-1.5 rounded-lg text-primary leading-none">
+            <div className={`p-1.5 rounded-lg leading-none ${isProg ? 'bg-emerald-500/20 text-emerald-400' : 'bg-accent text-primary'}`}>
               <span className="material-symbols-outlined block text-2xl font-bold">ads_click</span>
             </div>
             <div className="flex flex-col leading-none">
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
               <span className="text-xl font-black italic tracking-tight text-white">
-                un <span className="text-accent uppercase">CLICK</span>
+                un <span className={`uppercase ${isProg ? 'text-emerald-400' : 'text-accent'}`}>CLICK</span>
               </span>
             </div>
           </a>
         </div>
 
-        {/* Barra "Ver mi página" solo para plan Normal y Premium */}
-        {hasPage && (
+        {/* Barra "Ver mi página" solo para plan Normal y Premium (no programador) */}
+        {hasPage && !isProg && (
           <div className="bg-[#4A2070] border-t border-white/10 py-1.5 flex justify-center">
             <a
               href={user.tipo_cuenta === 'turismo' ? `/?turismo=${user.id}` : `/?store=${user.id}`}

@@ -5,9 +5,11 @@ import AdminSidebar from './components/AdminSidebar'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const isProg = (user.rol || 'usuario') === 'programador'
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className={`min-h-screen flex flex-col ${isProg ? 'bg-slate-800' : 'bg-gray-100'}`}>
       <AdminHeader onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1">

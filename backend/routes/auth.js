@@ -141,6 +141,7 @@ router.post('/login', [
         email: user.email,
         tipo_cuenta: user.tipo_cuenta,
         plan_id: user.plan_id,
+        rol: user.rol,
         vende_productos: user.vende_productos,
         ofrece_servicios: user.ofrece_servicios,
         ofrece_arriendos: user.ofrece_arriendos
@@ -175,7 +176,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT u.id, u.nombre, u.email, u.tipo_cuenta, u.telefono, u.comuna, u.direccion,
               u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos,
-              u.plan_id, u.activo, u.created_at,
+              u.plan_id, u.rol, u.activo, u.created_at,
               p.nombre as plan_nombre, p.max_listings, p.tiene_pagina,
               p.tiene_destacados, p.tiene_estadisticas
        FROM users u

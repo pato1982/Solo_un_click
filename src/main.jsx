@@ -11,11 +11,13 @@ import AdminEstadisticas from './admin/pages/AdminEstadisticas'
 import AdminTour from './admin/pages/AdminTour'
 import AdminPortada from './admin/pages/AdminPortada'
 import AdminPagina from './admin/pages/AdminPagina'
+import ProgramadorLocales from './admin/pages/ProgramadorLocales'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
 function AdminIndex() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  if (user.rol === 'programador') return <Navigate to="/admin/programador/locales" replace />
   if (user.tipo_cuenta === 'turismo') return <Navigate to="/admin/tour" replace />
   return <AdminProductos />
 }
@@ -34,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="portada" element={<AdminPortada />} />
           <Route path="tour" element={<AdminTour />} />
           <Route path="pagina" element={<AdminPagina />} />
+          <Route path="programador/locales" element={<ProgramadorLocales />} />
         </Route>
         <Route path="/*" element={<App />} />
       </Routes>

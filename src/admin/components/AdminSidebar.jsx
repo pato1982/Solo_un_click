@@ -19,22 +19,27 @@ const menuTurismo = [
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas', minPlan: 3 },
 ]
 
+const menuProgramador = [
+  { label: 'Locales de Barrio', icon: 'store', path: '/admin/programador/locales' },
+]
+
 const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }
 
 export default function AdminSidebar({ open }) {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const planId = user.plan_id || 1
   const tipoCuenta = user.tipo_cuenta || 'general'
-  const menuItems = tipoCuenta === 'turismo' ? menuTurismo : menuGeneral
+  const rol = user.rol || 'usuario'
+  const isProg = rol === 'programador'
+  const menuItems = isProg ? menuProgramador : (tipoCuenta === 'turismo' ? menuTurismo : menuGeneral)
   const [lockedPopup, setLockedPopup] = useState(null)
   const [counts, setCounts] = useState(null)
   const location = useLocation()
 
-  // Cargar counts para saber si hay contenido guardado en secciones bloqueadas
   useEffect(() => {
+    if (isProg) return
     const token = localStorage.getItem('token')
     if (!token || token === 'dev-token') return
-    // Solo cargar si hay secciones bloqueadas
     const hasLocked = menuItems.some(item => item.minPlan && item.countKey && planId < item.minPlan)
     if (!hasLocked) return
     fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
@@ -45,26 +50,31 @@ export default function AdminSidebar({ open }) {
 
   return (
     <aside
-      className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-white border-r border-gray-200 shadow-sm transition-transform duration-300 ${
-        open ? 'translate-x-0' : '-translate-x-full'
-      }`}
+      className={`fixed top-16 left-0 bottom-0 z-40 w-64 border-r shadow-sm transition-transform duration-300 ${
+        isProg ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
+      } ${open ? 'translate-x-0' : '-translate-x-full'}`}
     >
-      {/* Logo / enlace al sitio */}
-      <div className="p-4 border-b border-gray-100">
-        <a
-          href="/"
-          className="flex items-center gap-2 text-xs text-primary hover:text-accent transition-colors font-semibold"
-        >
-          <span className="material-symbols-outlined text-sm">open_in_new</span>
-          Ver sitio público
-        </a>
+      {/* Header del sidebar */}
+      <div className={`p-4 border-b ${isProg ? 'border-slate-700' : 'border-gray-100'}`}>
+        {isProg ? (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-emerald-400 text-base">terminal</span>
+            </div>
+            <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider">Modo Programador</span>
+          </div>
+        ) : (
+          <a href="/" className="flex items-center gap-2 text-xs text-primary hover:text-accent transition-colors font-semibold">
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+            Ver sitio público
+          </a>
+        )}
       </div>
 
       {/* Navegación */}
       <nav className="p-3 flex flex-col gap-1">
         {menuItems.map((item) => {
-          const locked = item.minPlan && planId < item.minPlan
-          const isActive = item.path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.path)
+          const locked = !isProg && item.minPlan && planId < item.minPlan
 
           if (locked) {
             const savedCount = item.countKey && counts ? counts[item.countKey] || 0 : 0
@@ -72,7 +82,7 @@ export default function AdminSidebar({ open }) {
               <button
                 key={item.path}
                 onClick={() => setLockedPopup({ label: item.label, minPlan: item.minPlan, savedCount })}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-100 hover:text-gray-500 w-full`}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-100 hover:text-gray-500 w-full"
               >
                 <span className="material-symbols-outlined text-xl">{item.icon}</span>
                 <span className="flex-1 text-left">{item.label}</span>
@@ -91,9 +101,13 @@ export default function AdminSidebar({ open }) {
               end={item.path === '/admin'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                  isProg
+                    ? (isActive
+                      ? 'bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10 border border-emerald-500/30'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-emerald-300')
+                    : (isActive
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-primary')
                 }`
               }
             >
@@ -104,15 +118,31 @@ export default function AdminSidebar({ open }) {
         })}
       </nav>
 
+      {/* Enlace al sitio para programador */}
+      {isProg && (
+        <div className="px-4 mt-3 pt-3 mx-3 border-t border-slate-700">
+          <a href="/" className="flex items-center gap-2 text-[11px] text-slate-500 hover:text-emerald-400 transition-colors font-semibold">
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+            Ver sitio público
+          </a>
+        </div>
+      )}
+
       {/* Pie del sidebar */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+      <div className={`absolute bottom-0 left-0 right-0 p-4 border-t ${isProg ? 'border-slate-700' : 'border-gray-100'}`}>
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary text-lg">person</span>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isProg ? 'bg-emerald-500/20' : 'bg-primary/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${isProg ? 'text-emerald-400' : 'text-primary'}`}>
+              {isProg ? 'code' : 'person'}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-700 truncate">Administrador</p>
-            <p className="text-[10px] text-gray-400">admin@soloaunclick.cl</p>
+            <p className={`text-xs font-semibold truncate ${isProg ? 'text-emerald-400' : 'text-gray-700'}`}>
+              {isProg ? 'Programador' : 'Administrador'}
+            </p>
+            <p className={`text-[10px] truncate ${isProg ? 'text-slate-500' : 'text-gray-400'}`}>
+              {user.email || 'admin@soloaunclick.cl'}
+            </p>
           </div>
         </div>
       </div>

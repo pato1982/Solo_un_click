@@ -16,6 +16,7 @@ const portadaRoutes = require('./routes/portada')
 const paginaRoutes = require('./routes/pagina')
 const categoriasRoutes = require('./routes/categorias')
 const passwordResetRoutes = require('./routes/passwordReset')
+const localesRoutes = require('./routes/locales')
 
 const app = express()
 const PORT = 3001
@@ -93,6 +94,7 @@ app.use('/api/portada', portadaRoutes)
 app.use('/api/pagina', paginaRoutes)
 app.use('/api/categorias', categoriasRoutes)
 app.use('/api/password-reset', passwordResetRoutes)
+app.use('/api/locales', localesRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
