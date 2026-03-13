@@ -117,7 +117,7 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
     const [visitasRows] = await pool.query(`
       SELECT
         COUNT(*) AS total_visitas,
-        COUNT(DISTINCT visitor_ip) AS visitantes_unicos,
+        COUNT(DISTINCT ip) AS visitantes_unicos,
         SUM(CASE WHEN created_at >= CURDATE() THEN 1 ELSE 0 END) AS visitas_hoy,
         SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS visitas_semana,
         SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS visitas_mes,
