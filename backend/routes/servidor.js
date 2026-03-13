@@ -97,4 +97,36 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
   }
 })
 
+// GET /api/servidor/estadisticas
+router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, res) => {
+  try {
+    // KPIs de usuarios por plan y tipo
+    const [rows] = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN tipo_cuenta = 'general' AND plan_id = 1 THEN 1 ELSE 0 END) AS general_gratis,
+        SUM(CASE WHEN tipo_cuenta = 'general' AND plan_id = 2 THEN 1 ELSE 0 END) AS general_normal,
+        SUM(CASE WHEN tipo_cuenta = 'general' AND plan_id = 3 THEN 1 ELSE 0 END) AS general_premium,
+        SUM(CASE WHEN tipo_cuenta = 'turismo' AND plan_id = 1 THEN 1 ELSE 0 END) AS turismo_gratis,
+        SUM(CASE WHEN tipo_cuenta = 'turismo' AND plan_id = 3 THEN 1 ELSE 0 END) AS turismo_premium
+      FROM users
+      WHERE rol != 'programador'
+    `)
+
+    res.json({
+      kpis: {
+        total: rows[0].total || 0,
+        general_gratis: rows[0].general_gratis || 0,
+        general_normal: rows[0].general_normal || 0,
+        general_premium: rows[0].general_premium || 0,
+        turismo_gratis: rows[0].turismo_gratis || 0,
+        turismo_premium: rows[0].turismo_premium || 0,
+      },
+    })
+  } catch (err) {
+    console.error('Error obteniendo estadísticas:', err)
+    res.status(500).json({ error: 'Error al obtener estadísticas' })
+  }
+})
+
 module.exports = router

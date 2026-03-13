@@ -14,6 +14,7 @@ import AdminPagina from './admin/pages/AdminPagina'
 import ProgramadorLocales from './admin/pages/ProgramadorLocales'
 import ProgramadorEventos from './admin/pages/ProgramadorEventos'
 import ProgramadorServidor from './admin/pages/ProgramadorServidor'
+import ProgramadorEstadisticas from './admin/pages/ProgramadorEstadisticas'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="pagina" element={<AdminPagina />} />
           <Route path="programador/locales" element={<ProgramadorLocales />} />
           <Route path="programador/eventos" element={<ProgramadorEventos />} />
+          <Route path="programador/estadisticas" element={<ProgramadorEstadisticas />} />
           <Route path="programador/servidor" element={<ProgramadorServidor />} />
         </Route>
         <Route path="/*" element={<App />} />
