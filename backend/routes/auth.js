@@ -1,15 +1,31 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const { body, validationResult } = require('express-validator')
 const pool = require('../db')
 const logActivity = require('../logActivity')
 
 const router = express.Router()
 const JWT_SECRET = process.env.JWT_SECRET || 'soloaunclick_secret_2026'
 
+// Sanitización: elimina tags HTML de un string
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', [
+  body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
+  body('password').isLength({ min: 6 }).withMessage('Contraseña mínimo 6 caracteres'),
+  body('nombre').trim().escape().notEmpty().withMessage('Nombre requerido'),
+], async (req, res) => {
   try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg })
+    }
+
     const { nombre, email, password, telefono, comuna, direccion, tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id } = req.body
 
     // Verificar si el email ya existe
@@ -30,13 +46,13 @@ router.post('/register', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         selectedPlan,
-        tipo_cuenta || 'general',
-        nombre,
+        ['general', 'turismo'].includes(tipo_cuenta) ? tipo_cuenta : 'general',
+        sanitize(nombre),
         email,
         hashedPassword,
-        telefono || null,
-        comuna || null,
-        direccion || null,
+        sanitize(telefono) || null,
+        sanitize(comuna) || null,
+        sanitize(direccion) || null,
         vende_productos ? 1 : 0,
         ofrece_servicios ? 1 : 0,
         ofrece_arriendos ? 1 : 0
@@ -70,8 +86,16 @@ router.post('/register', async (req, res) => {
 })
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', [
+  body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
+  body('password').notEmpty().withMessage('Contraseña requerida'),
+], async (req, res) => {
   try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg })
+    }
+
     const { email, password } = req.body
 
     // Buscar usuario

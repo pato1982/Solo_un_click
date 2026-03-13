@@ -5,6 +5,12 @@ const logActivity = require('../logActivity')
 
 const router = express.Router()
 
+// Sanitización: elimina tags HTML
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // GET /api/portada — obtener portada del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -82,7 +88,7 @@ router.post('/', authMiddleware, async (req, res) => {
       `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes, categorias)
        VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes), categorias=VALUES(categorias)`,
-      [req.userId, (nombre || '').trim() || null, descripcion || null, imagenesJson, categoriasJson]
+      [req.userId, sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson]
     )
 
     await logActivity(req.userId, 'crear', 'portada', result.insertId, { nombre })
@@ -104,7 +110,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const [result] = await pool.query(
       `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?, categorias=?
        WHERE id=? AND user_id=?`,
-      [(nombre || '').trim() || null, descripcion || null, imagenesJson, categoriasJson, req.params.id, req.userId]
+      [sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

@@ -5,6 +5,12 @@ const logActivity = require('../logActivity')
 
 const router = express.Router()
 
+// Sanitización: elimina tags HTML
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
@@ -161,7 +167,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, carousel_posicion, carousel_orden, banner_orden)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, categoria || null, subcategoria || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
+      [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
     )
 
     const listingId = result.insertId
@@ -210,7 +216,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     await pool.query(
       `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
        WHERE id=?`,
-      [tipo, seccion || 'destacados', nombre, descripcion || null, precio || 0, precio_original || null, categoria || null, subcategoria || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
+      [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
     )
 
     // Actualizar imagen

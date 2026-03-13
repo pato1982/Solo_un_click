@@ -4,6 +4,12 @@ const { authMiddleware } = require('./auth')
 
 const router = express.Router()
 
+// Sanitización: elimina tags HTML
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // GET /api/pagina — obtener página premium del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -57,7 +63,7 @@ router.post('/', authMiddleware, async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE titulo_superior=VALUES(titulo_superior), texto_superior=VALUES(texto_superior), imagen_superior=VALUES(imagen_superior),
        titulo_inferior=VALUES(titulo_inferior), texto_inferior=VALUES(texto_inferior), imagen_inferior=VALUES(imagen_inferior)`,
-      [req.userId, titulo_superior || null, texto_superior || null, imagen_superior || null, titulo_inferior || null, texto_inferior || null, imagen_inferior || null]
+      [req.userId, sanitize(titulo_superior) || null, sanitize(texto_superior) || null, imagen_superior || null, sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, imagen_inferior || null]
     )
 
     res.status(201).json({ message: 'Página guardada', id: result.insertId })
@@ -80,7 +86,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const [result] = await pool.query(
       `UPDATE turismo_pagina SET titulo_superior=?, texto_superior=?, imagen_superior=?, titulo_inferior=?, texto_inferior=?, imagen_inferior=?
        WHERE id=? AND user_id=?`,
-      [titulo_superior || null, texto_superior || null, imagen_superior || null, titulo_inferior || null, texto_inferior || null, imagen_inferior || null, req.params.id, req.userId]
+      [sanitize(titulo_superior) || null, sanitize(texto_superior) || null, imagen_superior || null, sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, imagen_inferior || null, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

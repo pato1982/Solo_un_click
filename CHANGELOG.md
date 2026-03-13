@@ -1,5 +1,43 @@
 # Registro de Cambios - Solo a un Click
 
+## 13 de Marzo 2026 (sesión 5) - Correcciones de seguridad backend
+
+### Helmet — Headers de seguridad HTTP
+- Se agregó `helmet` para enviar headers seguros automáticamente (X-Content-Type-Options, X-Frame-Options, etc.)
+- Configurado con `crossOriginResourcePolicy: 'cross-origin'` para que las imágenes carguen correctamente
+
+### CORS restringido con whitelist
+- CORS ya no acepta cualquier origen — solo `soloaunclick.cl`, `www.soloaunclick.cl`, `localhost:5173`, `localhost:3000`
+- Requests sin `Origin` (mismo servidor, Postman) siguen permitidos
+
+### Rate Limiting (protección contra brute force)
+- **Global:** máximo 300 requests por IP cada 15 minutos
+- **Login/Register:** máximo 10 intentos por IP cada 15 minutos
+- **Password Reset:** máximo 5 intentos por IP por hora
+- Mensajes de error en español para el usuario
+
+### Sanitización de inputs (anti-XSS)
+- Función `sanitize()` que elimina tags HTML de todos los campos de texto antes de guardarlos en BD
+- Aplicado en: auth (register), business, listings, tours, portada, pagina
+- URLs de imágenes no se sanitizan (se requieren tal cual)
+
+### Validación con express-validator
+- Login: valida email y contraseña obligatoria
+- Register: valida email, contraseña mínimo 6 caracteres, nombre requerido
+- Password Reset Request: valida formato de email
+- Normalización automática de emails (lowercase, trim)
+
+### Middleware centralizado de errores
+- Captura errores de CORS, Multer (tamaño/tipo archivo) y errores genéricos
+- Respuestas JSON consistentes en español
+
+### Dependencias nuevas
+- `express-rate-limit` ^7.1.5
+- `helmet` ^7.1.0
+- `express-validator` ^7.0.1
+
+---
+
 ## 13 de Marzo 2026 (sesión 4) - Turismo premium: filtros, tracking, zoom imágenes y mejoras UX
 
 ### Separación columnas contacto en página premium turismo

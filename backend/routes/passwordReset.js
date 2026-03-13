@@ -1,16 +1,23 @@
 const express = require('express')
 const crypto = require('crypto')
 const bcrypt = require('bcryptjs')
+const { body, validationResult } = require('express-validator')
 const pool = require('../db')
 const { sendPasswordResetEmail } = require('../mailer')
 
 const router = express.Router()
 
 // POST /api/password-reset/request — solicitar recuperación de contraseña
-router.post('/request', async (req, res) => {
+router.post('/request', [
+  body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
+], async (req, res) => {
   try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg })
+    }
+
     const { email } = req.body
-    if (!email) return res.status(400).json({ error: 'Email requerido' })
 
     // Verificar que el usuario existe
     const [users] = await pool.query('SELECT id, nombre FROM users WHERE email = ? AND activo = 1', [email])

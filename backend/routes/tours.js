@@ -5,6 +5,12 @@ const logActivity = require('../logActivity')
 
 const router = express.Router()
 
+// Sanitización: elimina tags HTML
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // GET /api/tours — listar tours del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -95,7 +101,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO turismo_tours (user_id, nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, nombre.trim(), categoria || null, ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
+      [req.userId, sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null, sanitize(detalle) || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
     )
 
     await logActivity(req.userId, 'crear', 'tour', result.insertId, { nombre })
@@ -125,7 +131,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const [result] = await pool.query(
       `UPDATE turismo_tours SET nombre=?, categoria=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
        WHERE id=? AND user_id=?`,
-      [nombre.trim(), categoria || null, ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson, req.params.id, req.userId]
+      [sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null, sanitize(detalle) || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

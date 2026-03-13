@@ -5,6 +5,12 @@ const logActivity = require('../logActivity')
 
 const router = express.Router()
 
+// Sanitización: elimina tags HTML
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
 // GET /api/business — obtener datos del negocio del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -79,13 +85,13 @@ router.post('/', authMiddleware, async (req, res) => {
       await pool.query(
         `UPDATE businesses SET nombre_negocio=?, slogan=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
          WHERE user_id=?`,
-        [nombre_negocio || null, slogan || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson, req.userId]
+        [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson, req.userId]
       )
     } else {
       await pool.query(
         `INSERT INTO businesses (user_id, nombre_negocio, slogan, direccion, whatsapp, telefono, correo, facebook, instagram, horarios)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, nombre_negocio || null, slogan || null, direccion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson]
+        [req.userId, sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson]
       )
     }
 
