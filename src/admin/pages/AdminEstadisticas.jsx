@@ -107,6 +107,7 @@ export default function AdminEstadisticas() {
   const [portada, setPortada] = useState(null)
   const [visitas, setVisitas] = useState(EMPTY_CHART)
   const [clicks, setClicks] = useState(EMPTY_CHART)
+  const [cardClicks, setCardClicks] = useState(EMPTY_CHART)
   const [resumen, setResumen] = useState({ visitas_mes: 0, visitantes_unicos: 0, por_pagina: {} })
   const [loading, setLoading] = useState(true)
 
@@ -124,6 +125,7 @@ export default function AdminEstadisticas() {
           if (portadaData.portada) setPortada(portadaData.portada)
           if (statsData.visitas?.length) setVisitas(statsData.visitas)
           if (statsData.clicks?.length) setClicks(statsData.clicks)
+          if (statsData.card_clicks?.length) setCardClicks(statsData.card_clicks)
           if (statsData.resumen) setResumen(statsData.resumen)
         })
         .catch(err => console.error('Error:', err))
@@ -385,9 +387,9 @@ export default function AdminEstadisticas() {
             <span className="material-symbols-outlined text-lg text-accent">touch_app</span>
             {esTurismo ? 'Clicks en tu tarjeta' : 'Clicks en productos'}
           </h2>
-          <p className="text-[9px] text-gray-400 mb-2">Últimos 6 meses — página principal y tu página</p>
+          <p className="text-[9px] text-gray-400 mb-2">Últimos 6 meses — {esTurismo ? 'iconos y botón Ver más' : 'página principal y tu página'}</p>
           <div className="bg-gray-50 rounded-lg border border-gray-100 p-1 overflow-hidden">
-            <LineChart data={clicks} />
+            <LineChart data={esTurismo ? cardClicks : clicks} />
           </div>
         </div>
 

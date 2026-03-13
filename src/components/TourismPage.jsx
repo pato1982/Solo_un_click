@@ -466,6 +466,13 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     }
   }, [selectedCompany])
 
+  const trackCardClick = (userId) => {
+    fetch(`${API}/api/analytics/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, event_type: 'card_click' }),
+    }).catch(() => {})
+  }
+
   const filteredCompanies = activeFilter
     ? empresas.filter((c) => c.subcategories.includes(activeFilter))
     : empresas
@@ -521,11 +528,11 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
               <div className="flex items-center gap-1.5 mb-1">
                 <span
                   className="material-symbols-outlined text-slate-400 text-base cursor-pointer hover:text-primary transition-colors"
-                  onClick={() => setPopup({ type: 'location', data: company.direccion })}
+                  onClick={() => { trackCardClick(company.userId); setPopup({ type: 'location', data: company.direccion }) }}
                 >location_on</span>
                 <span
                   className="material-symbols-outlined text-slate-400 text-base cursor-pointer hover:text-primary transition-colors"
-                  onClick={() => setPopup({ type: 'schedule', data: company.horarios })}
+                  onClick={() => { trackCardClick(company.userId); setPopup({ type: 'schedule', data: company.horarios }) }}
                 >schedule</span>
               </div>
               <h3 className="text-lg font-black text-primary mb-1">{company.name}</h3>
@@ -534,6 +541,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
                 {company.planId >= 3 && (
                   <button
                     onClick={() => {
+                      trackCardClick(company.userId)
                       setSelectedCompany(company)
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
@@ -551,6 +559,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
                     }
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackCardClick(company.userId)}
                     className="border border-primary/20 text-primary px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-primary/5 transition-all flex items-center gap-1.5"
                   >
                     <span className="material-symbols-outlined text-sm">{company.whatsapp ? 'chat' : 'call'}</span>

@@ -9,7 +9,7 @@ router.post('/track', async (req, res) => {
   try {
     const { user_id, event_type, listing_id } = req.body
     if (!user_id || !event_type) return res.status(400).json({ error: 'Faltan datos' })
-    if (!['page_view', 'product_click'].includes(event_type)) return res.status(400).json({ error: 'Tipo inválido' })
+    if (!['page_view', 'product_click', 'card_click'].includes(event_type)) return res.status(400).json({ error: 'Tipo inválido' })
 
     // Registrar en analytics (legacy)
     await pool.query(
@@ -55,6 +55,15 @@ router.get('/stats', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
+    // Últimos 6 meses de clicks en tarjeta (turismo)
+    const [cardClicks] = await pool.query(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
+       FROM analytics
+       WHERE user_id = ? AND event_type = 'card_click' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+       GROUP BY mes ORDER BY mes ASC`,
+      [req.userId]
+    )
+
     // Visitantes únicos (por IP) del mes actual
     const [uniqueVisitors] = await pool.query(
       `SELECT COUNT(DISTINCT visitor_ip) as total
@@ -96,6 +105,9 @@ router.get('/stats', authMiddleware, async (req, res) => {
     const clicksMap = {}
     clicks.forEach(c => { clicksMap[c.mes] = c.total })
 
+    const cardClicksMap = {}
+    cardClicks.forEach(c => { cardClicksMap[c.mes] = c.total })
+
     const visitas = meses.map(m => ({
       mes: MESES_LABEL[parseInt(m.split('-')[1]) - 1],
       valor: viewsMap[m] || 0,
@@ -109,9 +121,15 @@ router.get('/stats', authMiddleware, async (req, res) => {
     const paginasMap = {}
     visitsByPage.forEach(v => { paginasMap[v.pagina] = v.total })
 
+    const tarjeta_clicks = meses.map(m => ({
+      mes: MESES_LABEL[parseInt(m.split('-')[1]) - 1],
+      valor: cardClicksMap[m] || 0,
+    }))
+
     res.json({
       visitas,
       clicks: productos_clicks,
+      card_clicks: tarjeta_clicks,
       resumen: {
         visitas_mes: monthVisits[0]?.total || 0,
         visitantes_unicos: uniqueVisitors[0]?.total || 0,
