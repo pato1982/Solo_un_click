@@ -82,9 +82,9 @@ export default function ProgramadorEstadisticas() {
           <KpiCard label="Promedio diario" value={visitas.promedio_diario} color="text-emerald-400" />
           <KpiCard label="Visitas semanales" value={visitas.semanales} color="text-blue-400" />
           <KpiCard label="Visitas mensuales" value={visitas.mensuales} color="text-indigo-400" />
-          <KpiCard label="Visitas hoy" value={visitas.hoy} color="text-cyan-400" />
           <KpiCard label="Total histórico" value={visitas.total} color="text-amber-400" />
-          <KpiCard label="Visitantes únicos" value={visitas.visitantes_unicos} color="text-rose-400" />
+          <KpiCard label="Visitantes únicos" value={visitas.visitantes_unicos} color="text-cyan-400" />
+          <KpiCard label="Visitantes reiterados" value={visitas.reiterados} color="text-rose-400" />
         </div>
       </div>
     </div>

@@ -142,9 +142,9 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
         promedio_diario: promedioDiario,
         semanales: v.visitas_semana || 0,
         mensuales: v.visitas_mes || 0,
-        hoy: v.visitas_hoy || 0,
         total: v.total_visitas || 0,
         visitantes_unicos: v.visitantes_unicos || 0,
+        reiterados: Math.max(0, (v.total_visitas || 0) - (v.visitantes_unicos || 0)),
       },
     })
   } catch (err) {
