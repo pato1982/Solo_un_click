@@ -296,7 +296,7 @@ function CompanyDetail({ company, onBack }) {
         <div className="md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-5 pl-8">
           <h3 className="text-sm font-black text-primary mb-4">{tituloInf}</h3>
           {textoInf && <p className="text-xs text-slate-500 leading-relaxed mb-4">{textoInf}</p>}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-8">
             {/* Columna 1 */}
             <div className="flex flex-col gap-3">
               {company.direccion && (
