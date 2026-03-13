@@ -47,6 +47,7 @@ export default function ProgramadorServidor() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [uploadsOpen, setUploadsOpen] = useState(false)
+  const [proyectoOpen, setProyectoOpen] = useState(false)
 
   const token = localStorage.getItem('token')
 
@@ -125,33 +126,66 @@ export default function ProgramadorServidor() {
             </div>
           </div>
 
-          <div className="bg-slate-800/50 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setUploadsOpen(!uploadsOpen)}
-              className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-slate-700/50 transition-colors"
-            >
-              <span className="material-symbols-outlined text-lg text-blue-400">folder</span>
-              <div className="flex-1 text-left">
-                <p className="text-[10px] text-slate-500 uppercase font-bold">Carpeta uploads</p>
-                <p className="text-sm font-bold text-white">{formatBytes(disco.uploads)}</p>
-              </div>
-              <span className={`material-symbols-outlined text-sm text-slate-500 transition-transform duration-200 ${uploadsOpen ? 'rotate-180' : ''}`}>
-                expand_more
-              </span>
-            </button>
-            {uploadsOpen && disco.uploadsCarpetas && disco.uploadsCarpetas.length > 0 && (
-              <div className="border-t border-slate-700 px-3 py-2 flex flex-col gap-1.5">
-                {disco.uploadsCarpetas.map((c) => (
-                  <div key={c.nombre} className="flex items-center gap-2.5 px-2 py-1.5 rounded bg-slate-900/50">
-                    <span className="material-symbols-outlined text-sm text-slate-500">
-                      {c.nombre.includes('raíz') ? 'image' : 'folder_open'}
-                    </span>
-                    <span className="text-[11px] text-slate-300 flex-1 truncate font-mono">{c.nombre}</span>
-                    <span className="text-[11px] text-slate-400 font-bold">{formatBytes(c.bytes)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-col gap-2">
+            {/* Carpeta proyecto */}
+            <div className="bg-slate-800/50 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setProyectoOpen(!proyectoOpen)}
+                className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-slate-700/50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg text-amber-400">source</span>
+                <div className="flex-1 text-left">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold">Proyecto soloaunclick</p>
+                  <p className="text-sm font-bold text-white">{formatBytes(disco.proyecto)}</p>
+                </div>
+                <span className={`material-symbols-outlined text-sm text-slate-500 transition-transform duration-200 ${proyectoOpen ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+              {proyectoOpen && disco.proyectoCarpetas && disco.proyectoCarpetas.length > 0 && (
+                <div className="border-t border-slate-700 px-3 py-2 flex flex-col gap-1.5">
+                  {disco.proyectoCarpetas.map((c) => (
+                    <div key={c.nombre} className="flex items-center gap-2.5 px-2 py-1.5 rounded bg-slate-900/50">
+                      <span className="material-symbols-outlined text-sm text-slate-500">
+                        {c.nombre.includes('raíz') ? 'description' : 'folder_open'}
+                      </span>
+                      <span className="text-[11px] text-slate-300 flex-1 truncate font-mono">{c.nombre}</span>
+                      <span className="text-[11px] text-slate-400 font-bold">{formatBytes(c.bytes)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Carpeta uploads */}
+            <div className="bg-slate-800/50 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setUploadsOpen(!uploadsOpen)}
+                className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-slate-700/50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg text-blue-400">folder</span>
+                <div className="flex-1 text-left">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold">Carpeta uploads</p>
+                  <p className="text-sm font-bold text-white">{formatBytes(disco.uploads)}</p>
+                </div>
+                <span className={`material-symbols-outlined text-sm text-slate-500 transition-transform duration-200 ${uploadsOpen ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+              {uploadsOpen && disco.uploadsCarpetas && disco.uploadsCarpetas.length > 0 && (
+                <div className="border-t border-slate-700 px-3 py-2 flex flex-col gap-1.5">
+                  {disco.uploadsCarpetas.map((c) => (
+                    <div key={c.nombre} className="flex items-center gap-2.5 px-2 py-1.5 rounded bg-slate-900/50">
+                      <span className="material-symbols-outlined text-sm text-slate-500">
+                        {c.nombre.includes('raíz') ? 'image' : 'folder_open'}
+                      </span>
+                      <span className="text-[11px] text-slate-300 flex-1 truncate font-mono">{c.nombre}</span>
+                      <span className="text-[11px] text-slate-400 font-bold">{formatBytes(c.bytes)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
