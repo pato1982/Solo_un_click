@@ -406,7 +406,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
 /* =========================================
    Página principal de turismo
    ========================================= */
-export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias, initialUserId, onInitialUserConsumed }) {
+export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias, initialUserId, onInitialUserConsumed, resetKey }) {
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCompany, setSelectedCompany] = useState(null)
@@ -439,6 +439,11 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
       .catch(err => console.error('Error cargando empresas turismo:', err))
       .finally(() => setLoading(false))
   }, [])
+
+  // Volver a la lista principal cuando se clickea "Turismo" en el nav
+  useEffect(() => {
+    setSelectedCompany(null)
+  }, [resetKey])
 
   // Auto-seleccionar empresa si viene initialUserId
   useEffect(() => {
