@@ -11,7 +11,12 @@ router.get('/', authMiddleware, async (req, res) => {
       'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
       [req.userId]
     )
-    res.json({ pagina: rows[0] || null })
+    const pagina = rows[0] || null
+    if (pagina) {
+      try { if (pagina.crop_superior && typeof pagina.crop_superior === 'string') pagina.crop_superior = JSON.parse(pagina.crop_superior) } catch {}
+      try { if (pagina.crop_inferior && typeof pagina.crop_inferior === 'string') pagina.crop_inferior = JSON.parse(pagina.crop_inferior) } catch {}
+    }
+    res.json({ pagina })
   } catch (err) {
     console.error('Error al obtener página:', err)
     res.status(500).json({ error: 'Error al obtener página' })
@@ -25,7 +30,12 @@ router.get('/public/:userId', async (req, res) => {
       'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
       [req.params.userId]
     )
-    res.json({ pagina: rows[0] || null })
+    const pagina = rows[0] || null
+    if (pagina) {
+      try { if (pagina.crop_superior && typeof pagina.crop_superior === 'string') pagina.crop_superior = JSON.parse(pagina.crop_superior) } catch {}
+      try { if (pagina.crop_inferior && typeof pagina.crop_inferior === 'string') pagina.crop_inferior = JSON.parse(pagina.crop_inferior) } catch {}
+    }
+    res.json({ pagina })
   } catch (err) {
     console.error('Error al obtener página pública:', err)
     res.status(500).json({ error: 'Error al obtener página' })
@@ -81,6 +91,21 @@ router.put('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al actualizar página:', err)
     res.status(500).json({ error: 'Error al actualizar página' })
+  }
+})
+
+// PATCH /api/pagina/:id/crop — guardar encuadre de imágenes
+router.patch('/:id/crop', authMiddleware, async (req, res) => {
+  try {
+    const { crop_superior, crop_inferior } = req.body
+    await pool.query(
+      'UPDATE turismo_pagina SET crop_superior=?, crop_inferior=? WHERE id=? AND user_id=?',
+      [crop_superior ? JSON.stringify(crop_superior) : null, crop_inferior ? JSON.stringify(crop_inferior) : null, req.params.id, req.userId]
+    )
+    res.json({ message: 'Encuadre guardado' })
+  } catch (err) {
+    console.error('Error al guardar encuadre:', err)
+    res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
 

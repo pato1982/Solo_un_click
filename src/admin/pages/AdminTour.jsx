@@ -13,6 +13,7 @@ const emptyForm = {
   imagenPrincipal: 0,
   imagenes: [null, null, null],
   imagenesPreview: [null, null, null],
+  imagenesCrop: [null, null, null],
 }
 
 export default function AdminTour() {
@@ -112,6 +113,11 @@ export default function AdminTour() {
         imgs[0] ? `${API}${imgs[0]}` : null,
         imgs[1] ? `${API}${imgs[1]}` : null,
         imgs[2] ? `${API}${imgs[2]}` : null,
+      ],
+      imagenesCrop: [
+        (tour.imagenes_crop && tour.imagenes_crop[0]) || null,
+        (tour.imagenes_crop && tour.imagenes_crop[1]) || null,
+        (tour.imagenes_crop && tour.imagenes_crop[2]) || null,
       ],
     })
     setActiveTab(0)
@@ -327,6 +333,19 @@ export default function AdminTour() {
                     alt={`Imagen ${activeTab + 1}`}
                     onEdit={() => fileRefs[activeTab].current?.click()}
                     onRemove={() => removeImage(activeTab)}
+                    initialCrop={form.imagenesCrop[activeTab]}
+                    onSaveCrop={(cropData) => {
+                      const newCrops = [...form.imagenesCrop]
+                      newCrops[activeTab] = cropData
+                      setForm(prev => ({ ...prev, imagenesCrop: newCrops }))
+                      if (editingId) {
+                        fetch(`${API}/api/tours/${editingId}/crop`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ imagenes_crop: newCrops }),
+                        }).catch(() => {})
+                      }
+                    }}
                   />
                 ) : (
                   <button

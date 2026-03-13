@@ -21,6 +21,9 @@ router.get('/', authMiddleware, async (req, res) => {
       if (portada.categorias && typeof portada.categorias === 'string') {
         try { portada.categorias = JSON.parse(portada.categorias) } catch { portada.categorias = [] }
       }
+      if (portada.imagenes_crop && typeof portada.imagenes_crop === 'string') {
+        try { portada.imagenes_crop = JSON.parse(portada.imagenes_crop) } catch { portada.imagenes_crop = [] }
+      }
     }
 
     res.json({ portada })
@@ -34,7 +37,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/public', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT p.id, p.user_id, p.descripcion, p.imagenes, p.categorias,
+      `SELECT p.id, p.user_id, p.descripcion, p.imagenes, p.imagenes_crop, p.categorias,
               b.nombre_negocio, b.direccion, b.whatsapp, b.telefono, b.correo, b.facebook, b.instagram, b.horarios,
               u.plan_id
        FROM turismo_portada p
@@ -53,6 +56,9 @@ router.get('/public', async (req, res) => {
       }
       if (row.horarios && typeof row.horarios === 'string') {
         try { row.horarios = JSON.parse(row.horarios) } catch { row.horarios = [] }
+      }
+      if (row.imagenes_crop && typeof row.imagenes_crop === 'string') {
+        try { row.imagenes_crop = JSON.parse(row.imagenes_crop) } catch { row.imagenes_crop = [] }
       }
     }
 
@@ -130,6 +136,21 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar portada:', err)
     res.status(500).json({ error: 'Error al eliminar portada' })
+  }
+})
+
+// PATCH /api/portada/:id/crop — guardar encuadre de imágenes
+router.patch('/:id/crop', authMiddleware, async (req, res) => {
+  try {
+    const { imagenes_crop } = req.body
+    await pool.query(
+      'UPDATE turismo_portada SET imagenes_crop=? WHERE id=? AND user_id=?',
+      [JSON.stringify(imagenes_crop || []), req.params.id, req.userId]
+    )
+    res.json({ message: 'Encuadre guardado' })
+  } catch (err) {
+    console.error('Error al guardar encuadre:', err)
+    res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
 

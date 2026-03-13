@@ -7,6 +7,7 @@ const emptyForm = {
   descripcion: '',
   imagenes: [null, null, null],
   imagenesPreview: [null, null, null],
+  imagenesCrop: [null, null, null],
 }
 
 export default function AdminPortada() {
@@ -55,6 +56,7 @@ export default function AdminPortada() {
           const imgs = p.imagenes || []
           setPortadaId(p.id)
           setCategorias(p.categorias || [])
+          const crops = p.imagenes_crop || []
           setForm({
             descripcion: p.descripcion || '',
             imagenes: [imgs[0] || null, imgs[1] || null, imgs[2] || null],
@@ -63,6 +65,7 @@ export default function AdminPortada() {
               imgs[1] ? `${API}${imgs[1]}` : null,
               imgs[2] ? `${API}${imgs[2]}` : null,
             ],
+            imagenesCrop: [crops[0] || null, crops[1] || null, crops[2] || null],
           })
         }
       })
@@ -284,6 +287,19 @@ export default function AdminPortada() {
                 alt={`Imagen ${activeTab + 1}`}
                 onEdit={() => fileRefs[activeTab].current?.click()}
                 onRemove={() => removeImage(activeTab)}
+                initialCrop={form.imagenesCrop[activeTab]}
+                onSaveCrop={(cropData) => {
+                  const newCrops = [...form.imagenesCrop]
+                  newCrops[activeTab] = cropData
+                  setForm(prev => ({ ...prev, imagenesCrop: newCrops }))
+                  if (portadaId) {
+                    fetch(`${API}/api/portada/${portadaId}/crop`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ imagenes_crop: newCrops }),
+                    }).catch(() => {})
+                  }
+                }}
               />
             ) : (
               <button

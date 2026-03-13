@@ -11,7 +11,7 @@ const fanAngles = [
   { rotate: 15, translateX: 50 },
 ]
 
-function CardFan({ images }) {
+function CardFan({ images, crops = [] }) {
   if (!images || images.length === 0) {
     return (
       <div className="relative shrink-0 flex items-center justify-center" style={{ width: '250px', height: '180px' }}>
@@ -21,21 +21,35 @@ function CardFan({ images }) {
   }
   return (
     <div className="relative shrink-0" style={{ width: '250px', height: '180px' }}>
-      {images.map((img, i) => (
-        <div
-          key={i}
-          className="absolute w-28 h-[150px] rounded-xl overflow-hidden shadow-2xl border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20"
-          style={{
-            transform: `translateX(calc(-50% + ${fanAngles[i].translateX}px)) rotate(${fanAngles[i].rotate}deg)`,
-            transformOrigin: 'bottom center',
-            left: '50%',
-            top: '0px',
-            zIndex: i === 1 || i === 2 ? 12 : 10,
-          }}
-        >
-          <img src={img} alt="Turismo" className="w-full h-full object-cover" />
-        </div>
-      ))}
+      {images.map((img, i) => {
+        const c = crops[i]
+        const z = c?.zoom || 1
+        const cx = c?.x || 0
+        const cy = c?.y || 0
+        return (
+          <div
+            key={i}
+            className="absolute w-28 h-[150px] rounded-xl overflow-hidden shadow-2xl border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20"
+            style={{
+              transform: `translateX(calc(-50% + ${fanAngles[i].translateX}px)) rotate(${fanAngles[i].rotate}deg)`,
+              transformOrigin: 'bottom center',
+              left: '50%',
+              top: '0px',
+              zIndex: i === 1 || i === 2 ? 12 : 10,
+            }}
+          >
+            <img
+              src={img}
+              alt="Turismo"
+              className="w-full h-full object-cover"
+              style={z > 1 || cx || cy ? {
+                transform: `scale(${z}) translate(${cx / z}px, ${cy / z}px)`,
+                transformOrigin: 'center center',
+              } : undefined}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -137,6 +151,7 @@ function SchedulePopup({ horarios, onClose }) {
    ========================================= */
 function TourModal({ tour, onClose }) {
   const imgs = (tour.imagenes || []).map(img => `${API}${img}`).filter(Boolean)
+  const crops = tour.imagenes_crop || []
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -153,9 +168,19 @@ function TourModal({ tour, onClose }) {
         {imgs.length > 0 && (
           <div className="px-4 pt-3">
             <div className={`grid gap-2 ${imgs.length === 1 ? 'grid-cols-1' : imgs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-              {imgs.map((src, i) => (
-                <img key={i} src={src} alt={`${tour.nombre} ${i + 1}`} className="w-full h-36 object-cover rounded-lg" />
-              ))}
+              {imgs.map((src, i) => {
+                const c = crops[i]
+                return (
+                  <div key={i} className="rounded-lg overflow-hidden">
+                    <img src={src} alt={`${tour.nombre} ${i + 1}`} className="w-full h-36 object-cover"
+                      style={c && (c.zoom > 1 || c.x || c.y) ? {
+                        transform: `scale(${c.zoom}) translate(${c.x / c.zoom}px, ${c.y / c.zoom}px)`,
+                        transformOrigin: 'center center',
+                      } : undefined}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
@@ -222,6 +247,8 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
 
   const imgSup = pagina?.imagen_superior ? `${API}${pagina.imagen_superior}` : company.images[0]
   const imgInf = pagina?.imagen_inferior ? `${API}${pagina.imagen_inferior}` : company.images[1]
+  const cropSup = pagina?.crop_superior || null
+  const cropInf = pagina?.crop_inferior || null
   const tituloSup = pagina?.titulo_superior || 'Sobre Nosotros'
   const textoSup = pagina?.texto_superior || company.description || 'Sin descripción'
   const tituloInf = pagina?.titulo_inferior || 'Datos de la Empresa'
@@ -240,7 +267,12 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
       <div className="flex flex-col md:flex-row gap-6 items-center">
         {imgSup && (
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgSup} alt={company.name} className="w-full h-64 object-cover" />
+            <img src={imgSup} alt={company.name} className="w-full h-64 object-cover"
+              style={cropSup && (cropSup.zoom > 1 || cropSup.x || cropSup.y) ? {
+                transform: `scale(${cropSup.zoom}) translate(${cropSup.x / cropSup.zoom}px, ${cropSup.y / cropSup.zoom}px)`,
+                transformOrigin: 'center center',
+              } : undefined}
+            />
           </div>
         )}
         <div className={imgSup ? 'md:w-1/2 flex flex-col' : 'w-full flex flex-col'}>
@@ -292,6 +324,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
                 const imagen = tour.imagenes && tour.imagenes[imgIdx]
                   ? `${API}${tour.imagenes[imgIdx]}`
                   : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
+                const imgCrop = tour.imagenes_crop && tour.imagenes_crop[imgIdx] ? tour.imagenes_crop[imgIdx] : null
                 return (
                   <div
                     key={tour.id}
@@ -299,7 +332,12 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
                     className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
                   >
                     {imagen ? (
-                      <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                        style={imgCrop && (imgCrop.zoom > 1 || imgCrop.x || imgCrop.y) ? {
+                          transform: `scale(${imgCrop.zoom}) translate(${imgCrop.x / imgCrop.zoom}px, ${imgCrop.y / imgCrop.zoom}px)`,
+                          transformOrigin: 'center center',
+                        } : undefined}
+                      />
                     ) : (
                       <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
                         <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
@@ -387,7 +425,12 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
         </div>
         {imgInf && (
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgInf} alt={company.name} className="w-full h-64 object-cover" />
+            <img src={imgInf} alt={company.name} className="w-full h-64 object-cover"
+              style={cropInf && (cropInf.zoom > 1 || cropInf.x || cropInf.y) ? {
+                transform: `scale(${cropInf.zoom}) translate(${cropInf.x / cropInf.zoom}px, ${cropInf.y / cropInf.zoom}px)`,
+                transformOrigin: 'center center',
+              } : undefined}
+            />
           </div>
         )}
       </div>
@@ -423,6 +466,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
             name: p.nombre_negocio || 'Sin nombre',
             description: p.descripcion || '',
             images: (p.imagenes || []).map(img => `${API}${img}`),
+            imagesCrop: p.imagenes_crop || [],
             subcategories: p.categorias || [],
             direccion: p.direccion || '',
             horarios: p.horarios || [],
@@ -575,7 +619,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
             </div>
 
             <div className="shrink-0 flex flex-col items-center">
-              <CardFan images={company.images} />
+              <CardFan images={company.images} crops={company.imagesCrop} />
               {company.subcategories && company.subcategories.length > 0 && (
                 <div className="flex flex-wrap justify-center items-center gap-x-1 gap-y-0.5 -mt-2 max-w-[250px]">
                   {company.subcategories.map((cat, i) => (

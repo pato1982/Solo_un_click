@@ -16,6 +16,8 @@ router.get('/', authMiddleware, async (req, res) => {
     for (const row of rows) {
       try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
       catch { row.imagenes = [] }
+      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
+      catch { row.imagenes_crop = [] }
     }
 
     res.json({ tours: rows })
@@ -35,6 +37,8 @@ router.get('/public', async (req, res) => {
     for (const row of rows) {
       try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
       catch { row.imagenes = [] }
+      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
+      catch { row.imagenes_crop = [] }
     }
 
     res.json({ tours: rows })
@@ -55,6 +59,8 @@ router.get('/public/:userId', async (req, res) => {
     for (const row of rows) {
       try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
       catch { row.imagenes = [] }
+      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
+      catch { row.imagenes_crop = [] }
     }
 
     res.json({ tours: rows })
@@ -151,6 +157,21 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar tour:', err)
     res.status(500).json({ error: 'Error al eliminar tour' })
+  }
+})
+
+// PATCH /api/tours/:id/crop — guardar encuadre de imágenes
+router.patch('/:id/crop', authMiddleware, async (req, res) => {
+  try {
+    const { imagenes_crop } = req.body
+    await pool.query(
+      'UPDATE turismo_tours SET imagenes_crop=? WHERE id=? AND user_id=?',
+      [JSON.stringify(imagenes_crop || []), req.params.id, req.userId]
+    )
+    res.json({ message: 'Encuadre guardado' })
+  } catch (err) {
+    console.error('Error al guardar encuadre:', err)
+    res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
 

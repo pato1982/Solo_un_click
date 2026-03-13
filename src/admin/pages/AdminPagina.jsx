@@ -20,6 +20,7 @@ export default function AdminPagina() {
   const [supPreview, setSupPreview] = useState(null)
   const [savingSup, setSavingSup] = useState(false)
   const [savedSup, setSavedSup] = useState(false)
+  const [supCrop, setSupCrop] = useState(null)
   const supRef = useRef(null)
 
   // Estado para fila inferior
@@ -29,6 +30,7 @@ export default function AdminPagina() {
   const [infPreview, setInfPreview] = useState(null)
   const [savingInf, setSavingInf] = useState(false)
   const [savedInf, setSavedInf] = useState(false)
+  const [infCrop, setInfCrop] = useState(null)
   const infRef = useRef(null)
 
   const token = localStorage.getItem('token')
@@ -61,6 +63,8 @@ export default function AdminPagina() {
             setInfImagen(p.imagen_inferior)
             setInfPreview(`${API}${p.imagen_inferior}`)
           }
+          if (p.crop_superior) setSupCrop(p.crop_superior)
+          if (p.crop_inferior) setInfCrop(p.crop_inferior)
         }
       })
       .catch(err => console.error('Error cargando página:', err))
@@ -192,8 +196,8 @@ export default function AdminPagina() {
   }
 
   const current = activeTab === 'superior'
-    ? { titulo: supTitulo, setTitulo: setSupTitulo, texto: supTexto, setTexto: setSupTexto, imagen: supImagen, preview: supPreview, ref: supRef, saving: savingSup, saved: savedSup }
-    : { titulo: infTitulo, setTitulo: setInfTitulo, texto: infTexto, setTexto: setInfTexto, imagen: infImagen, preview: infPreview, ref: infRef, saving: savingInf, saved: savedInf }
+    ? { titulo: supTitulo, setTitulo: setSupTitulo, texto: supTexto, setTexto: setSupTexto, imagen: supImagen, preview: supPreview, ref: supRef, saving: savingSup, saved: savedSup, crop: supCrop, setCrop: setSupCrop }
+    : { titulo: infTitulo, setTitulo: setInfTitulo, texto: infTexto, setTexto: setInfTexto, imagen: infImagen, preview: infPreview, ref: infRef, saving: savingInf, saved: savedInf, crop: infCrop, setCrop: setInfCrop }
 
   if (loading) {
     return (
@@ -252,6 +256,20 @@ export default function AdminPagina() {
                 alt={`Imagen ${activeTab}`}
                 onEdit={() => current.ref.current?.click()}
                 onRemove={() => removeImage(activeTab)}
+                initialCrop={current.crop}
+                onSaveCrop={(cropData) => {
+                  current.setCrop(cropData)
+                  if (paginaId) {
+                    const body = activeTab === 'superior'
+                      ? { crop_superior: cropData, crop_inferior: infCrop }
+                      : { crop_superior: supCrop, crop_inferior: cropData }
+                    fetch(`${API}/api/pagina/${paginaId}/crop`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify(body),
+                    }).catch(() => {})
+                  }
+                }}
               />
             ) : (
               <button
