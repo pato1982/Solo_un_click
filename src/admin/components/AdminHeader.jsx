@@ -523,21 +523,26 @@ export default function AdminHeader({ onToggleSidebar }) {
             </button>
           )}
 
-          {/* Título centrado */}
+          {/* Título centrado (solo admin normal) */}
           <div className="flex-1 flex items-center justify-center">
-            {isProg ? (
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-emerald-400 text-base">terminal</span>
-                </div>
-                <span className="text-sm font-black text-emerald-400 uppercase tracking-wider">Panel Programador</span>
-              </div>
-            ) : (
+            {!isProg && (
               <span className="text-lg font-bold uppercase tracking-wider text-white">
                 Panel Administrador
               </span>
             )}
           </div>
+
+          {/* Programador: botón salir */}
+          {isProg && (
+            <button
+              onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/' }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors mr-3"
+              title="Cerrar sesión"
+            >
+              <span className="material-symbols-outlined text-lg">logout</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Salir</span>
+            </button>
+          )}
 
           {/* Logo Solo a un Click a la derecha */}
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">

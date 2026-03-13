@@ -128,24 +128,20 @@ export default function AdminSidebar({ open }) {
         </div>
       )}
 
-      {/* Pie del sidebar */}
-      <div className={`absolute bottom-0 left-0 right-0 p-4 border-t ${isProg ? 'border-slate-700' : 'border-gray-100'}`}>
-        <div className="flex items-center gap-3 px-2">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isProg ? 'bg-emerald-500/20' : 'bg-primary/10'}`}>
-            <span className={`material-symbols-outlined text-lg ${isProg ? 'text-emerald-400' : 'text-primary'}`}>
-              {isProg ? 'code' : 'person'}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-xs font-semibold truncate ${isProg ? 'text-emerald-400' : 'text-gray-700'}`}>
-              {isProg ? 'Programador' : 'Administrador'}
-            </p>
-            <p className={`text-[10px] truncate ${isProg ? 'text-slate-500' : 'text-gray-400'}`}>
-              {user.email || 'admin@soloaunclick.cl'}
-            </p>
+      {/* Pie del sidebar (solo admin normal) */}
+      {!isProg && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-lg">person</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-gray-700 truncate">Administrador</p>
+              <p className="text-[10px] text-gray-400 truncate">{user.email || 'admin@soloaunclick.cl'}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Popup contenido bloqueado */}
       {lockedPopup && (
