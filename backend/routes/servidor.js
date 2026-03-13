@@ -59,36 +59,6 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
       uploadsCarpetas.sort((a, b) => b.bytes - a.bytes)
     } catch (e) {}
 
-    // Proyecto: desglose de carpetas principales
-    let proyectoBytes = 0
-    let proyectoCarpetas = []
-    try {
-      // du --max-depth=1 lista cada subdirectorio + total en una sola pasada
-      const projOutput = await execPromise("du -b --max-depth=1 /var/www/soloaunclick 2>/dev/null")
-      if (projOutput) {
-        const lines = projOutput.split('\n')
-        for (const line of lines) {
-          const [bytes, fullpath] = line.split('\t')
-          const name = fullpath.replace('/var/www/soloaunclick', '').replace(/^\//, '') || ''
-          const size = parseInt(bytes) || 0
-          if (!name) {
-            proyectoBytes = size // línea del total
-          } else {
-            proyectoCarpetas.push({ nombre: name, bytes: size })
-          }
-        }
-      }
-
-      // Archivos sueltos en raíz del proyecto
-      const projSubTotal = proyectoCarpetas.reduce((sum, c) => sum + c.bytes, 0)
-      const projLoose = proyectoBytes - projSubTotal
-      if (projLoose > 0) {
-        proyectoCarpetas.push({ nombre: 'archivos raíz', bytes: projLoose })
-      }
-
-      proyectoCarpetas.sort((a, b) => b.bytes - a.bytes)
-    } catch (e) {}
-
     // Base de datos
     const [dbRows] = await pool.query(`
       SELECT
@@ -113,8 +83,6 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
         disponible: availBytes,
         uploads: uploadsBytes,
         uploadsCarpetas,
-        proyecto: proyectoBytes,
-        proyectoCarpetas,
       },
       bd: {
         total: dbTotal,
