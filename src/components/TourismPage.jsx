@@ -136,7 +136,6 @@ function SchedulePopup({ horarios, onClose }) {
    Página premium de una empresa
    ========================================= */
 function TourModal({ tour, onClose }) {
-  const [activeImg, setActiveImg] = useState(0)
   const imgs = (tour.imagenes || []).map(img => `${API}${img}`).filter(Boolean)
 
   return (
@@ -150,21 +149,14 @@ function TourModal({ tour, onClose }) {
           </button>
         </div>
 
-        {/* Imágenes con pestañas */}
+        {/* Imágenes lado a lado */}
         {imgs.length > 0 && (
           <div className="px-4 pt-3">
-            <img src={imgs[activeImg] || imgs[0]} alt={tour.nombre} className="w-full h-56 object-cover rounded-lg" />
-            {imgs.length > 1 && (
-              <div className="flex justify-center gap-2 mt-2">
-                {imgs.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    className={`w-2 h-2 rounded-full transition-colors ${activeImg === i ? 'bg-primary' : 'bg-gray-300'}`}
-                  />
-                ))}
-              </div>
-            )}
+            <div className={`grid gap-2 ${imgs.length === 1 ? 'grid-cols-1' : imgs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {imgs.map((src, i) => (
+                <img key={i} src={src} alt={`${tour.nombre} ${i + 1}`} className="w-full h-36 object-cover rounded-lg" />
+              ))}
+            </div>
           </div>
         )}
 
@@ -257,6 +249,48 @@ function CompanyDetail({ company, onBack }) {
         </div>
       </div>
 
+      {/* Tours / Panoramas — entre las dos filas */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-1 h-5 bg-accent rounded-full"></div>
+          <h3 className="text-sm font-black text-primary uppercase tracking-wide">Panoramas y Salidas</h3>
+          <div className="flex-1 h-px bg-slate-200"></div>
+        </div>
+
+        {loadingTours ? (
+          <div className="flex items-center justify-center py-10">
+            <span className="material-symbols-outlined text-primary text-2xl animate-spin">progress_activity</span>
+          </div>
+        ) : tours.length === 0 ? (
+          <p className="text-center text-slate-400 text-xs py-6">Esta empresa aún no ha publicado tours.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {tours.map((tour) => {
+              const imgIdx = tour.imagen_principal || 0
+              const imagen = tour.imagenes && tour.imagenes[imgIdx]
+                ? `${API}${tour.imagenes[imgIdx]}`
+                : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
+              return (
+                <div
+                  key={tour.id}
+                  onClick={() => setSelectedTour(tour)}
+                  className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                >
+                  {imagen ? (
+                    <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
+                    </div>
+                  )}
+                  <p className="text-[11px] font-semibold text-slate-600 text-center py-2 px-1 truncate">{tour.nombre}</p>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Fila 2: Datos empresa + Imagen derecha */}
       <div className="flex flex-col md:flex-row gap-6 items-center">
         <div className="md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-5 pl-8">
@@ -322,48 +356,6 @@ function CompanyDetail({ company, onBack }) {
         {imgInf && (
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
             <img src={imgInf} alt={company.name} className="w-full h-64 object-cover" />
-          </div>
-        )}
-      </div>
-
-      {/* Fila 3: Tours / Panoramas — solo imagen + nombre */}
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-1 h-5 bg-accent rounded-full"></div>
-          <h3 className="text-sm font-black text-primary uppercase tracking-wide">Panoramas y Salidas</h3>
-          <div className="flex-1 h-px bg-slate-200"></div>
-        </div>
-
-        {loadingTours ? (
-          <div className="flex items-center justify-center py-10">
-            <span className="material-symbols-outlined text-primary text-2xl animate-spin">progress_activity</span>
-          </div>
-        ) : tours.length === 0 ? (
-          <p className="text-center text-slate-400 text-xs py-6">Esta empresa aún no ha publicado tours.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {tours.map((tour) => {
-              const imgIdx = tour.imagen_principal || 0
-              const imagen = tour.imagenes && tour.imagenes[imgIdx]
-                ? `${API}${tour.imagenes[imgIdx]}`
-                : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
-              return (
-                <div
-                  key={tour.id}
-                  onClick={() => setSelectedTour(tour)}
-                  className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
-                >
-                  {imagen ? (
-                    <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
-                    </div>
-                  )}
-                  <p className="text-[11px] font-semibold text-slate-600 text-center py-2 px-1 truncate">{tour.nombre}</p>
-                </div>
-              )
-            })}
           </div>
         )}
       </div>
