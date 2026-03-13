@@ -23,6 +23,9 @@ const servidorRoutes = require('./routes/servidor')
 const app = express()
 const PORT = 3001
 
+// Nginx reverse proxy: confiar en X-Forwarded-For
+app.set('trust proxy', 1)
+
 // --- Seguridad: Helmet (headers seguros) ---
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
