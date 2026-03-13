@@ -159,12 +159,21 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           <div className="absolute right-0 flex items-center gap-4">
             {user ? (
               <>
-                <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
-                  {' '}<span className="text-white/50">Plan {user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
-                </span>
-                <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
-                  <span className="material-symbols-outlined text-xl">dashboard</span>
-                </a>
+                {user.rol !== 'programador' && (
+                  <>
+                    <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
+                      {' '}<span className="text-white/50">Plan {user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
+                    </span>
+                    <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
+                      <span className="material-symbols-outlined text-xl">dashboard</span>
+                    </a>
+                  </>
+                )}
+                {user.rol === 'programador' && (
+                  <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
+                    <span className="material-symbols-outlined text-xl">terminal</span>
+                  </a>
+                )}
                 <button onClick={onLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
                   <span className="material-symbols-outlined text-xl">logout</span>
                 </button>

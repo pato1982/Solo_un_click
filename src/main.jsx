@@ -12,6 +12,7 @@ import AdminTour from './admin/pages/AdminTour'
 import AdminPortada from './admin/pages/AdminPortada'
 import AdminPagina from './admin/pages/AdminPagina'
 import ProgramadorLocales from './admin/pages/ProgramadorLocales'
+import ProgramadorEventos from './admin/pages/ProgramadorEventos'
 import DevLogin from './admin/DevLogin'
 import './index.css'
 
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="tour" element={<AdminTour />} />
           <Route path="pagina" element={<AdminPagina />} />
           <Route path="programador/locales" element={<ProgramadorLocales />} />
+          <Route path="programador/eventos" element={<ProgramadorEventos />} />
         </Route>
         <Route path="/*" element={<App />} />
       </Routes>

@@ -21,6 +21,7 @@ const menuTurismo = [
 
 const menuProgramador = [
   { label: 'Locales de Barrio', icon: 'store', path: '/admin/programador/locales' },
+  { label: 'Próximos Eventos', icon: 'event', path: '/admin/programador/eventos' },
 ]
 
 const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }
