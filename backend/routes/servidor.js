@@ -49,9 +49,9 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
         })
       }
 
-      // Archivos sueltos en raíz de uploads
-      const loosOutput = await execPromise("find /var/www/soloaunclick/backend/uploads -mindepth 1 -maxdepth 1 -type f -exec du -sb {} + 2>/dev/null | tail -1 | awk '{print $1}'")
-      const looseBytes = parseInt(loosOutput) || 0
+      // Archivos sueltos = total uploads - suma de subcarpetas
+      const subdirsTotal = uploadsCarpetas.reduce((sum, c) => sum + c.bytes, 0)
+      const looseBytes = uploadsBytes - subdirsTotal
       if (looseBytes > 0) {
         uploadsCarpetas.unshift({ nombre: 'imágenes (raíz)', bytes: looseBytes })
       }
