@@ -191,7 +191,7 @@ function TourModal({ tour, onClose }) {
   )
 }
 
-function CompanyDetail({ company, onBack, activeFilter }) {
+function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
   const [tours, setTours] = useState([])
   const [loadingTours, setLoadingTours] = useState(true)
   const [selectedTour, setSelectedTour] = useState(null)
@@ -249,11 +249,27 @@ function CompanyDetail({ company, onBack, activeFilter }) {
         </div>
       </div>
 
+      {/* Botón flotante "Ver todos" cuando hay filtro activo */}
+      {activeFilter && !loadingTours && (
+        <div className="sticky top-16 z-30 flex justify-center -mb-4">
+          <button
+            onClick={() => onClearFilter && onClearFilter()}
+            className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-primary/90 transition-all text-xs font-bold"
+          >
+            <span className="material-symbols-outlined text-sm">filter_list_off</span>
+            Ver todos los tours
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+      )}
+
       {/* Tours / Panoramas — entre las dos filas */}
       <div>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-1 h-5 bg-accent rounded-full"></div>
-          <h3 className="text-sm font-black text-primary uppercase tracking-wide">Panoramas y Salidas</h3>
+          <h3 className="text-sm font-black text-primary uppercase tracking-wide">
+            {activeFilter ? `${activeFilter}` : 'Panoramas y Salidas'}
+          </h3>
           <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
@@ -263,37 +279,39 @@ function CompanyDetail({ company, onBack, activeFilter }) {
           </div>
         ) : tours.length === 0 ? (
           <p className="text-center text-slate-400 text-xs py-6">Esta empresa aún no ha publicado tours.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {tours.map((tour) => {
-              const imgIdx = tour.imagen_principal || 0
-              const imagen = tour.imagenes && tour.imagenes[imgIdx]
-                ? `${API}${tour.imagenes[imgIdx]}`
-                : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
-              const highlighted = activeFilter && tour.categoria && tour.categoria.toLowerCase() === activeFilter.toLowerCase()
-              return (
-                <div
-                  key={tour.id}
-                  onClick={() => setSelectedTour(tour)}
-                  className={`cursor-pointer group rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${
-                    highlighted
-                      ? 'border-2 border-accent ring-2 ring-accent/20 shadow-md scale-[1.02]'
-                      : 'border border-slate-100'
-                  }`}
-                >
-                  {imagen ? (
-                    <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
-                    </div>
-                  )}
-                  <p className={`text-[11px] font-semibold text-center py-2 px-1 truncate ${highlighted ? 'text-primary' : 'text-slate-600'}`}>{tour.nombre}</p>
-                </div>
-              )
-            })}
-          </div>
-        )}
+        ) : (() => {
+          const visibleTours = activeFilter
+            ? tours.filter(t => t.categoria && t.categoria.toLowerCase() === activeFilter.toLowerCase())
+            : tours
+          return visibleTours.length === 0 ? (
+            <p className="text-center text-slate-400 text-xs py-6">No hay tours en esta categoría.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {visibleTours.map((tour) => {
+                const imgIdx = tour.imagen_principal || 0
+                const imagen = tour.imagenes && tour.imagenes[imgIdx]
+                  ? `${API}${tour.imagenes[imgIdx]}`
+                  : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
+                return (
+                  <div
+                    key={tour.id}
+                    onClick={() => setSelectedTour(tour)}
+                    className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                  >
+                    {imagen ? (
+                      <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-32 bg-slate-50 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
+                      </div>
+                    )}
+                    <p className="text-[11px] font-semibold text-slate-600 text-center py-2 px-1 truncate">{tour.nombre}</p>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Fila 2: Datos empresa + Imagen derecha */}
@@ -466,6 +484,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
       <CompanyDetail
         company={selectedCompany}
         activeFilter={activeFilter}
+        onClearFilter={onClearFilter}
         onBack={() => {
           setSelectedCompany(null)
           if (onClearFilter) onClearFilter()
