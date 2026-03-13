@@ -4,14 +4,12 @@ const API = import.meta.env.VITE_API || ''
 
 function KpiCard({ icon, label, value, color, bgColor }) {
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl ${bgColor} flex items-center justify-center shrink-0`}>
-        <span className={`material-symbols-outlined text-2xl ${color}`}>{icon}</span>
+    <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 text-center">
+      <div className={`w-10 h-10 rounded-lg ${bgColor} flex items-center justify-center shrink-0`}>
+        <span className={`material-symbols-outlined text-xl ${color}`}>{icon}</span>
       </div>
-      <div>
-        <p className="text-2xl font-black text-white">{value}</p>
-        <p className="text-[11px] text-slate-400 font-semibold">{label}</p>
-      </div>
+      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="text-[10px] text-slate-400 font-semibold leading-tight">{label}</p>
     </div>
   )
 }
@@ -70,7 +68,7 @@ export default function ProgramadorEstadisticas() {
       {/* KPIs Usuarios */}
       <div className="mb-6">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Usuarios registrados</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-6 gap-3">
           <KpiCard
             icon="group"
             label="Total registrados"
