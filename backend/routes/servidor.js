@@ -113,6 +113,22 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
       WHERE rol != 'programador'
     `)
 
+    // KPIs de visitas al sitio
+    const [visitasRows] = await pool.query(`
+      SELECT
+        COUNT(*) AS total_visitas,
+        COUNT(DISTINCT visitor_ip) AS visitantes_unicos,
+        SUM(CASE WHEN created_at >= CURDATE() THEN 1 ELSE 0 END) AS visitas_hoy,
+        SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS visitas_semana,
+        SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS visitas_mes,
+        DATEDIFF(CURDATE(), MIN(DATE(created_at))) + 1 AS dias_con_datos
+      FROM site_visits
+    `)
+
+    const v = visitasRows[0]
+    const diasConDatos = v.dias_con_datos || 1
+    const promedioDiario = v.total_visitas > 0 ? Math.round((v.total_visitas / diasConDatos) * 10) / 10 : 0
+
     res.json({
       kpis: {
         total: rows[0].total || 0,
@@ -122,10 +138,34 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
         turismo_gratis: rows[0].turismo_gratis || 0,
         turismo_premium: rows[0].turismo_premium || 0,
       },
+      visitas: {
+        promedio_diario: promedioDiario,
+        semanales: v.visitas_semana || 0,
+        mensuales: v.visitas_mes || 0,
+        hoy: v.visitas_hoy || 0,
+        total: v.total_visitas || 0,
+        visitantes_unicos: v.visitantes_unicos || 0,
+      },
     })
   } catch (err) {
     console.error('Error obteniendo estadísticas:', err)
     res.status(500).json({ error: 'Error al obtener estadísticas' })
+  }
+})
+
+// POST /api/servidor/visita (público, registra visita al sitio)
+router.post('/visita', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress
+    const userAgent = (req.headers['user-agent'] || '').substring(0, 255)
+    const pagina = (req.body.pagina || 'home').substring(0, 100)
+    await pool.query(
+      'INSERT INTO site_visits (ip, pagina, user_agent) VALUES (?, ?, ?)',
+      [ip, pagina, userAgent]
+    )
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Error al registrar visita' })
   }
 })
 

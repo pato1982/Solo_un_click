@@ -44,7 +44,7 @@ export default function ProgramadorEstadisticas() {
     )
   }
 
-  const { kpis } = data
+  const { kpis, visitas } = data
 
   return (
     <div>
@@ -72,6 +72,19 @@ export default function ProgramadorEstadisticas() {
           <KpiCard label="Plan Premium" value={kpis.general_premium} color="text-amber-400" />
           <KpiCard label="Turismo Gratis" value={kpis.turismo_gratis} color="text-teal-400" />
           <KpiCard label="Turismo Premium" value={kpis.turismo_premium} color="text-purple-400" />
+        </div>
+      </div>
+
+      {/* KPIs Visitas */}
+      <div className="mb-6">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Visitas al sitio</h2>
+        <div className="grid grid-cols-6 gap-3">
+          <KpiCard label="Promedio diario" value={visitas.promedio_diario} color="text-emerald-400" />
+          <KpiCard label="Visitas semanales" value={visitas.semanales} color="text-blue-400" />
+          <KpiCard label="Visitas mensuales" value={visitas.mensuales} color="text-indigo-400" />
+          <KpiCard label="Visitas hoy" value={visitas.hoy} color="text-cyan-400" />
+          <KpiCard label="Total histórico" value={visitas.total} color="text-amber-400" />
+          <KpiCard label="Visitantes únicos" value={visitas.visitantes_unicos} color="text-rose-400" />
         </div>
       </div>
     </div>

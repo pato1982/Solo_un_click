@@ -164,6 +164,15 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
+  // Registrar visita al sitio
+  useEffect(() => {
+    fetch(`${API}/api/servidor/visita`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pagina: 'home' }),
+    }).catch(() => {})
+  }, [])
+
   // Cargar listings desde API
   useEffect(() => {
     fetch(`${API}/api/listings`)
