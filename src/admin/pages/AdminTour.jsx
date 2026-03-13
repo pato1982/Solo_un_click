@@ -4,6 +4,7 @@ const API = import.meta.env.VITE_API || ''
 
 const emptyForm = {
   nombre: '',
+  categoria: '',
   ubicacion: '',
   detalle: '',
   precio: '',
@@ -15,6 +16,7 @@ const emptyForm = {
 
 export default function AdminTour() {
   const [tours, setTours] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -40,7 +42,21 @@ export default function AdminTour() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchTours() }, [])
+  useEffect(() => {
+    fetchTours()
+    // Cargar categorías desde la portada del usuario
+    fetch(`${API}/api/portada`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : { portada: null })
+      .then(data => {
+        if (data.portada && data.portada.categorias) {
+          try {
+            const cats = typeof data.portada.categorias === 'string' ? JSON.parse(data.portada.categorias) : data.portada.categorias
+            setCategorias(cats)
+          } catch { setCategorias([]) }
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const update = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -84,6 +100,7 @@ export default function AdminTour() {
     const imgs = tour.imagenes || []
     setForm({
       nombre: tour.nombre || '',
+      categoria: tour.categoria || '',
       ubicacion: tour.ubicacion || '',
       detalle: tour.detalle || '',
       precio: tour.precio ? String(tour.precio) : '',
@@ -129,6 +146,7 @@ export default function AdminTour() {
 
       const body = {
         nombre: form.nombre,
+        categoria: form.categoria || null,
         ubicacion: form.ubicacion,
         detalle: form.detalle,
         precio: form.precio ? Math.round(Number(form.precio)) : null,
@@ -350,17 +368,30 @@ export default function AdminTour() {
 
               {/* Columna derecha — Info */}
               <div className="flex-1 flex flex-col gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nombre del tour *</label>
+                  <input
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) => update('nombre', e.target.value)}
+                    required
+                    className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary"
+                    placeholder="Ej: Ascenso Volcán Villarrica"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nombre del tour *</label>
-                    <input
-                      type="text"
-                      value={form.nombre}
-                      onChange={(e) => update('nombre', e.target.value)}
-                      required
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría</label>
+                    <select
+                      value={form.categoria}
+                      onChange={(e) => update('categoria', e.target.value)}
                       className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary"
-                      placeholder="Ej: Ascenso Volcán Villarrica"
-                    />
+                    >
+                      <option value="">Sin categoría</option>
+                      {categorias.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Imagen principal</label>

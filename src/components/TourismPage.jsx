@@ -191,7 +191,7 @@ function TourModal({ tour, onClose }) {
   )
 }
 
-function CompanyDetail({ company, onBack }) {
+function CompanyDetail({ company, onBack, activeFilter }) {
   const [tours, setTours] = useState([])
   const [loadingTours, setLoadingTours] = useState(true)
   const [selectedTour, setSelectedTour] = useState(null)
@@ -270,11 +270,16 @@ function CompanyDetail({ company, onBack }) {
               const imagen = tour.imagenes && tour.imagenes[imgIdx]
                 ? `${API}${tour.imagenes[imgIdx]}`
                 : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
+              const highlighted = activeFilter && tour.categoria && tour.categoria.toLowerCase() === activeFilter.toLowerCase()
               return (
                 <div
                   key={tour.id}
                   onClick={() => setSelectedTour(tour)}
-                  className="cursor-pointer group rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                  className={`cursor-pointer group rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${
+                    highlighted
+                      ? 'border-2 border-accent ring-2 ring-accent/20 shadow-md scale-[1.02]'
+                      : 'border border-slate-100'
+                  }`}
                 >
                   {imagen ? (
                     <img src={imagen} alt={tour.nombre} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -283,7 +288,7 @@ function CompanyDetail({ company, onBack }) {
                       <span className="material-symbols-outlined text-3xl text-slate-200">image</span>
                     </div>
                   )}
-                  <p className="text-[11px] font-semibold text-slate-600 text-center py-2 px-1 truncate">{tour.nombre}</p>
+                  <p className={`text-[11px] font-semibold text-center py-2 px-1 truncate ${highlighted ? 'text-primary' : 'text-slate-600'}`}>{tour.nombre}</p>
                 </div>
               )
             })}
@@ -426,8 +431,10 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     }
   }, [initialUserId, empresas])
 
+  // Solo cerrar empresa si se filtra y NO hay empresa seleccionada (listado general)
+  // Si hay empresa seleccionada, el filtro resalta tours, no cierra la página
   useEffect(() => {
-    if (activeFilter) setSelectedCompany(null)
+    if (activeFilter && !selectedCompany) setSelectedCompany(null)
   }, [activeFilter])
 
   // Cuando se selecciona/deselecciona empresa, actualizar categorías del sidebar
@@ -458,8 +465,10 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     return (
       <CompanyDetail
         company={selectedCompany}
+        activeFilter={activeFilter}
         onBack={() => {
           setSelectedCompany(null)
+          if (onClearFilter) onClearFilter()
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }}
       />

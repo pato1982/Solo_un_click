@@ -78,7 +78,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Máximo 12 tours permitidos' })
     }
 
-    const { nombre, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
+    const { nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
     if (!nombre || !nombre.trim()) {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
@@ -87,9 +87,9 @@ router.post('/', authMiddleware, async (req, res) => {
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
-      `INSERT INTO turismo_tours (user_id, nombre, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, nombre.trim(), ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
+      `INSERT INTO turismo_tours (user_id, nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.userId, nombre.trim(), categoria || null, ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
     )
 
     await logActivity(req.userId, 'crear', 'tour', result.insertId, { nombre })
@@ -108,7 +108,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Se requiere Plan Premium para editar tours' })
     }
 
-    const { nombre, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
+    const { nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
     if (!nombre || !nombre.trim()) {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
@@ -117,9 +117,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
-      `UPDATE turismo_tours SET nombre=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
+      `UPDATE turismo_tours SET nombre=?, categoria=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
        WHERE id=? AND user_id=?`,
-      [nombre.trim(), ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson, req.params.id, req.userId]
+      [nombre.trim(), categoria || null, ubicacion || null, detalle || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {
