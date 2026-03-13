@@ -286,7 +286,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           return visibleTours.length === 0 ? (
             <p className="text-center text-slate-400 text-xs py-6">No hay tours en esta categoría.</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {visibleTours.map((tour) => {
                 const imgIdx = tour.imagen_principal || 0
                 const imagen = tour.imagenes && tour.imagenes[imgIdx]
