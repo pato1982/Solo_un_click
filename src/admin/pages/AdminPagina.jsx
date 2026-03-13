@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -246,27 +247,12 @@ export default function AdminPagina() {
             </label>
 
             {current.preview ? (
-              <div className="relative">
-                <img
-                  src={current.preview}
-                  alt={`Imagen ${activeTab}`}
-                  className="w-52 h-52 object-cover rounded-lg border border-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => current.ref.current?.click()}
-                  className="absolute top-1.5 left-1.5 bg-white/90 p-1 rounded-md shadow hover:bg-primary/10 transition-colors z-10"
-                >
-                  <span className="material-symbols-outlined text-primary text-sm">edit</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeImage(activeTab)}
-                  className="absolute top-1.5 right-1.5 bg-white/90 p-1 rounded-md shadow hover:bg-red-50 transition-colors z-10"
-                >
-                  <span className="material-symbols-outlined text-red-500 text-sm">close</span>
-                </button>
-              </div>
+              <ImageZoomPan
+                src={current.preview}
+                alt={`Imagen ${activeTab}`}
+                onEdit={() => current.ref.current?.click()}
+                onRemove={() => removeImage(activeTab)}
+              />
             ) : (
               <button
                 type="button"
