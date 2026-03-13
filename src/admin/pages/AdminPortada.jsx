@@ -13,6 +13,7 @@ export default function AdminPortada() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState(0)
   const [portadaId, setPortadaId] = useState(null)
   const [nombreNegocio, setNombreNegocio] = useState('')
@@ -20,6 +21,8 @@ export default function AdminPortada() {
   const [categorias, setCategorias] = useState([])
   const [savingCats, setSavingCats] = useState(false)
   const [savedCats, setSavedCats] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
   const fileRefs = [useRef(null), useRef(null), useRef(null)]
 
   const token = localStorage.getItem('token')
@@ -44,9 +47,7 @@ export default function AdminPortada() {
           setNombreNegocio(businessData.business.nombre_negocio || '')
         }
         if (catsData.categorias) {
-          // Extraer todas las subcategorías de turismo como lista plana
-          const subs = catsData.categorias.flatMap(c => c.subcategorias.map(s => s.nombre))
-          setCategoriasDB(subs.length > 0 ? subs : catsData.categorias.map(c => c.nombre))
+          setCategoriasDB(catsData.categorias)
         }
         if (portadaData.portada) {
           const p = portadaData.portada
@@ -67,6 +68,16 @@ export default function AdminPortada() {
       .catch(err => console.error('Error cargando portada:', err))
       .finally(() => setLoading(false))
   }, [])
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dropdownOpen])
 
   const update = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -151,6 +162,7 @@ export default function AdminPortada() {
     e.preventDefault()
     if (!form.imagenes.some(img => img)) return
     setSaving(true)
+    setError('')
 
     try {
       const finalUrls = []
@@ -164,6 +176,11 @@ export default function AdminPortada() {
             headers: { Authorization: `Bearer ${token}` },
             body: fd
           })
+          if (!upRes.ok) {
+            setError(`Error al subir imagen ${i + 1}`)
+            setSaving(false)
+            return
+          }
           const upData = await upRes.json()
           finalUrls.push(upData.url || null)
         } else if (typeof img === 'string') {
@@ -189,14 +206,20 @@ export default function AdminPortada() {
         body: JSON.stringify(body)
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        if (!portadaId && data.id) setPortadaId(data.id)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al guardar la portada')
+        setSaving(false)
+        return
       }
+
+      const data = await res.json()
+      if (!portadaId && data.id) setPortadaId(data.id)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
     } catch (err) {
       console.error('Error guardando portada:', err)
+      setError('Error de conexión al guardar')
     }
     setSaving(false)
   }
@@ -215,6 +238,13 @@ export default function AdminPortada() {
         <h1 className="text-xl font-black text-gray-800">Portada</h1>
         <p className="text-xs text-gray-400 mt-0.5">Personaliza cómo se ve tu negocio en la página principal de turismo</p>
       </div>
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex gap-6">
@@ -297,29 +327,119 @@ export default function AdminPortada() {
 
           {/* Columna derecha — Info */}
           <div className="flex-1 flex flex-col gap-4">
-            {/* Categorías */}
+            {/* Categorías — selector desplegable */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-600 mb-2">Categorías</label>
-              <div className="grid grid-cols-4 gap-2">
-                {categoriasDB.map((cat) => {
-                  const activa = categorias.includes(cat)
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => toggleCategoria(cat)}
-                      className={`py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center gap-1 ${
-                        activa
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                      }`}
-                    >
-                      {activa && <span className="material-symbols-outlined text-xs">check</span>}
-                      {cat}
-                    </button>
-                  )
-                })}
+              <div className="relative" ref={dropdownRef}>
+                {/* Input que abre el dropdown */}
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left flex items-center gap-2 hover:border-primary/50 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                >
+                  <span className="flex-1 text-gray-500">
+                    {categorias.length > 0 ? `${categorias.length} seleccionada${categorias.length !== 1 ? 's' : ''}` : 'Seleccionar categorías...'}
+                  </span>
+                  <span className={`material-symbols-outlined text-lg text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}>
+                    expand_more
+                  </span>
+                </button>
+
+                {/* Dropdown con opciones */}
+                {dropdownOpen && (
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                    {(() => {
+                      const seen = new Set()
+                      const items = []
+                      const otrosLabel = 'Otros'
+
+                      categoriasDB.forEach(cat => {
+                        const hasSubs = cat.subcategorias && cat.subcategorias.length > 0
+                        if (hasSubs) {
+                          cat.subcategorias.forEach(sub => {
+                            // "Otros" se agrega una sola vez al final
+                            if (sub.nombre.toLowerCase() === 'otros') return
+                            if (!seen.has(sub.nombre)) {
+                              seen.add(sub.nombre)
+                              items.push({ key: `${cat.nombre}-${sub.nombre}`, label: sub.nombre, group: cat.nombre })
+                            }
+                          })
+                        } else {
+                          if (cat.nombre.toLowerCase() !== 'otros' && !seen.has(cat.nombre)) {
+                            seen.add(cat.nombre)
+                            items.push({ key: cat.nombre, label: cat.nombre, group: null })
+                          }
+                        }
+                      })
+
+                      // Verificar si "Otros" existe en alguna categoría
+                      const hasOtros = categoriasDB.some(cat =>
+                        cat.subcategorias?.some(s => s.nombre.toLowerCase() === 'otros')
+                      ) || categoriasDB.some(cat => cat.nombre.toLowerCase() === 'otros')
+                      if (hasOtros) {
+                        items.push({ key: 'otros-unico', label: otrosLabel, group: null })
+                      }
+
+                      // Agrupar con encabezados
+                      return items.reduce((acc, item) => {
+                        if (item.group && (acc.length === 0 || acc[acc.length - 1].group !== item.group)) {
+                          acc.push({ type: 'header', group: item.group })
+                        }
+                        acc.push({ type: 'option', ...item })
+                        return acc
+                      }, [])
+                    })().map((entry, i) => {
+                      if (entry.type === 'header') {
+                        return (
+                          <div key={`h-${entry.group}`} className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wide bg-gray-50 sticky top-0">
+                            {entry.group}
+                          </div>
+                        )
+                      }
+                      const selected = categorias.includes(entry.label)
+                      return (
+                        <button
+                          key={entry.key}
+                          type="button"
+                          onClick={() => { toggleCategoria(entry.label) }}
+                          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors ${
+                            selected ? 'bg-primary/5 text-primary font-semibold' : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                            selected ? 'bg-primary border-primary' : 'border-gray-300'
+                          }`}>
+                            {selected && <span className="material-symbols-outlined text-white text-xs">check</span>}
+                          </span>
+                          {entry.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
+
+              {/* Categorías seleccionadas como chips debajo */}
+              {categorias.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {categorias.map(cat => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-semibold pl-2 pr-1 py-0.5 rounded-full"
+                    >
+                      {cat}
+                      <button
+                        type="button"
+                        onClick={() => toggleCategoria(cat)}
+                        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-xs">close</span>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-3 mt-3">
                 <button
                   type="button"
@@ -334,9 +454,6 @@ export default function AdminPortada() {
                   <span className="material-symbols-outlined text-sm">{savedCats ? 'check_circle' : 'save'}</span>
                   {savingCats ? 'Guardando...' : savedCats ? 'Guardado' : 'Guardar categorías'}
                 </button>
-                {categorias.length > 0 && !savedCats && (
-                  <span className="text-[10px] text-gray-400">{categorias.length} seleccionada{categorias.length !== 1 ? 's' : ''}</span>
-                )}
               </div>
             </div>
 

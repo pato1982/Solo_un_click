@@ -633,12 +633,12 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {/* Carrusel 1: visible con 12+ productos */}
-                  {idx === 1 && carousel1.length > 0 && storeProducts.length >= 12 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
-                  {/* Carrusel 2: visible con 32+ productos */}
-                  {idx === 3 && carousel2.length > 0 && storeProducts.length >= 32 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
-                  {/* Carrusel 3: visible con 52+ productos */}
-                  {idx === 5 && carousel3.length > 0 && storeProducts.length >= 52 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
+                  {/* Carrusel 1: visible con 12+ productos y plan >= 2 */}
+                  {idx === 1 && carousel1.length > 0 && storeProducts.length >= 12 && store.plan_id >= 2 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
+                  {/* Carrusel 2: visible con 32+ productos y plan >= 3 */}
+                  {idx === 3 && carousel2.length > 0 && storeProducts.length >= 32 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
+                  {/* Carrusel 3: visible con 52+ productos y plan >= 3 */}
+                  {idx === 5 && carousel3.length > 0 && storeProducts.length >= 52 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
                 </div>
               ))
             })()

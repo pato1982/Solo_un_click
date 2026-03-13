@@ -2,6 +2,7 @@ const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const pool = require('../db')
+const logActivity = require('../logActivity')
 
 const router = express.Router()
 const JWT_SECRET = process.env.JWT_SECRET || 'soloaunclick_secret_2026'
@@ -352,6 +353,26 @@ router.put('/profile', authMiddleware, async (req, res) => {
         uid
       ]
     )
+
+    // Registrar cambio de plan en activity_log
+    const PLAN_NAMES = { 1: 'Gratis', 2: 'Normal', 3: 'Premium' }
+    if (selectedPlan !== current.plan_id) {
+      await logActivity(uid, 'cambio_plan', 'user', uid, {
+        plan_anterior: current.plan_id,
+        plan_anterior_nombre: PLAN_NAMES[current.plan_id],
+        plan_nuevo: selectedPlan,
+        plan_nuevo_nombre: PLAN_NAMES[selectedPlan],
+        tipo: selectedPlan > current.plan_id ? 'upgrade' : 'downgrade',
+      })
+    }
+
+    // Registrar cambio de tipo de cuenta en activity_log
+    if (tipo !== current.tipo_cuenta) {
+      await logActivity(uid, 'cambio_tipo_cuenta', 'user', uid, {
+        tipo_anterior: current.tipo_cuenta,
+        tipo_nuevo: tipo,
+      })
+    }
 
     // Devolver usuario actualizado
     const [rows] = await pool.query(

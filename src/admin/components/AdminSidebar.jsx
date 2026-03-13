@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+
+const API = import.meta.env.VITE_API || ''
 
 const menuGeneral = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Productos', icon: 'inventory_2', path: '/admin' },
-  { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles', minPlan: 2 },
+  { label: 'Carruseles', icon: 'view_carousel', path: '/admin/carruseles', minPlan: 2, countKey: 'carousels' },
   { label: 'Banner', icon: 'photo_library', path: '/admin/banner', minPlan: 3 },
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas', minPlan: 3 },
 ]
@@ -12,8 +14,8 @@ const menuGeneral = [
 const menuTurismo = [
   { label: 'Mi Negocio', icon: 'storefront', path: '/admin/negocio' },
   { label: 'Portada', icon: 'home', path: '/admin/portada' },
-  { label: 'Mi Página', icon: 'web', path: '/admin/pagina', minPlan: 3 },
-  { label: 'Tour', icon: 'tour', path: '/admin/tour', minPlan: 3 },
+  { label: 'Mi Página', icon: 'web', path: '/admin/pagina', minPlan: 3, countKey: 'pagina' },
+  { label: 'Tour', icon: 'tour', path: '/admin/tour', minPlan: 3, countKey: 'tours' },
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/estadisticas', minPlan: 3 },
 ]
 
@@ -25,7 +27,21 @@ export default function AdminSidebar({ open }) {
   const tipoCuenta = user.tipo_cuenta || 'general'
   const menuItems = tipoCuenta === 'turismo' ? menuTurismo : menuGeneral
   const [lockedPopup, setLockedPopup] = useState(null)
+  const [counts, setCounts] = useState(null)
   const location = useLocation()
+
+  // Cargar counts para saber si hay contenido guardado en secciones bloqueadas
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token || token === 'dev-token') return
+    // Solo cargar si hay secciones bloqueadas
+    const hasLocked = menuItems.some(item => item.minPlan && item.countKey && planId < item.minPlan)
+    if (!hasLocked) return
+    fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setCounts(data))
+      .catch(() => {})
+  }, [planId])
 
   return (
     <aside
@@ -51,15 +67,19 @@ export default function AdminSidebar({ open }) {
           const isActive = item.path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.path)
 
           if (locked) {
+            const savedCount = item.countKey && counts ? counts[item.countKey] || 0 : 0
             return (
               <button
                 key={item.path}
-                onClick={() => setLockedPopup({ label: item.label, minPlan: item.minPlan })}
+                onClick={() => setLockedPopup({ label: item.label, minPlan: item.minPlan, savedCount })}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-100 hover:text-gray-500 w-full`}
               >
                 <span className="material-symbols-outlined text-xl">{item.icon}</span>
-                {item.label}
-                <span className="material-symbols-outlined text-sm ml-auto">lock</span>
+                <span className="flex-1 text-left">{item.label}</span>
+                {savedCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Contenido guardado"></span>
+                )}
+                <span className="material-symbols-outlined text-sm">lock</span>
               </button>
             )
           }
@@ -109,6 +129,14 @@ export default function AdminSidebar({ open }) {
               <p className="text-xs text-gray-500 text-center leading-relaxed">
                 La sección <strong className="text-primary">{lockedPopup.label}</strong> está disponible a partir del <strong>Plan {PLAN_NAMES[lockedPopup.minPlan] || 'Premium'}</strong>. Actualiza tu plan para acceder a esta funcionalidad.
               </p>
+              {lockedPopup.savedCount > 0 && (
+                <div className="w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-green-500 text-base">inventory_2</span>
+                  <p className="text-[11px] text-green-700 leading-snug">
+                    Tienes contenido guardado en esta sección. Al subir de plan se mostrará automáticamente.
+                  </p>
+                </div>
+              )}
               <button onClick={() => setLockedPopup(null)} className="w-full py-2.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-colors mt-1">
                 Entendido
               </button>

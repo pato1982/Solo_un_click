@@ -44,6 +44,51 @@ function ConfirmDeletePopup({ message, details, onConfirm, onCancel }) {
   )
 }
 
+function ConfirmDowngradePopup({ message, items, onConfirm, onCancel }) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10001 }} onClick={onCancel}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-amber-500 px-6 py-4 text-center">
+          <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
+            <span className="material-symbols-outlined text-3xl text-white">info</span>
+          </div>
+          <h3 className="text-base font-bold text-white">Cambio de plan</h3>
+        </div>
+        <div className="px-6 py-4">
+          <p className="text-sm text-slate-700 text-center leading-relaxed">{message}</p>
+          {items && items.length > 0 && (
+            <div className="mt-3 bg-amber-50 rounded-lg p-3">
+              <p className="text-[10px] font-bold text-amber-500 uppercase mb-1.5">Qué cambiará:</p>
+              <ul className="space-y-1">
+                {items.map((d, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-amber-700">
+                    <span className="material-symbols-outlined text-sm">visibility_off</span>
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="text-[10px] text-green-600 font-bold text-center mt-3 flex items-center justify-center gap-1">
+            <span className="material-symbols-outlined text-sm">check_circle</span>
+            Tu contenido se conservará y podrás recuperarlo subiendo de plan.
+          </p>
+        </div>
+        <div className="px-6 pb-4 flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">
+            Cancelar
+          </button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">swap_vert</span>
+            Cambiar plan
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ProfileModal({ onClose }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -51,6 +96,7 @@ function ProfileModal({ onClose }) {
   const [saving, setSaving] = useState(false)
   const [counts, setCounts] = useState(null)
   const [confirmPopup, setConfirmPopup] = useState(null)
+  const [downgradePopup, setDowngradePopup] = useState(null)
 
   // Campos editables
   const [tipoCuenta, setTipoCuenta] = useState('general')
@@ -145,6 +191,40 @@ function ProfileModal({ onClose }) {
     return null
   }
 
+  // Advertencia al bajar de plan (no borra datos, solo oculta)
+  const buildDowngradeWarning = () => {
+    if (planId >= user.plan_id) return null // upgrade o mismo plan, sin advertencia
+    const esTurismo = tipoCuenta === 'turismo'
+    const items = []
+
+    if (esTurismo) {
+      // Turismo: de Premium a Gratis
+      if (user.plan_id >= 3 && planId < 3) {
+        if (counts?.tours > 0) items.push(`${counts.tours} tours dejarán de mostrarse`)
+        if (counts?.pagina > 0) items.push('Tu página personalizada no será accesible')
+        items.push('Las estadísticas no estarán disponibles')
+      }
+    } else {
+      // Comercio: de Premium a Normal o Gratis
+      if (user.plan_id >= 3 && planId < 3) {
+        items.push('Tus banners dejarán de mostrarse públicamente')
+        items.push('Las estadísticas no estarán disponibles')
+      }
+      // De Premium/Normal a Gratis
+      if (user.plan_id >= 2 && planId < 2) {
+        if (counts?.carousels > 0) items.push('Tus carruseles dejarán de mostrarse públicamente')
+        items.push('Tu página de tienda no será accesible')
+        items.push('Si tienes más de 5 productos, solo los 5 más recientes serán visibles')
+      }
+    }
+
+    if (items.length === 0) return null
+    return {
+      message: `Al bajar de Plan ${planLabel(user.plan_id)} a Plan ${planLabel(planId)}, tu contenido no se eliminará pero dejará de estar visible públicamente. Si vuelves a subir de plan, se restaurará automáticamente.`,
+      items,
+    }
+  }
+
   const handleSave = async (deleteTipos = []) => {
     const token = localStorage.getItem('token')
     if (!token) return
@@ -190,9 +270,14 @@ function ProfileModal({ onClose }) {
     const warning = buildDeleteWarning()
     if (warning) {
       setConfirmPopup(warning)
-    } else {
-      handleSave()
+      return
     }
+    const downgrade = buildDowngradeWarning()
+    if (downgrade) {
+      setDowngradePopup(downgrade)
+      return
+    }
+    handleSave()
   }
 
   const planLabel = (id) => id === 3 ? 'Premium' : id === 2 ? 'Normal' : 'Gratis'
@@ -389,6 +474,19 @@ function ProfileModal({ onClose }) {
           onConfirm={() => {
             setConfirmPopup(null)
             handleSave(confirmPopup.deleteTipos || [])
+          }}
+        />
+      )}
+
+      {/* Popup de confirmación de downgrade */}
+      {downgradePopup && (
+        <ConfirmDowngradePopup
+          message={downgradePopup.message}
+          items={downgradePopup.items}
+          onCancel={() => setDowngradePopup(null)}
+          onConfirm={() => {
+            setDowngradePopup(null)
+            handleSave()
           }}
         />
       )}

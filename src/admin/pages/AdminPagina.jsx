@@ -111,63 +111,81 @@ export default function AdminPagina() {
     return data.url || null
   }
 
+  const [error, setError] = useState('')
+
   const handleSave = async (type) => {
     const setSaving = type === 'superior' ? setSavingSup : setSavingInf
     const setSaved = type === 'superior' ? setSavedSup : setSavedInf
     setSaving(true)
+    setError('')
 
     try {
-      // Subir imagen si es File
-      let imgSupUrl = typeof supImagen === 'string' ? supImagen : null
-      let imgInfUrl = typeof infImagen === 'string' ? infImagen : null
+      // Subir imágenes si son File, preservando la otra tab tal cual
+      let imgSupUrl = supImagen
+      let imgInfUrl = infImagen
 
-      if (type === 'superior' && supImagen instanceof File) {
+      if (supImagen instanceof File) {
         imgSupUrl = await uploadIfNeeded(supImagen)
+        if (!imgSupUrl) {
+          setError('Error al subir la imagen superior')
+          setSaving(false)
+          return
+        }
         setSupImagen(imgSupUrl)
         setSupPreview(`${API}${imgSupUrl}`)
-      } else if (type === 'superior') {
-        imgSupUrl = supImagen
       }
 
-      if (type === 'inferior' && infImagen instanceof File) {
+      if (infImagen instanceof File) {
         imgInfUrl = await uploadIfNeeded(infImagen)
+        if (!imgInfUrl) {
+          setError('Error al subir la imagen inferior')
+          setSaving(false)
+          return
+        }
         setInfImagen(imgInfUrl)
         setInfPreview(`${API}${imgInfUrl}`)
-      } else if (type === 'inferior') {
-        imgInfUrl = infImagen
       }
 
+      // Asegurar que las URLs sean strings o null (no objetos File)
       const body = {
         titulo_superior: supTitulo || null,
         texto_superior: supTexto || null,
-        imagen_superior: imgSupUrl,
+        imagen_superior: typeof imgSupUrl === 'string' ? imgSupUrl : null,
         titulo_inferior: infTitulo || null,
         texto_inferior: infTexto || null,
-        imagen_inferior: imgInfUrl,
+        imagen_inferior: typeof imgInfUrl === 'string' ? imgInfUrl : null,
       }
 
+      let res
       if (paginaId) {
-        await fetch(`${API}/api/pagina/${paginaId}`, {
+        res = await fetch(`${API}/api/pagina/${paginaId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body),
         })
       } else {
-        const res = await fetch(`${API}/api/pagina`, {
+        res = await fetch(`${API}/api/pagina`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body),
         })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.id) setPaginaId(data.id)
-        }
       }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al guardar la página')
+        setSaving(false)
+        return
+      }
+
+      const data = await res.json()
+      if (data.id) setPaginaId(data.id)
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
       console.error('Error guardando página:', err)
+      setError('Error de conexión al guardar')
     }
     setSaving(false)
   }
@@ -209,6 +227,14 @@ export default function AdminPagina() {
           </button>
         ))}
       </div>
+
+      {/* Mensaje de error */}
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {error}
+        </div>
+      )}
 
       {/* Contenido de la pestaña activa */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
