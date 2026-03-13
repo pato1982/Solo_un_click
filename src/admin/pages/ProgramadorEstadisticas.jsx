@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
-function KpiCard({ icon, label, value, color, bgColor }) {
+function KpiCard({ label, value, color }) {
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 text-center">
-      <div className={`w-10 h-10 rounded-lg ${bgColor} flex items-center justify-center shrink-0`}>
-        <span className={`material-symbols-outlined text-xl ${color}`}>{icon}</span>
-      </div>
-      <p className="text-2xl font-black text-white">{value}</p>
+    <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col items-center gap-1.5 text-center">
+      <p className={`text-2xl font-black ${color}`}>{value}</p>
       <p className="text-[10px] text-slate-400 font-semibold leading-tight">{label}</p>
     </div>
   )
@@ -69,48 +66,12 @@ export default function ProgramadorEstadisticas() {
       <div className="mb-6">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Usuarios registrados</h2>
         <div className="grid grid-cols-6 gap-3">
-          <KpiCard
-            icon="group"
-            label="Total registrados"
-            value={kpis.total}
-            color="text-emerald-400"
-            bgColor="bg-emerald-500/15"
-          />
-          <KpiCard
-            icon="person"
-            label="Plan Gratuito"
-            value={kpis.general_gratis}
-            color="text-slate-400"
-            bgColor="bg-slate-500/15"
-          />
-          <KpiCard
-            icon="star_half"
-            label="Plan Normal"
-            value={kpis.general_normal}
-            color="text-blue-400"
-            bgColor="bg-blue-500/15"
-          />
-          <KpiCard
-            icon="workspace_premium"
-            label="Plan Premium"
-            value={kpis.general_premium}
-            color="text-amber-400"
-            bgColor="bg-amber-500/15"
-          />
-          <KpiCard
-            icon="landscape"
-            label="Turismo Gratis"
-            value={kpis.turismo_gratis}
-            color="text-teal-400"
-            bgColor="bg-teal-500/15"
-          />
-          <KpiCard
-            icon="diamond"
-            label="Turismo Premium"
-            value={kpis.turismo_premium}
-            color="text-purple-400"
-            bgColor="bg-purple-500/15"
-          />
+          <KpiCard label="Total registrados" value={kpis.total} color="text-emerald-400" />
+          <KpiCard label="Plan Gratuito" value={kpis.general_gratis} color="text-slate-300" />
+          <KpiCard label="Plan Normal" value={kpis.general_normal} color="text-blue-400" />
+          <KpiCard label="Plan Premium" value={kpis.general_premium} color="text-amber-400" />
+          <KpiCard label="Turismo Gratis" value={kpis.turismo_gratis} color="text-teal-400" />
+          <KpiCard label="Turismo Premium" value={kpis.turismo_premium} color="text-purple-400" />
         </div>
       </div>
     </div>
