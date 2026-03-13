@@ -383,7 +383,7 @@ function CompanyDetail({ company, onBack }) {
 /* =========================================
    Página principal de turismo
    ========================================= */
-export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias }) {
+export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias, initialUserId, onInitialUserConsumed }) {
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCompany, setSelectedCompany] = useState(null)
@@ -416,6 +416,15 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
       .catch(err => console.error('Error cargando empresas turismo:', err))
       .finally(() => setLoading(false))
   }, [])
+
+  // Auto-seleccionar empresa si viene initialUserId
+  useEffect(() => {
+    if (initialUserId && empresas.length > 0) {
+      const match = empresas.find(e => e.userId === initialUserId)
+      if (match) setSelectedCompany(match)
+      if (onInitialUserConsumed) onInitialUserConsumed()
+    }
+  }, [initialUserId, empresas])
 
   useEffect(() => {
     if (activeFilter) setSelectedCompany(null)

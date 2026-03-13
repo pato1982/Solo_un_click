@@ -211,13 +211,21 @@ export default function App() {
       .catch(err => console.error('Error cargando categorías sidebar:', err))
   }, [])
 
-  // Abrir tienda directamente si viene ?store=userId en la URL
+  const [turismoDirectUserId, setTurismoDirectUserId] = useState(null)
+
+  // Abrir tienda o turismo directamente si viene ?store= o ?turismo= en la URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const storeUserId = params.get('store')
+    const turismoUserId = params.get('turismo')
     if (storeUserId) {
       window.history.replaceState({}, '', '/')
       handleOpenStore({ id: `user-${storeUserId}`, userId: parseInt(storeUserId) })
+    } else if (turismoUserId) {
+      window.history.replaceState({}, '', '/')
+      setCurrentPage('turismo')
+      setActiveSidebar('turismo')
+      setTurismoDirectUserId(parseInt(turismoUserId))
     }
   }, [])
 
@@ -524,6 +532,8 @@ export default function App() {
               activeFilter={activeFilter}
               onClearFilter={() => setActiveFilter(null)}
               onEmpresaCategorias={(cats) => setTurismoCategorias(cats || turismoCategoriasAll)}
+              initialUserId={turismoDirectUserId}
+              onInitialUserConsumed={() => setTurismoDirectUserId(null)}
             />
           ) : activeFilter ? (
             /* Filtro activo: mostrar secciones (filas) que tengan productos de esa subcategoría o categoría */
