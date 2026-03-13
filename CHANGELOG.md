@@ -1,5 +1,59 @@
 # Registro de Cambios - Solo a un Click
 
+## 13 de Marzo 2026 (sesión 4) - Turismo premium: filtros, tracking, zoom imágenes y mejoras UX
+
+### Separación columnas contacto en página premium turismo
+- Información de contacto en 3 columnas con más separación (gap-8 → gap-10)
+- Texto más compacto (text-[11px]) y whitespace-nowrap para que cada item quede en una fila
+
+### Fix: "Ver mi página" redirige correctamente según tipo de cuenta
+- Turismo usa `?turismo=ID` en vez de `?store=ID`
+- App.jsx maneja parámetro `?turismo=` para abrir página turismo directamente
+- TourismPage acepta `initialUserId` y auto-selecciona la empresa correspondiente
+
+### Categorías por tour y filtrado desde sidebar
+- Nueva columna `categoria` en tabla `turismo_tours`
+- Selector de categoría en admin tours (carga categorías desde portada del usuario)
+- Al clickear categoría en sidebar dentro de página premium: filtra tours por categoría (no cierra la página)
+- Botón flotante sticky "Ver todos los tours" para quitar el filtro
+- Título de sección cambia al nombre de la categoría activa
+
+### Grid de tours: 6 columnas por fila
+- Cambio de grid-cols-4 a grid-cols-6 para mostrar máximo 6 tours por fila
+- Con 8 tours: 6 arriba y 2 abajo (siempre empieza con 6)
+
+### Tracking de clicks en tarjeta turismo
+- Nuevo event_type `card_click` en tabla analytics (ENUM actualizado)
+- Se registra click en: icono ubicación, icono horario, botón "Ver más", botón "Contactar"
+- Gráfico "Clicks en tu tarjeta" en estadísticas usa `card_click` para turismo
+- Subtítulo actualizado: "iconos y botón Ver más"
+
+### Click en "Turismo" nav vuelve a portada general
+- Nuevo `resetKey` que se incrementa al clickear "Turismo" en la barra de navegación
+- Deselecciona empresa activa y restaura todas las categorías en el sidebar
+
+### Zoom y pan en imágenes del admin turismo
+- Componente reutilizable `ImageZoomPan` con zoom +/- (100% a 300%) y arrastrar mouse/touch
+- Controles de zoom centrados en la parte inferior de la imagen
+- Scroll del mouse para hacer zoom
+- Aplicado en: Portada (3 imgs), Tour (3 imgs), Mi Página (superior/inferior)
+
+### Guardar encuadre (zoom + posición) de imágenes
+- Nuevas columnas: `imagenes_crop` en turismo_portada y turismo_tours, `crop_superior`/`crop_inferior` en turismo_pagina
+- Endpoints `PATCH /api/portada/:id/crop`, `PATCH /api/tours/:id/crop`, `PATCH /api/pagina/:id/crop`
+- Botón "Guardar encuadre" debajo de cada imagen en el admin
+- Crops aplicados en página pública: CardFan (portada), página premium (filas sup/inf), grilla de tours y modal de tours
+- La imagen original NO se modifica, solo se guarda metadata de visualización (CSS transform)
+
+### Limpieza de base de datos
+- Vaciado completo de todas las tablas excepto `plans`, `categorias` y `subcategorias`
+- AUTO_INCREMENT reseteado a 1 en todas las tablas vaciadas
+
+### Pendientes
+- **SMTP Gmail:** Configurar App Password para emails de recuperación de contraseña (solo se loguean en consola)
+- **Categorías:** Continuar poblando desde letra I en adelante
+- **Locales de barrio:** Tabla + panel programador pendiente
+
 ## 12 de Marzo 2026 (sesión 3) - Perfil editable, modal más ancho, tracking de clicks y mejoras admin
 
 ### Saludo simplificado en header
