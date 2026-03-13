@@ -296,34 +296,34 @@ function CompanyDetail({ company, onBack }) {
         <div className="md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-5 pl-8">
           <h3 className="text-sm font-black text-primary mb-4">{tituloInf}</h3>
           {textoInf && <p className="text-xs text-slate-500 leading-relaxed mb-4">{textoInf}</p>}
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-3 gap-10">
             {/* Columna 1 */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {company.direccion && (
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent text-base">location_on</span>
-                  <span className="text-xs text-slate-600">{company.direccion}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-sm">location_on</span>
+                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.direccion}</span>
                 </div>
               )}
               {company.telefono && (
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent text-base">call</span>
-                  <span className="text-xs text-slate-600">{company.telefono}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-sm">call</span>
+                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.telefono}</span>
                 </div>
               )}
             </div>
             {/* Columna 2 */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {company.whatsapp && (
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent text-base">chat</span>
-                  <span className="text-xs text-slate-600">{company.whatsapp}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-sm">chat</span>
+                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.whatsapp}</span>
                 </div>
               )}
               {company.correo && (
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent text-base">mail</span>
-                  <span className="text-xs text-slate-600">{company.correo}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-sm">mail</span>
+                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.correo}</span>
                 </div>
               )}
             </div>
