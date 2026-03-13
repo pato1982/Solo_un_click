@@ -33,11 +33,30 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
     const dfOutput = await execPromise("df -B1 / | tail -1 | awk '{print $2, $3, $4}'")
     const [totalBytes, usedBytes, availBytes] = dfOutput.split(' ').map(Number)
 
-    // Uploads folder size
+    // Uploads folder size + breakdown
     let uploadsBytes = 0
+    let uploadsCarpetas = []
     try {
       const duOutput = await execPromise("du -sb /var/www/soloaunclick/backend/uploads 2>/dev/null | awk '{print $1}'")
       uploadsBytes = parseInt(duOutput) || 0
+
+      // Desglose: subcarpetas
+      const subdirsOutput = await execPromise("find /var/www/soloaunclick/backend/uploads -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null")
+      if (subdirsOutput) {
+        uploadsCarpetas = subdirsOutput.split('\n').map(line => {
+          const [bytes, fullpath] = line.split('\t')
+          return { nombre: fullpath.split('/').pop(), bytes: parseInt(bytes) || 0 }
+        })
+      }
+
+      // Archivos sueltos en raíz de uploads
+      const loosOutput = await execPromise("find /var/www/soloaunclick/backend/uploads -mindepth 1 -maxdepth 1 -type f -exec du -sb {} + 2>/dev/null | tail -1 | awk '{print $1}'")
+      const looseBytes = parseInt(loosOutput) || 0
+      if (looseBytes > 0) {
+        uploadsCarpetas.unshift({ nombre: 'imágenes (raíz)', bytes: looseBytes })
+      }
+
+      uploadsCarpetas.sort((a, b) => b.bytes - a.bytes)
     } catch (e) {}
 
     // Base de datos
@@ -63,6 +82,7 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
         usado: usedBytes,
         disponible: availBytes,
         uploads: uploadsBytes,
+        uploadsCarpetas,
       },
       bd: {
         total: dbTotal,
