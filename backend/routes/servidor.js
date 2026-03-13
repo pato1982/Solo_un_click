@@ -19,7 +19,7 @@ async function programadorMiddleware(req, res, next) {
 
 function execPromise(cmd) {
   return new Promise((resolve, reject) => {
-    exec(cmd, (err, stdout) => {
+    exec(cmd, { timeout: 30000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
       if (err) return reject(err)
       resolve(stdout.trim())
     })
@@ -63,15 +63,20 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
     let proyectoBytes = 0
     let proyectoCarpetas = []
     try {
-      const projTotal = await execPromise("du -sb /var/www/soloaunclick 2>/dev/null | awk '{print $1}'")
-      proyectoBytes = parseInt(projTotal) || 0
-
-      const projDirs = await execPromise("find /var/www/soloaunclick -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null")
-      if (projDirs) {
-        proyectoCarpetas = projDirs.split('\n').map(line => {
+      // du --max-depth=1 lista cada subdirectorio + total en una sola pasada
+      const projOutput = await execPromise("du -sb --max-depth=1 /var/www/soloaunclick 2>/dev/null")
+      if (projOutput) {
+        const lines = projOutput.split('\n')
+        for (const line of lines) {
           const [bytes, fullpath] = line.split('\t')
-          return { nombre: fullpath.split('/').pop(), bytes: parseInt(bytes) || 0 }
-        })
+          const name = fullpath.replace('/var/www/soloaunclick', '').replace(/^\//, '') || ''
+          const size = parseInt(bytes) || 0
+          if (!name) {
+            proyectoBytes = size // línea del total
+          } else {
+            proyectoCarpetas.push({ nombre: name, bytes: size })
+          }
+        }
       }
 
       // Archivos sueltos en raíz del proyecto
