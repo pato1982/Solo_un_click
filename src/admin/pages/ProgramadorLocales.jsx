@@ -9,7 +9,7 @@ export default function ProgramadorLocales() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // null | 'new' | local object
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ nombre: '', direccion: '', categoria_barrio_id: '', orden: 0 })
+  const [form, setForm] = useState({ nombre: '', direccion: '', categoria_barrio_id: '' })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
@@ -35,7 +35,7 @@ export default function ProgramadorLocales() {
   useEffect(() => { fetchLocales(); fetchCategorias() }, [])
 
   const openNew = () => {
-    setForm({ nombre: '', direccion: '', categoria_barrio_id: '', orden: 0 })
+    setForm({ nombre: '', direccion: '', categoria_barrio_id: '' })
     setImageFile(null)
     setImagePreview(null)
     setModal('new')
@@ -46,7 +46,6 @@ export default function ProgramadorLocales() {
       nombre: local.nombre || '',
       direccion: local.direccion || '',
       categoria_barrio_id: local.categoria_barrio_id || '',
-      orden: local.orden || 0,
     })
     setImageFile(null)
     setImagePreview(local.imagen ? `${API}${local.imagen}` : null)
@@ -67,7 +66,6 @@ export default function ProgramadorLocales() {
     fd.append('nombre', form.nombre)
     fd.append('direccion', form.direccion)
     fd.append('categoria_barrio_id', form.categoria_barrio_id)
-    fd.append('orden', form.orden)
     if (imageFile) fd.append('imagen', imageFile)
 
     const isNew = modal === 'new'
@@ -291,16 +289,6 @@ export default function ProgramadorLocales() {
                       <option key={c.id} value={c.id}>{c.nombre}</option>
                     ))}
                   </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Orden</label>
-                  <input
-                    type="number"
-                    value={form.orden}
-                    onChange={e => setForm({ ...form, orden: parseInt(e.target.value) || 0 })}
-                    className="w-24 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
-                  />
                 </div>
 
                 <div className="flex-1"></div>
