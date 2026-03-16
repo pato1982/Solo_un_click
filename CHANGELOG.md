@@ -1,5 +1,79 @@
 # Registro de Cambios - Solo a un Click
 
+## 16 de Marzo 2026 (sesión 7) - Conexión API pública + correcciones panel programador
+
+### Componentes públicos conectados a la API (ya no usan datos hardcodeados)
+- **StoresCarousel** — Carga locales desde `GET /api/locales`, muestra mensaje si no hay datos
+- **StoresPage** — Carga locales desde `GET /api/locales`, filtrado por categoría desde BD
+- **EventsSection** — Carga primeros 8 eventos desde `GET /api/eventos`, badge dinámico por categoría/gratis
+- **EventsPage** — Carga todos los eventos desde `GET /api/eventos`, filtrado por categoría desde BD
+- **Sidebar** — Categorías de locales y eventos cargadas desde `/api/locales/categorias` y `/api/eventos/categorias`
+- Las secciones siempre muestran título + "Ver todo" aunque no haya datos (no desaparecen)
+
+### Correcciones estadísticas del programador
+- **Promedio diario corregido:** usa `COUNT(DISTINCT DATE(created_at))` (días reales con visitas, no calendario)
+- **Visitantes reiterados corregido:** cuenta IPs con más de 1 visita (personas reales que volvieron)
+- **Deduplicación de visitas:** `POST /api/servidor/visita` limita 1 registro por IP cada 30 minutos
+- **Nuevo KPI "Visitas hoy"** agregado al panel (grid 7 columnas)
+
+### Correcciones panel programador (Locales y Eventos)
+- **parseCrop seguro:** parsea `imagen_crop` tanto si llega como string JSON o como objeto
+- **Toast de feedback:** notificación verde/roja al crear, editar, eliminar, toggle y guardar encuadre
+- **Manejo de errores:** errores del servidor se muestran al usuario en vez de fallar silenciosamente
+
+### Mejoras de arquitectura backend
+- **programadorMiddleware centralizado:** definido una sola vez en `auth.js`, importado en `servidor.js`, `locales.js`, `eventos.js`
+- **Register devuelve `rol`:** consistente con login (antes faltaba)
+- **Rutas dinámicas en servidor.js:** `/var/www/...` reemplazado por `path.join(__dirname, '..', 'uploads')`
+- **ImageZoomPan:** borde corregido para dark mode (`border-gray-200` → `border-slate-600`)
+
+### searchIndex.js
+- Categorías de locales y eventos definidas localmente (ya no importa de StoresPage/EventsPage)
+
+---
+
+## 13 de Marzo 2026 (sesión 6) - Panel Programador + Servidor
+
+### Panel Programador (tema oscuro)
+- Nuevo panel exclusivo para rol `programador` con tema dark (slate-900/950 + emerald)
+- Login con credenciales del programador, detección por `rol` en BD
+- Sidebar propio: Locales de Barrio, Próximos Eventos, Servidor
+- Header limpio: sin nombre, sin plan, solo iconos de panel y logout
+- Header público también limpio para programador (sin "Hola Programador Plan Premium")
+
+### Locales de Barrio (CRUD completo)
+- Tabla `locales_barrio` + tabla `categorias_barrio` con FK
+- Backend: `/api/locales` — CRUD con multer, sanitización, programadorMiddleware
+- Frontend: `ProgramadorLocales.jsx` — crear/editar/eliminar con ImageZoomPan
+- Categorías desde BD (farmacia, abarrotes, florería, peluquería, etc.)
+- Orden público aleatorio (ORDER BY RAND())
+- Toggle activar/desactivar
+
+### Próximos Eventos (CRUD completo)
+- Tabla `eventos` + tabla `categorias_evento` con FK
+- Backend: `/api/eventos` — CRUD con mismo patrón que locales
+- Frontend: `ProgramadorEventos.jsx` — crear/editar con ImageZoomPan
+- Campos: título, fecha, dirección, precio, categoría (desde BD), imagen
+- Categorías: música, gastronomía, deporte, ferias, teatro, etc.
+
+### Monitoreo de Servidor
+- Backend: `/api/servidor/stats` — estadísticas de disco y BD (protegido con programadorMiddleware)
+- Frontend: `ProgramadorServidor.jsx` — dos paneles lado a lado
+- **Almacenamiento:** anillo de progreso con % usado, total/usado/disponible
+- **Carpeta uploads:** expandible con desglose por subcarpetas (imágenes raíz + carousels)
+- **Base de Datos:** anillo de progreso, datos/índices/tablas, tabla detallada por tabla MySQL
+- Botón Actualizar para recargar stats
+
+### Correcciones
+- Fix `ip_address` → `ip` en INSERT de user_sessions (auth.js)
+- Fix header público mostrando "Hola Programador Plan Premium" → solo iconos
+
+### Pendientes
+- **Conectar componentes públicos a API:** StoresCarousel, StoresPage, EventsSection, EventsPage aún usan datos hardcodeados
+- **SMTP Gmail:** pendiente configurar para emails de recuperación de contraseña
+
+---
+
 ## 13 de Marzo 2026 (sesión 5) - Correcciones de seguridad backend
 
 ### Helmet — Headers de seguridad HTTP

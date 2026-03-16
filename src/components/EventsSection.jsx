@@ -1,79 +1,58 @@
-const events = [
-  {
-    title: 'Feria Costumbrista Villarrica',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80',
-    date: '15 - 17 Mar 2026',
-    location: 'Plaza de Armas, Villarrica',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-  },
-  {
-    title: 'Festival de Música Lago',
-    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80',
-    date: '22 Mar 2026',
-    location: 'Costanera Villarrica',
-    price: '$8.000',
-    badge: 'Música',
-    badgeColor: 'bg-primary-light text-white',
-  },
-  {
-    title: 'Feria Gastronómica Sur',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80',
-    date: '28 - 30 Mar 2026',
-    location: 'Parque Municipal',
-    price: '$3.000',
-    badge: 'Gastronomía',
-    badgeColor: 'bg-accent text-primary font-black',
-  },
-  {
-    title: 'Carrera Trail Volcán',
-    image: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&q=80',
-    date: '5 Abr 2026',
-    location: 'Parque Nacional Villarrica',
-    price: '$15.000',
-    badge: 'Deporte',
-    badgeColor: 'bg-red-500 text-white',
-  },
-  {
-    title: 'Expo Emprendedores',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
-    date: '10 - 12 Abr 2026',
-    location: 'Centro Cultural Villarrica',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-  },
-  {
-    title: 'Noche de Fogatas y Folklore',
-    image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80',
-    date: '18 Abr 2026',
-    location: 'Playa Villarrica',
-    price: '$5.000',
-    badge: 'Cultura',
-    badgeColor: 'bg-primary text-white',
-  },
-  {
-    title: 'Feria de Artesanía Mapuche',
-    image: 'https://images.unsplash.com/photo-1604999565976-8913ad2ddb7c?w=800&q=80',
-    date: '25 - 27 Abr 2026',
-    location: 'Mercado Municipal',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-  },
-  {
-    title: 'Torneo de Pesca Deportiva',
-    image: 'https://images.unsplash.com/photo-1504309092620-4d0ec726efa4?w=800&q=80',
-    date: '3 May 2026',
-    location: 'Lago Villarrica',
-    price: '$12.000',
-    badge: 'Deporte',
-    badgeColor: 'bg-red-500 text-white',
-  },
-]
+import { useState, useEffect } from 'react'
+
+const API = import.meta.env.VITE_API || ''
+
+const badgeColors = {
+  'Música': 'bg-primary-light text-white',
+  'Musica': 'bg-primary-light text-white',
+  'Gastronomía': 'bg-accent text-primary font-black',
+  'Gastronomia': 'bg-accent text-primary font-black',
+  'Deporte': 'bg-red-500 text-white',
+  'Cultura': 'bg-primary text-white',
+  'Artesanía': 'bg-amber-500 text-white',
+  'Artesania': 'bg-amber-500 text-white',
+  'Ferias': 'bg-teal-500 text-white',
+  'Familiar': 'bg-blue-400 text-white',
+  'Nocturno': 'bg-purple-600 text-white',
+  'Educación': 'bg-blue-500 text-white',
+  'Educacion': 'bg-blue-500 text-white',
+  'Beneficencia': 'bg-pink-500 text-white',
+  'Naturaleza': 'bg-green-600 text-white',
+  'Religioso': 'bg-amber-600 text-white',
+}
+
+function getBadgeColor(categoria) {
+  return badgeColors[categoria] || 'bg-slate-500 text-white'
+}
+
+function isGratis(precio) {
+  if (!precio) return true
+  const lower = precio.toLowerCase().trim()
+  return lower === 'entrada libre' || lower === 'gratis' || lower === '' || lower === '$0' || lower === '0'
+}
 
 export default function EventsSection({ onViewAll }) {
+  const [events, setEvents] = useState([])
+
+  useEffect(() => {
+    fetch(`${API}/api/eventos`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.eventos || []).slice(0, 8).map(e => ({
+          id: e.id,
+          title: e.titulo,
+          image: e.imagen ? `${API}${e.imagen}` : '',
+          date: e.fecha || '',
+          location: e.ubicacion || '',
+          price: e.precio || 'Entrada libre',
+          badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
+          badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
+        }))
+        setEvents(mapped)
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="border-2 border-accent rounded-2xl p-6 mx-6 bg-white">
       <div className="flex items-center gap-3 mb-4">
@@ -82,10 +61,12 @@ export default function EventsSection({ onViewAll }) {
         <div className="flex-1 h-px bg-slate-200"></div>
         <button onClick={onViewAll} className="text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
-      <div className="grid grid-cols-4 gap-3">
+      {events.length === 0 ? (
+        <p className="text-center text-slate-400 text-xs py-4">No hay eventos próximos aún.</p>
+      ) : <div className="grid grid-cols-4 gap-3">
         {events.map((event) => (
           <div
-            key={event.title}
+            key={event.id}
             className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-200 group max-w-[200px] mx-auto w-full"
           >
             <div className="relative h-28 overflow-hidden">
@@ -114,7 +95,7 @@ export default function EventsSection({ onViewAll }) {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   )
 }

@@ -1,47 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const stores = [
-  {
-    name: 'Botillería El Volcán',
-    image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80',
-    address: 'Av. Pedro de Valdivia 520, Villarrica',
-  },
-  {
-    name: 'Almacén Doña Rosa',
-    image: 'https://images.unsplash.com/photo-1556767576-5ec41e3239ea?w=800&q=80',
-    address: 'Calle Anfión Muñoz 312, Villarrica',
-  },
-  {
-    name: 'Botillería La Esquina',
-    image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800&q=80',
-    address: 'Camino Villarrica-Pucón Km 3, Villarrica',
-  },
-  {
-    name: 'Almacén Don Lucho',
-    image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80',
-    address: 'Calle General Körner 145, Villarrica',
-  },
-  {
-    name: 'Botillería Sur',
-    image: 'https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=800&q=80',
-    address: 'Av. Julio Zegers 890, Villarrica',
-  },
-  {
-    name: 'Almacén La Vecina',
-    image: 'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=800&q=80',
-    address: 'Pasaje Los Aromos 67, Villarrica',
-  },
-  {
-    name: 'Botillería Central',
-    image: 'https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=800&q=80',
-    address: 'Calle Valentín Letelier 210, Villarrica',
-  },
-  {
-    name: 'Almacén El Barrio',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-    address: 'Calle Bilbao 455, Villarrica',
-  },
-]
+const API = import.meta.env.VITE_API || ''
 
 function StoreModal({ store, onClose }) {
   return (
@@ -70,18 +29,34 @@ function StoreModal({ store, onClose }) {
 }
 
 export default function StoresCarousel({ onViewAll }) {
+  const [stores, setStores] = useState([])
   const [selected, setSelected] = useState(null)
   const [paused, setPaused] = useState(false)
   const trackRef = useRef(null)
   const animRef = useRef(null)
   const posRef = useRef(0)
 
+  useEffect(() => {
+    fetch(`${API}/api/locales`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.locales || []).map(l => ({
+          id: l.id,
+          name: l.nombre,
+          image: l.imagen ? `${API}${l.imagen}` : '',
+          address: l.direccion || '',
+        }))
+        setStores(mapped)
+      })
+      .catch(() => {})
+  }, [])
+
   // Duplicate stores for seamless loop
   const doubledStores = [...stores, ...stores]
 
   useEffect(() => {
     const track = trackRef.current
-    if (!track) return
+    if (!track || stores.length === 0) return
 
     const speed = 0.4 // pixels per frame
 
@@ -100,7 +75,7 @@ export default function StoresCarousel({ onViewAll }) {
 
     animRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(animRef.current)
-  }, [paused])
+  }, [paused, stores])
 
   return (
     <div>
@@ -111,7 +86,9 @@ export default function StoresCarousel({ onViewAll }) {
         <button onClick={onViewAll} className="text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
 
-      <div
+      {stores.length === 0 ? (
+        <p className="text-center text-slate-400 text-xs py-6">No hay locales inscritos aún.</p>
+      ) : <div
         className="overflow-hidden py-2"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
@@ -123,7 +100,7 @@ export default function StoresCarousel({ onViewAll }) {
         >
           {doubledStores.map((store, i) => (
             <button
-              key={`${store.name}-${i}`}
+              key={`${store.id}-${i}`}
               onClick={() => setSelected(store)}
               className="shrink-0 flex flex-col items-center gap-2 group/item cursor-pointer"
               style={{ width: 'calc(16.666% - 10px)' }}
@@ -135,7 +112,7 @@ export default function StoresCarousel({ onViewAll }) {
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {selected && <StoreModal store={selected} onClose={() => setSelected(null)} />}
     </div>

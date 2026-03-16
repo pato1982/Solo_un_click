@@ -77,7 +77,7 @@ router.post('/register', [
     res.status(201).json({
       message: 'Usuario registrado',
       token,
-      user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
+      user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, rol: null, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
     })
   } catch (err) {
     console.error('Error en registro:', err)
@@ -167,6 +167,19 @@ function authMiddleware(req, res, next) {
     next()
   } catch (err) {
     return res.status(401).json({ error: 'Token inválido' })
+  }
+}
+
+async function programadorMiddleware(req, res, next) {
+  try {
+    const [rows] = await pool.query('SELECT rol FROM users WHERE id = ?', [req.userId])
+    if (rows.length === 0 || rows[0].rol !== 'programador') {
+      return res.status(403).json({ error: 'Acceso denegado: se requiere rol programador' })
+    }
+    next()
+  } catch (err) {
+    console.error('Error verificando rol programador:', err)
+    res.status(500).json({ error: 'Error al verificar permisos' })
   }
 }
 
@@ -421,3 +434,4 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
 module.exports = router
 module.exports.authMiddleware = authMiddleware
+module.exports.programadorMiddleware = programadorMiddleware

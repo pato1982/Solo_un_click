@@ -1,182 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-export const eventCategories = [
-  { icon: 'music_note', label: 'Musica' },
-  { icon: 'restaurant', label: 'Gastronomia' },
-  { icon: 'sports_soccer', label: 'Deporte' },
-  { icon: 'theater_comedy', label: 'Cultura' },
-  { icon: 'palette', label: 'Artesania' },
-  { icon: 'storefront', label: 'Ferias' },
-  { icon: 'family_restroom', label: 'Familiar' },
-  { icon: 'nightlife', label: 'Nocturno' },
-  { icon: 'school', label: 'Educacion' },
-  { icon: 'volunteer_activism', label: 'Beneficencia' },
-  { icon: 'eco', label: 'Naturaleza' },
-  { icon: 'church', label: 'Religioso' },
-]
+const API = import.meta.env.VITE_API || ''
 
-export const allEvents = [
-  {
-    title: 'Feria Costumbrista Villarrica',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80',
-    date: '15 - 17 Mar 2026',
-    location: 'Plaza de Armas, Villarrica',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-    type: 'Ferias',
-  },
-  {
-    title: 'Festival de Musica Lago',
-    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80',
-    date: '22 Mar 2026',
-    location: 'Costanera Villarrica',
-    price: '$8.000',
-    badge: 'Musica',
-    badgeColor: 'bg-primary-light text-white',
-    type: 'Musica',
-  },
-  {
-    title: 'Feria Gastronomica Sur',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80',
-    date: '28 - 30 Mar 2026',
-    location: 'Parque Municipal',
-    price: '$3.000',
-    badge: 'Gastronomia',
-    badgeColor: 'bg-accent text-primary font-black',
-    type: 'Gastronomia',
-  },
-  {
-    title: 'Carrera Trail Volcan',
-    image: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&q=80',
-    date: '5 Abr 2026',
-    location: 'Parque Nacional Villarrica',
-    price: '$15.000',
-    badge: 'Deporte',
-    badgeColor: 'bg-red-500 text-white',
-    type: 'Deporte',
-  },
-  {
-    title: 'Expo Emprendedores',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
-    date: '10 - 12 Abr 2026',
-    location: 'Centro Cultural Villarrica',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-    type: 'Ferias',
-  },
-  {
-    title: 'Noche de Fogatas y Folklore',
-    image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80',
-    date: '18 Abr 2026',
-    location: 'Playa Villarrica',
-    price: '$5.000',
-    badge: 'Cultura',
-    badgeColor: 'bg-primary text-white',
-    type: 'Cultura',
-  },
-  {
-    title: 'Feria de Artesania Mapuche',
-    image: 'https://images.unsplash.com/photo-1604999565976-8913ad2ddb7c?w=800&q=80',
-    date: '25 - 27 Abr 2026',
-    location: 'Mercado Municipal',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-    type: 'Artesania',
-  },
-  {
-    title: 'Torneo de Pesca Deportiva',
-    image: 'https://images.unsplash.com/photo-1504309092620-4d0ec726efa4?w=800&q=80',
-    date: '3 May 2026',
-    location: 'Lago Villarrica',
-    price: '$12.000',
-    badge: 'Deporte',
-    badgeColor: 'bg-red-500 text-white',
-    type: 'Deporte',
-  },
-  {
-    title: 'Concierto de Verano',
-    image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
-    date: '10 May 2026',
-    location: 'Anfiteatro Municipal',
-    price: '$10.000',
-    badge: 'Musica',
-    badgeColor: 'bg-primary-light text-white',
-    type: 'Musica',
-  },
-  {
-    title: 'Dia de la Familia',
-    image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80',
-    date: '15 May 2026',
-    location: 'Parque Municipal',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-    type: 'Familiar',
-  },
-  {
-    title: 'Festival Nocturno Villarrica',
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
-    date: '22 May 2026',
-    location: 'Costanera Villarrica',
-    price: '$6.000',
-    badge: 'Nocturno',
-    badgeColor: 'bg-purple-600 text-white',
-    type: 'Nocturno',
-  },
-  {
-    title: 'Taller de Cocina Mapuche',
-    image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80',
-    date: '28 May 2026',
-    location: 'Centro Cultural Villarrica',
-    price: '$5.000',
-    badge: 'Educacion',
-    badgeColor: 'bg-blue-500 text-white',
-    type: 'Educacion',
-  },
-  {
-    title: 'Caminata Ecologica',
-    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
-    date: '1 Jun 2026',
-    location: 'Reserva Nacional',
-    price: 'Entrada libre',
-    badge: 'Gratis',
-    badgeColor: 'bg-green-500 text-white',
-    type: 'Naturaleza',
-  },
-  {
-    title: 'Bingo Solidario',
-    image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&q=80',
-    date: '7 Jun 2026',
-    location: 'Gimnasio Municipal',
-    price: '$2.000',
-    badge: 'Beneficencia',
-    badgeColor: 'bg-pink-500 text-white',
-    type: 'Beneficencia',
-  },
-  {
-    title: 'Fiesta de San Pedro',
-    image: 'https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800&q=80',
-    date: '29 Jun 2026',
-    location: 'Caleta de Pescadores',
-    price: 'Entrada libre',
-    badge: 'Religioso',
-    badgeColor: 'bg-amber-600 text-white',
-    type: 'Religioso',
-  },
-  {
-    title: 'Festival Gastronomico del Lago',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
-    date: '5 Jul 2026',
-    location: 'Costanera Villarrica',
-    price: '$4.000',
-    badge: 'Gastronomia',
-    badgeColor: 'bg-accent text-primary font-black',
-    type: 'Gastronomia',
-  },
-]
+const badgeColors = {
+  'Música': 'bg-primary-light text-white',
+  'Musica': 'bg-primary-light text-white',
+  'Gastronomía': 'bg-accent text-primary font-black',
+  'Gastronomia': 'bg-accent text-primary font-black',
+  'Deporte': 'bg-red-500 text-white',
+  'Cultura': 'bg-primary text-white',
+  'Artesanía': 'bg-amber-500 text-white',
+  'Artesania': 'bg-amber-500 text-white',
+  'Ferias': 'bg-teal-500 text-white',
+  'Familiar': 'bg-blue-400 text-white',
+  'Nocturno': 'bg-purple-600 text-white',
+  'Educación': 'bg-blue-500 text-white',
+  'Educacion': 'bg-blue-500 text-white',
+  'Beneficencia': 'bg-pink-500 text-white',
+  'Naturaleza': 'bg-green-600 text-white',
+  'Religioso': 'bg-amber-600 text-white',
+}
+
+function getBadgeColor(categoria) {
+  return badgeColors[categoria] || 'bg-slate-500 text-white'
+}
+
+function isGratis(precio) {
+  if (!precio) return true
+  const lower = precio.toLowerCase().trim()
+  return lower === 'entrada libre' || lower === 'gratis' || lower === '' || lower === '$0' || lower === '0'
+}
 
 function EventCard({ event }) {
   return (
@@ -210,7 +63,28 @@ function EventCard({ event }) {
 }
 
 export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
+  const [allEvents, setAllEvents] = useState([])
   const [currentPage, setCurrentPage] = useState(0)
+
+  useEffect(() => {
+    fetch(`${API}/api/eventos`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.eventos || []).map(e => ({
+          id: e.id,
+          title: e.titulo,
+          image: e.imagen ? `${API}${e.imagen}` : '',
+          date: e.fecha || '',
+          location: e.ubicacion || '',
+          price: e.precio || 'Entrada libre',
+          type: e.categoria_nombre || '',
+          badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
+          badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
+        }))
+        setAllEvents(mapped)
+      })
+      .catch(() => {})
+  }, [])
 
   const filteredEvents = activeFilter
     ? allEvents.filter((e) => e.type === activeFilter)
@@ -248,7 +122,7 @@ export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
 
       <div className={`grid gap-4 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'} transition-all duration-300`}>
         {pageItems.map((event, idx) => (
-          <EventCard key={`${event.title}-${idx}`} event={event} />
+          <EventCard key={`${event.id}-${idx}`} event={event} />
         ))}
       </div>
 

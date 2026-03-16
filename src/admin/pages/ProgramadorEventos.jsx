@@ -3,6 +3,12 @@ import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
+function parseCrop(crop) {
+  if (!crop) return null
+  if (typeof crop === 'string') try { return JSON.parse(crop) } catch { return null }
+  return crop
+}
+
 export default function ProgramadorEventos() {
   const [eventos, setEventos] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -13,10 +19,16 @@ export default function ProgramadorEventos() {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [toast, setToast] = useState(null)
   const fileRef = useRef(null)
 
   const token = localStorage.getItem('token')
   const headers = { Authorization: `Bearer ${token}` }
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const fetchEventos = () => {
     fetch(`${API}/api/eventos/admin`, { headers })
@@ -77,38 +89,60 @@ export default function ProgramadorEventos() {
     const method = isNew ? 'POST' : 'PUT'
 
     try {
-      await fetch(url, { method, headers, body: fd })
-      setModal(null)
-      fetchEventos()
+      const res = await fetch(url, { method, headers, body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error || 'Error al guardar', 'error')
+      } else {
+        setModal(null)
+        fetchEventos()
+        showToast(isNew ? 'Evento creado' : 'Evento actualizado')
+      }
     } catch (err) {
-      console.error('Error guardando evento:', err)
+      showToast('Error de conexión al guardar', 'error')
     }
     setSaving(false)
   }
 
   const handleToggle = async (evento) => {
     try {
-      await fetch(`${API}/api/eventos/${evento.id}/toggle`, { method: 'PATCH', headers })
+      const res = await fetch(`${API}/api/eventos/${evento.id}/toggle`, { method: 'PATCH', headers })
+      const data = await res.json()
       fetchEventos()
-    } catch (err) { console.error(err) }
+      showToast(data.message || (evento.activo ? 'Evento desactivado' : 'Evento activado'))
+    } catch (err) {
+      showToast('Error al cambiar estado', 'error')
+    }
   }
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`${API}/api/eventos/${id}`, { method: 'DELETE', headers })
+      const res = await fetch(`${API}/api/eventos/${id}`, { method: 'DELETE', headers })
+      if (!res.ok) {
+        const data = await res.json()
+        showToast(data.error || 'Error al eliminar', 'error')
+      } else {
+        showToast('Evento eliminado')
+      }
       setDeleteConfirm(null)
       fetchEventos()
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      showToast('Error de conexión al eliminar', 'error')
+    }
   }
 
   const handleSaveCrop = async (eventoId, cropData) => {
     try {
-      await fetch(`${API}/api/eventos/${eventoId}/crop`, {
+      const res = await fetch(`${API}/api/eventos/${eventoId}/crop`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagen_crop: cropData }),
       })
-    } catch (err) { console.error(err) }
+      if (res.ok) showToast('Encuadre guardado')
+      else showToast('Error al guardar encuadre', 'error')
+    } catch (err) {
+      showToast('Error de conexión', 'error')
+    }
   }
 
   const getCatName = (id) => categorias.find(c => c.id === id)?.nombre || ''
@@ -116,6 +150,14 @@ export default function ProgramadorEventos() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
       {/* Encabezado */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -147,7 +189,9 @@ export default function ProgramadorEventos() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {eventos.map(evento => (
+          {eventos.map(evento => {
+            const crop = parseCrop(evento.imagen_crop)
+            return (
             <div key={evento.id} className={`bg-slate-900 border rounded-xl overflow-hidden transition-all ${evento.activo ? 'border-slate-700' : 'border-red-500/30 opacity-60'}`}>
               {/* Imagen */}
               <div className="relative">
@@ -157,8 +201,8 @@ export default function ProgramadorEventos() {
                       src={`${API}${evento.imagen}`}
                       alt={evento.titulo}
                       className="w-full h-full object-cover"
-                      style={evento.imagen_crop ? {
-                        transform: `scale(${evento.imagen_crop.zoom || 1}) translate(${(evento.imagen_crop.x || 0) / (evento.imagen_crop.zoom || 1)}px, ${(evento.imagen_crop.y || 0) / (evento.imagen_crop.zoom || 1)}px)`,
+                      style={crop ? {
+                        transform: `scale(${crop.zoom || 1}) translate(${(crop.x || 0) / (crop.zoom || 1)}px, ${(crop.y || 0) / (crop.zoom || 1)}px)`,
                         transformOrigin: 'center center',
                       } : undefined}
                     />
@@ -222,7 +266,8 @@ export default function ProgramadorEventos() {
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -249,7 +294,7 @@ export default function ProgramadorEventos() {
                     alt="Imagen evento"
                     onEdit={() => fileRef.current?.click()}
                     onRemove={() => { setImageFile(null); setImagePreview(null) }}
-                    initialCrop={modal !== 'new' ? modal.imagen_crop : undefined}
+                    initialCrop={modal !== 'new' ? parseCrop(modal.imagen_crop) : undefined}
                     onSaveCrop={modal !== 'new' ? (crop) => handleSaveCrop(modal.id, crop) : undefined}
                   />
                 ) : (

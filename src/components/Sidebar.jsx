@@ -1,22 +1,10 @@
-import { useState } from 'react'
-import { storeCategories } from './StoresPage'
-import { eventCategories } from './EventsPage'
+import { useState, useEffect } from 'react'
+
+const API = import.meta.env.VITE_API || ''
 
 const btnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full text-left'
 const catBtnClass = 'flex items-center gap-2 px-2 py-1 rounded-md transition-colors text-xs font-normal text-white/50 hover:text-accent w-full'
 const subBtnClass = 'flex items-center gap-2 pl-2 pr-2 py-0.5 rounded-md text-xs font-normal text-white/50 hover:text-accent w-full text-left'
-
-// Solo locales y eventos siguen con datos locales
-const flatContent = {
-  locales: {
-    title: 'Negocios',
-    items: storeCategories,
-  },
-  eventos: {
-    title: 'Eventos',
-    items: eventCategories,
-  },
-}
 
 const TURISMO_ICON_MAP = {
   'Aventura': 'kayaking',
@@ -49,6 +37,22 @@ const SIDEBAR_TITLES = {
 
 export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [] }) {
   const [expandedCat, setExpandedCat] = useState(null)
+  const [localeCategorias, setLocaleCategorias] = useState([])
+  const [eventoCategorias, setEventoCategorias] = useState([])
+
+  useEffect(() => {
+    if (activeNav === 'locales') {
+      fetch(`${API}/api/locales/categorias`)
+        .then(r => r.json())
+        .then(data => setLocaleCategorias(data.categorias || []))
+        .catch(() => {})
+    } else if (activeNav === 'eventos') {
+      fetch(`${API}/api/eventos/categorias`)
+        .then(r => r.json())
+        .then(data => setEventoCategorias(data.categorias || []))
+        .catch(() => {})
+    }
+  }, [activeNav])
 
   if (!activeNav) return null
 
@@ -86,9 +90,25 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
       }
     }
   }
-  // Locales y eventos: datos locales
-  else if (flatContent[activeNav]) {
-    panel = flatContent[activeNav]
+  // Locales: categorías desde API
+  else if (activeNav === 'locales') {
+    panel = {
+      title: 'Negocios',
+      items: localeCategorias.map(c => ({
+        icon: c.icono || 'storefront',
+        label: c.nombre,
+      })),
+    }
+  }
+  // Eventos: categorías desde API
+  else if (activeNav === 'eventos') {
+    panel = {
+      title: 'Eventos',
+      items: eventoCategorias.map(c => ({
+        icon: c.icono || 'event',
+        label: c.nombre,
+      })),
+    }
   }
 
   if (!panel) return null

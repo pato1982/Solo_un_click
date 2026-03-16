@@ -100,7 +100,7 @@ export default function ImageZoomPan({ src, alt, onEdit, onRemove, initialCrop, 
       <div className="relative">
         <div
           ref={containerRef}
-          className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden"
+          className="w-52 h-52 rounded-lg border border-slate-600 overflow-hidden"
           style={{ cursor: dragging ? 'grabbing' : 'grab' }}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}

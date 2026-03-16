@@ -1,154 +1,33 @@
 import { useState, useEffect, useRef } from 'react'
 
-export const storeCategories = [
-  { icon: 'store', label: 'Abarrotes' },
-  { icon: 'liquor', label: 'Botilleria' },
-  { icon: 'hardware', label: 'Ferreteria' },
-  { icon: 'bakery_dining', label: 'Panaderia' },
-  { icon: 'local_pharmacy', label: 'Farmacia' },
-  { icon: 'storefront', label: 'Bazar' },
-  { icon: 'restaurant', label: 'Comida' },
-  { icon: 'local_florist', label: 'Floreria' },
-  { icon: 'checkroom', label: 'Ropa' },
-  { icon: 'pets', label: 'Mascotas' },
-  { icon: 'local_library', label: 'Libreria' },
-  { icon: 'content_cut', label: 'Peluqueria' },
-  { icon: 'cake', label: 'Pasteleria' },
-  { icon: 'local_laundry_service', label: 'Lavanderia' },
-  { icon: 'smartphone', label: 'Celulares' },
-  { icon: 'recycling', label: 'Reciclaje' },
-]
+const API = import.meta.env.VITE_API || ''
 
-export const allStores = [
-  {
-    name: 'Botilleria El Volcan',
-    image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80',
-    address: 'Av. Pedro de Valdivia 520, Villarrica',
-    schedule: 'Lun-Sab 10:00 - 22:00',
-    type: 'Botilleria',
-    lat: -39.2820, lng: -72.2265,
-  },
-  {
-    name: 'Almacen Dona Rosa',
-    image: 'https://images.unsplash.com/photo-1556767576-5ec41e3239ea?w=800&q=80',
-    address: 'Calle Anfion Munoz 312, Villarrica',
-    schedule: 'Lun-Dom 08:00 - 21:00',
-    type: 'Abarrotes',
-    lat: -39.2845, lng: -72.2280,
-  },
-  {
-    name: 'Botilleria La Esquina',
-    image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800&q=80',
-    address: 'Camino Villarrica-Pucon Km 3, Villarrica',
-    schedule: 'Lun-Sab 11:00 - 23:00',
-    type: 'Botilleria',
-    lat: -39.2780, lng: -72.2150,
-  },
-  {
-    name: 'Almacen Don Lucho',
-    image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80',
-    address: 'Calle General Korner 145, Villarrica',
-    schedule: 'Lun-Sab 08:30 - 20:30',
-    type: 'Abarrotes',
-    lat: -39.2860, lng: -72.2250,
-  },
-  {
-    name: 'Botilleria Sur',
-    image: 'https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=800&q=80',
-    address: 'Av. Julio Zegers 890, Villarrica',
-    schedule: 'Lun-Dom 10:00 - 00:00',
-    type: 'Botilleria',
-    lat: -39.2890, lng: -72.2300,
-  },
-  {
-    name: 'Almacen La Vecina',
-    image: 'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=800&q=80',
-    address: 'Pasaje Los Aromos 67, Villarrica',
-    schedule: 'Lun-Sab 07:00 - 21:00',
-    type: 'Abarrotes',
-    lat: -39.2830, lng: -72.2310,
-  },
-  {
-    name: 'Botilleria Central',
-    image: 'https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=800&q=80',
-    address: 'Calle Valentin Letelier 210, Villarrica',
-    schedule: 'Lun-Sab 10:00 - 22:00',
-    type: 'Botilleria',
-    lat: -39.2855, lng: -72.2270,
-  },
-  {
-    name: 'Almacen El Barrio',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-    address: 'Calle Bilbao 455, Villarrica',
-    schedule: 'Lun-Dom 07:30 - 22:00',
-    type: 'Abarrotes',
-    lat: -39.2870, lng: -72.2235,
-  },
-  {
-    name: 'Ferreteria El Maestro',
-    image: 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=800&q=80',
-    address: 'Av. Pedro de Valdivia 310, Villarrica',
-    schedule: 'Lun-Sab 09:00 - 19:00',
-    type: 'Ferreteria',
-    lat: -39.2835, lng: -72.2260,
-  },
-  {
-    name: 'Panaderia La Espiga',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
-    address: 'Calle Anfion Munoz 180, Villarrica',
-    schedule: 'Lun-Dom 07:00 - 20:00',
-    type: 'Panaderia',
-    lat: -39.2842, lng: -72.2290,
-  },
-  {
-    name: 'Farmacia del Pueblo',
-    image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&q=80',
-    address: 'Calle General Korner 220, Villarrica',
-    schedule: 'Lun-Sab 09:00 - 20:00',
-    type: 'Farmacia',
-    lat: -39.2858, lng: -72.2242,
-  },
-  {
-    name: 'Bazar Todo Hogar',
-    image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=800&q=80',
-    address: 'Av. Julio Zegers 456, Villarrica',
-    schedule: 'Lun-Sab 10:00 - 19:30',
-    type: 'Bazar',
-    lat: -39.2880, lng: -72.2285,
-  },
-  {
-    name: 'Cocina de la Abuela',
-    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80',
-    address: 'Calle Valentin Letelier 89, Villarrica',
-    schedule: 'Lun-Sab 12:00 - 22:00',
-    type: 'Comida',
-    lat: -39.2850, lng: -72.2275,
-  },
-  {
-    name: 'Floreria Primavera',
-    image: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80',
-    address: 'Pasaje Los Aromos 34, Villarrica',
-    schedule: 'Lun-Sab 09:00 - 18:00',
-    type: 'Floreria',
-    lat: -39.2825, lng: -72.2320,
-  },
-  {
-    name: 'Ferreteria Don Tito',
-    image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=800&q=80',
-    address: 'Calle Bilbao 678, Villarrica',
-    schedule: 'Lun-Sab 08:30 - 19:00',
-    type: 'Ferreteria',
-    lat: -39.2875, lng: -72.2220,
-  },
-  {
-    name: 'Pasteleria Dulce Tentacion',
-    image: 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=800&q=80',
-    address: 'Av. Pedro de Valdivia 890, Villarrica',
-    schedule: 'Lun-Sab 09:00 - 20:00',
-    type: 'Pasteleria',
-    lat: -39.2810, lng: -72.2255,
-  },
-]
+const typeColors = {
+  Abarrotes: '#16a34a',
+  Botillería: '#7c3aed',
+  Botilleria: '#7c3aed',
+  Ferretería: '#ea580c',
+  Ferreteria: '#ea580c',
+  Panadería: '#ca8a04',
+  Panaderia: '#ca8a04',
+  Farmacia: '#0891b2',
+  Bazar: '#e11d48',
+  Comida: '#dc2626',
+  Florería: '#db2777',
+  Floreria: '#db2777',
+  Pastelería: '#a855f7',
+  Pasteleria: '#a855f7',
+  Ropa: '#6366f1',
+  Mascotas: '#059669',
+  Librería: '#0284c7',
+  Libreria: '#0284c7',
+  Peluquería: '#c026d3',
+  Peluqueria: '#c026d3',
+  Lavandería: '#0d9488',
+  Lavanderia: '#0d9488',
+  Celulares: '#4f46e5',
+  Reciclaje: '#65a30d',
+}
 
 function StoreCard({ store }) {
   return (
@@ -159,42 +38,23 @@ function StoreCard({ store }) {
           alt={store.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <span className="absolute top-2 right-2 bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider">
-          {store.type}
-        </span>
+        {store.type && (
+          <span className="absolute top-2 right-2 bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider">
+            {store.type}
+          </span>
+        )}
       </div>
       <div className="px-4 py-3 flex flex-col flex-1">
         <h3 className="font-bold text-xs text-slate-900 leading-tight line-clamp-1 mb-1">{store.name}</h3>
-        <div className="flex items-start gap-1 mb-1">
-          <span className="material-symbols-outlined text-slate-400 text-xs mt-0.5 shrink-0">location_on</span>
-          <p className="text-[10px] text-slate-500 line-clamp-2">{store.address}</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="material-symbols-outlined text-slate-400 text-xs shrink-0">schedule</span>
-          <p className="text-[10px] text-slate-500">{store.schedule}</p>
-        </div>
+        {store.address && (
+          <div className="flex items-start gap-1 mb-1">
+            <span className="material-symbols-outlined text-slate-400 text-xs mt-0.5 shrink-0">location_on</span>
+            <p className="text-[10px] text-slate-500 line-clamp-2">{store.address}</p>
+          </div>
+        )}
       </div>
     </div>
   )
-}
-
-const typeColors = {
-  Abarrotes: '#16a34a',
-  Botilleria: '#7c3aed',
-  Ferreteria: '#ea580c',
-  Panaderia: '#ca8a04',
-  Farmacia: '#0891b2',
-  Bazar: '#e11d48',
-  Comida: '#dc2626',
-  Floreria: '#db2777',
-  Pasteleria: '#a855f7',
-  Ropa: '#6366f1',
-  Mascotas: '#059669',
-  Libreria: '#0284c7',
-  Peluqueria: '#c026d3',
-  Lavanderia: '#0d9488',
-  Celulares: '#4f46e5',
-  Reciclaje: '#65a30d',
 }
 
 function StoresMap({ stores, activeFilter }) {
@@ -221,6 +81,7 @@ function StoresMap({ stores, activeFilter }) {
       : stores
 
     filtered.forEach((store) => {
+      if (!store.lat || !store.lng) return
       const color = typeColors[store.type] || '#6b21a8'
       const icon = window.L.divIcon({
         className: '',
@@ -242,10 +103,6 @@ function StoresMap({ stores, activeFilter }) {
               <span class="material-symbols-outlined" style="font-size:12px;color:#94a3b8;">location_on</span>
               ${store.address}
             </div>
-            <div style="font-size:10px;color:#64748b;display:flex;align-items:center;gap:3px;">
-              <span class="material-symbols-outlined" style="font-size:12px;color:#94a3b8;">schedule</span>
-              ${store.schedule}
-            </div>
             <div style="margin-top:4px;display:inline-block;background:${color};color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;">${store.type}</div>
           </div>
         `)
@@ -253,8 +110,9 @@ function StoresMap({ stores, activeFilter }) {
       markersRef.current.push(marker)
     })
 
-    if (filtered.length > 0) {
-      const bounds = window.L.latLngBounds(filtered.map((s) => [s.lat, s.lng]))
+    const withCoords = filtered.filter(s => s.lat && s.lng)
+    if (withCoords.length > 0) {
+      const bounds = window.L.latLngBounds(withCoords.map((s) => [s.lat, s.lng]))
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 })
     }
   }, [stores, activeFilter])
@@ -274,7 +132,24 @@ function StoresMap({ stores, activeFilter }) {
 }
 
 export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode, onToggleMap }) {
+  const [allStores, setAllStores] = useState([])
   const [currentPage, setCurrentPage] = useState(0)
+
+  useEffect(() => {
+    fetch(`${API}/api/locales`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.locales || []).map(l => ({
+          id: l.id,
+          name: l.nombre,
+          image: l.imagen ? `${API}${l.imagen}` : '',
+          address: l.direccion || '',
+          type: l.categoria_nombre || '',
+        }))
+        setAllStores(mapped)
+      })
+      .catch(() => {})
+  }, [])
 
   const filteredStores = activeFilter
     ? allStores.filter((s) => s.type === activeFilter)
@@ -326,7 +201,7 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
         <>
           <div className={`grid gap-4 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'} transition-all duration-300`}>
             {pageItems.map((store, idx) => (
-              <StoreCard key={`${store.name}-${idx}`} store={store} />
+              <StoreCard key={`${store.id}-${idx}`} store={store} />
             ))}
           </div>
 

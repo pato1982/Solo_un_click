@@ -3,6 +3,12 @@ import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
+function parseCrop(crop) {
+  if (!crop) return null
+  if (typeof crop === 'string') try { return JSON.parse(crop) } catch { return null }
+  return crop
+}
+
 export default function ProgramadorLocales() {
   const [locales, setLocales] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -13,10 +19,16 @@ export default function ProgramadorLocales() {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [toast, setToast] = useState(null)
   const fileRef = useRef(null)
 
   const token = localStorage.getItem('token')
   const headers = { Authorization: `Bearer ${token}` }
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const fetchLocales = () => {
     fetch(`${API}/api/locales/admin`, { headers })
@@ -73,38 +85,60 @@ export default function ProgramadorLocales() {
     const method = isNew ? 'POST' : 'PUT'
 
     try {
-      await fetch(url, { method, headers, body: fd })
-      setModal(null)
-      fetchLocales()
+      const res = await fetch(url, { method, headers, body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error || 'Error al guardar', 'error')
+      } else {
+        setModal(null)
+        fetchLocales()
+        showToast(isNew ? 'Local creado' : 'Local actualizado')
+      }
     } catch (err) {
-      console.error('Error guardando local:', err)
+      showToast('Error de conexión al guardar', 'error')
     }
     setSaving(false)
   }
 
   const handleToggle = async (local) => {
     try {
-      await fetch(`${API}/api/locales/${local.id}/toggle`, { method: 'PATCH', headers })
+      const res = await fetch(`${API}/api/locales/${local.id}/toggle`, { method: 'PATCH', headers })
+      const data = await res.json()
       fetchLocales()
-    } catch (err) { console.error(err) }
+      showToast(data.message || (local.activo ? 'Local desactivado' : 'Local activado'))
+    } catch (err) {
+      showToast('Error al cambiar estado', 'error')
+    }
   }
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`${API}/api/locales/${id}`, { method: 'DELETE', headers })
+      const res = await fetch(`${API}/api/locales/${id}`, { method: 'DELETE', headers })
+      if (!res.ok) {
+        const data = await res.json()
+        showToast(data.error || 'Error al eliminar', 'error')
+      } else {
+        showToast('Local eliminado')
+      }
       setDeleteConfirm(null)
       fetchLocales()
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      showToast('Error de conexión al eliminar', 'error')
+    }
   }
 
   const handleSaveCrop = async (localId, cropData) => {
     try {
-      await fetch(`${API}/api/locales/${localId}/crop`, {
+      const res = await fetch(`${API}/api/locales/${localId}/crop`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagen_crop: cropData }),
       })
-    } catch (err) { console.error(err) }
+      if (res.ok) showToast('Encuadre guardado')
+      else showToast('Error al guardar encuadre', 'error')
+    } catch (err) {
+      showToast('Error de conexión', 'error')
+    }
   }
 
   const getCatName = (id) => categorias.find(c => c.id === id)?.nombre || ''
@@ -112,6 +146,14 @@ export default function ProgramadorLocales() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
       {/* Encabezado */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -143,7 +185,9 @@ export default function ProgramadorLocales() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {locales.map(local => (
+          {locales.map(local => {
+            const crop = parseCrop(local.imagen_crop)
+            return (
             <div key={local.id} className={`bg-slate-900 border rounded-xl overflow-hidden transition-all ${local.activo ? 'border-slate-700' : 'border-red-500/30 opacity-60'}`}>
               {/* Imagen con zoom/pan */}
               <div className="relative">
@@ -153,8 +197,8 @@ export default function ProgramadorLocales() {
                       src={`${API}${local.imagen}`}
                       alt={local.nombre}
                       className="w-full h-full object-cover"
-                      style={local.imagen_crop ? {
-                        transform: `scale(${local.imagen_crop.zoom || 1}) translate(${(local.imagen_crop.x || 0) / (local.imagen_crop.zoom || 1)}px, ${(local.imagen_crop.y || 0) / (local.imagen_crop.zoom || 1)}px)`,
+                      style={crop ? {
+                        transform: `scale(${crop.zoom || 1}) translate(${(crop.x || 0) / (crop.zoom || 1)}px, ${(crop.y || 0) / (crop.zoom || 1)}px)`,
                         transformOrigin: 'center center',
                       } : undefined}
                     />
@@ -209,7 +253,8 @@ export default function ProgramadorLocales() {
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -237,7 +282,7 @@ export default function ProgramadorLocales() {
                     alt="Imagen local"
                     onEdit={() => fileRef.current?.click()}
                     onRemove={() => { setImageFile(null); setImagePreview(null) }}
-                    initialCrop={modal !== 'new' ? modal.imagen_crop : undefined}
+                    initialCrop={modal !== 'new' ? parseCrop(modal.imagen_crop) : undefined}
                     onSaveCrop={modal !== 'new' ? (crop) => handleSaveCrop(modal.id, crop) : undefined}
                   />
                 ) : (

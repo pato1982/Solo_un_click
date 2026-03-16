@@ -3,7 +3,7 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const pool = require('../db')
-const { authMiddleware } = require('./auth')
+const { authMiddleware, programadorMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
 
 const router = express.Router()
@@ -31,19 +31,6 @@ const upload = multer({
 function sanitize(str) {
   if (typeof str !== 'string') return str
   return str.replace(/<[^>]*>/g, '').trim()
-}
-
-async function programadorMiddleware(req, res, next) {
-  try {
-    const [rows] = await pool.query('SELECT rol FROM users WHERE id = ?', [req.userId])
-    if (rows.length === 0 || rows[0].rol !== 'programador') {
-      return res.status(403).json({ error: 'Acceso denegado: se requiere rol programador' })
-    }
-    next()
-  } catch (err) {
-    console.error('Error verificando rol programador:', err)
-    res.status(500).json({ error: 'Error al verificar permisos' })
-  }
 }
 
 // GET /api/eventos/categorias — categorías de evento (público)

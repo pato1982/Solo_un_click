@@ -1,6 +1,40 @@
-import { storeCategories } from '../components/StoresPage'
-import { eventCategories } from '../components/EventsPage'
 import { companies } from '../components/TourismPage'
+
+// Categorías de locales de barrio (para búsqueda)
+const storeCategories = [
+  { icon: 'store', label: 'Abarrotes' },
+  { icon: 'liquor', label: 'Botillería' },
+  { icon: 'hardware', label: 'Ferretería' },
+  { icon: 'bakery_dining', label: 'Panadería' },
+  { icon: 'local_pharmacy', label: 'Farmacia' },
+  { icon: 'storefront', label: 'Bazar' },
+  { icon: 'restaurant', label: 'Comida' },
+  { icon: 'local_florist', label: 'Florería' },
+  { icon: 'checkroom', label: 'Ropa' },
+  { icon: 'pets', label: 'Mascotas' },
+  { icon: 'local_library', label: 'Librería' },
+  { icon: 'content_cut', label: 'Peluquería' },
+  { icon: 'cake', label: 'Pastelería' },
+  { icon: 'local_laundry_service', label: 'Lavandería' },
+  { icon: 'smartphone', label: 'Celulares' },
+  { icon: 'recycling', label: 'Reciclaje' },
+]
+
+// Categorías de eventos (para búsqueda)
+const eventCategories = [
+  { icon: 'music_note', label: 'Música' },
+  { icon: 'restaurant', label: 'Gastronomía' },
+  { icon: 'sports_soccer', label: 'Deporte' },
+  { icon: 'theater_comedy', label: 'Cultura' },
+  { icon: 'palette', label: 'Artesanía' },
+  { icon: 'storefront', label: 'Ferias' },
+  { icon: 'family_restroom', label: 'Familiar' },
+  { icon: 'nightlife', label: 'Nocturno' },
+  { icon: 'school', label: 'Educación' },
+  { icon: 'volunteer_activism', label: 'Beneficencia' },
+  { icon: 'eco', label: 'Naturaleza' },
+  { icon: 'church', label: 'Religioso' },
+]
 
 // Productos - categorías y subcategorías
 const productCategories = [

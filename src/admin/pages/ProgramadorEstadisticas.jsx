@@ -78,7 +78,8 @@ export default function ProgramadorEstadisticas() {
       {/* KPIs Visitas */}
       <div className="mb-6">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Visitas al sitio</h2>
-        <div className="grid grid-cols-6 gap-3">
+        <div className="grid grid-cols-7 gap-3">
+          <KpiCard label="Visitas hoy" value={visitas.hoy} color="text-green-400" />
           <KpiCard label="Promedio diario" value={visitas.promedio_diario} color="text-emerald-400" />
           <KpiCard label="Visitas semanales" value={visitas.semanales} color="text-blue-400" />
           <KpiCard label="Visitas mensuales" value={visitas.mensuales} color="text-indigo-400" />

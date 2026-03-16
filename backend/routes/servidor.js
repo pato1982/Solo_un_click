@@ -1,21 +1,11 @@
 const express = require('express')
+const path = require('path')
 const { exec } = require('child_process')
 const pool = require('../db')
-const { authMiddleware } = require('./auth')
+const { authMiddleware, programadorMiddleware } = require('./auth')
 
 const router = express.Router()
-
-async function programadorMiddleware(req, res, next) {
-  try {
-    const [rows] = await pool.query('SELECT rol FROM users WHERE id = ?', [req.userId])
-    if (rows.length === 0 || rows[0].rol !== 'programador') {
-      return res.status(403).json({ error: 'Acceso denegado' })
-    }
-    next()
-  } catch (err) {
-    res.status(500).json({ error: 'Error al verificar permisos' })
-  }
-}
+const uploadsDir = path.join(__dirname, '..', 'uploads')
 
 function execPromise(cmd) {
   return new Promise((resolve, reject) => {
@@ -37,11 +27,11 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
     let uploadsBytes = 0
     let uploadsCarpetas = []
     try {
-      const duOutput = await execPromise("du -sb /var/www/soloaunclick/backend/uploads 2>/dev/null | awk '{print $1}'")
+      const duOutput = await execPromise(`du -sb ${uploadsDir} 2>/dev/null | awk '{print $1}'`)
       uploadsBytes = parseInt(duOutput) || 0
 
       // Desglose: subcarpetas
-      const subdirsOutput = await execPromise("find /var/www/soloaunclick/backend/uploads -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null")
+      const subdirsOutput = await execPromise(`find ${uploadsDir} -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null`)
       if (subdirsOutput) {
         uploadsCarpetas = subdirsOutput.split('\n').map(line => {
           const [bytes, fullpath] = line.split('\t')
@@ -121,8 +111,15 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
         SUM(CASE WHEN created_at >= CURDATE() THEN 1 ELSE 0 END) AS visitas_hoy,
         SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS visitas_semana,
         SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS visitas_mes,
-        DATEDIFF(CURDATE(), MIN(DATE(created_at))) + 1 AS dias_con_datos
+        COUNT(DISTINCT DATE(created_at)) AS dias_con_datos
       FROM site_visits
+    `)
+
+    // Visitantes reiterados: IPs que visitaron más de 1 vez
+    const [reiteradosRows] = await pool.query(`
+      SELECT COUNT(*) AS reiterados FROM (
+        SELECT ip FROM site_visits GROUP BY ip HAVING COUNT(*) > 1
+      ) t
     `)
 
     const v = visitasRows[0]
@@ -140,11 +137,12 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
       },
       visitas: {
         promedio_diario: promedioDiario,
+        hoy: v.visitas_hoy || 0,
         semanales: v.visitas_semana || 0,
         mensuales: v.visitas_mes || 0,
         total: v.total_visitas || 0,
         visitantes_unicos: v.visitantes_unicos || 0,
-        reiterados: Math.max(0, (v.total_visitas || 0) - (v.visitantes_unicos || 0)),
+        reiterados: reiteradosRows[0].reiterados || 0,
       },
     })
   } catch (err) {
@@ -154,11 +152,20 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
 })
 
 // POST /api/servidor/visita (público, registra visita al sitio)
+// Deduplicación: máximo 1 registro por IP cada 30 minutos
 router.post('/visita', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress
     const userAgent = (req.headers['user-agent'] || '').substring(0, 255)
     const pagina = (req.body.pagina || 'home').substring(0, 100)
+
+    // Verificar si esta IP ya registró visita en los últimos 30 minutos
+    const [recent] = await pool.query(
+      'SELECT id FROM site_visits WHERE ip = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE) LIMIT 1',
+      [ip]
+    )
+    if (recent.length > 0) return res.json({ ok: true, skipped: true })
+
     await pool.query(
       'INSERT INTO site_visits (ip, pagina, user_agent) VALUES (?, ?, ?)',
       [ip, pagina, userAgent]
