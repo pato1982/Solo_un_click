@@ -60,7 +60,7 @@ function ProductModal({ product, hidePrice, onClose }) {
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div
-        className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col"
+        className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón cerrar */}
@@ -245,7 +245,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
   return (
     <>
       <div className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group ${isFirst ? 'border-2 border-amber-400 outline outline-2 outline-amber-400 outline-offset-2' : 'border border-slate-100'}`}>
-        <div className="relative h-40 pt-2 bg-white overflow-hidden flex items-center justify-center">
+        <div className="relative h-28 sm:h-32 md:h-40 pt-2 bg-white overflow-hidden flex items-center justify-center">
           <img
             alt={product.alt}
             className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
@@ -257,9 +257,9 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
             </span>
           )}
         </div>
-        <div className="px-4 py-3 flex flex-col flex-1 items-center text-center">
-          <h3 className="font-bold text-xs text-slate-900 leading-tight line-clamp-1 mb-1">{product.name}</h3>
-          <p className="text-slate-500 text-[10px] line-clamp-2 mb-2">{product.description}</p>
+        <div className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 flex flex-col flex-1 items-center text-center">
+          <h3 className="font-bold text-[10px] sm:text-xs text-slate-900 leading-tight line-clamp-1 mb-0.5 sm:mb-1">{product.name}</h3>
+          <p className="text-slate-500 text-[9px] sm:text-[10px] line-clamp-2 mb-1 sm:mb-2">{product.description}</p>
           <div className="mt-auto flex items-end justify-between w-full">
             {hidePrice ? (
               <button
@@ -276,7 +276,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
                       ${product.originalPrice.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                     </p>
                   )}
-                  <p className="text-xs font-black text-primary leading-tight">
+                  <p className="text-[10px] sm:text-xs font-black text-primary leading-tight">
                     ${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                   </p>
                 </div>

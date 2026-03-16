@@ -6,6 +6,10 @@ export default {
   ],
   darkMode: "class",
   theme: {
+    screens: {
+      'sm': '700px',
+      'md': '1101px',
+    },
     extend: {
       colors: {
         "primary": "#3B1969",

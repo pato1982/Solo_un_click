@@ -184,7 +184,7 @@ export default function ProgramadorLocales() {
           <p className="text-xs text-slate-500 mt-1">Agrega el primer local del barrio</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {locales.map(local => {
             const crop = parseCrop(local.imagen_crop)
             return (

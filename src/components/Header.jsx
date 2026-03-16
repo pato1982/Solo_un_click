@@ -46,6 +46,7 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
     setQuery('')
     setResults([])
     setShowResults(false)
+    setMobileMenuOpen(false)
     if (onSearchSelect) onSearchSelect(item)
   }
 
@@ -59,34 +60,36 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
 
   return (
     <div className="sticky top-0 z-50">
-      <header className="bg-primary text-white px-6 py-3 shadow-lg">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 relative">
+      {/* === HEADER PRINCIPAL === */}
+      <header className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4 sm:py-2.5 md:py-3 shadow-lg">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-4 md:gap-8 md:justify-center relative">
           {/* Logo */}
-          <div className="flex items-center gap-2 absolute left-0">
-            <div className="bg-accent p-1.5 rounded-lg text-primary">
-              <span className="material-symbols-outlined block text-2xl font-bold">ads_click</span>
+          <div className="flex items-center gap-2 sm:gap-2 md:absolute md:left-0 shrink-0">
+            <div className="bg-accent p-1.5 sm:p-1.5 rounded-lg text-primary">
+              <span className="material-symbols-outlined block text-2xl sm:text-xl md:text-2xl font-bold">ads_click</span>
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
-              <span className="text-xl font-black italic tracking-tight">un <span className="text-accent uppercase">CLICK</span></span>
+              <span className="text-[9px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
+              <span className="text-lg sm:text-base md:text-xl font-black italic tracking-tight">un <span className="text-accent uppercase">CLICK</span></span>
             </div>
           </div>
 
-          {/* Buscador centrado */}
-          <div className="w-full max-w-lg relative group" ref={searchRef}>
+          {/* Buscador - oculto en mobile, visible en tablet/desktop */}
+          <div className="hidden sm:block sm:flex-initial w-full sm:max-w-sm md:max-w-lg relative group md:flex-none" ref={searchRef}>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-              <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary">search</span>
+              <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-sm sm:text-base">search</span>
             </div>
             <input
-              className="w-full rounded-full bg-white text-slate-900 py-2 pl-10 pr-24 focus:ring-4 focus:ring-primary-light/40 border-none transition-all placeholder:text-slate-400 text-sm"
-              placeholder="Buscar productos, servicios..."
+              className="w-full rounded-full bg-white text-slate-900 py-1.5 md:py-2 pl-8 sm:pl-10 pr-10 sm:pr-24 focus:ring-4 focus:ring-primary-light/40 border-none transition-all placeholder:text-slate-400 text-[10px] sm:text-xs md:text-sm"
+              placeholder="Buscar..."
               type="text"
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => query.length >= 3 && setShowResults(true)}
             />
-            <button className="absolute right-1 top-1 bottom-1 bg-accent text-primary px-4 rounded-full font-bold text-sm hover:brightness-110 hover:scale-105 transition-all">
-              Buscar
+            <button className="absolute right-1 top-1 bottom-1 bg-accent text-primary px-2 sm:px-4 rounded-full font-bold text-[10px] sm:text-sm hover:brightness-110 hover:scale-105 transition-all">
+              <span className="hidden sm:inline">Buscar</span>
+              <span className="material-symbols-outlined sm:hidden text-sm">search</span>
             </button>
             {showResults && results.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50">
@@ -115,12 +118,8 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             )}
           </div>
 
-          {/* Carrito y sesión - parte superior derecha */}
-          <div className="absolute right-0 flex items-center gap-3">
-            <button className="relative p-1.5 hover:bg-white/10 rounded-full">
-              <span className="material-symbols-outlined text-white text-xl">shopping_cart</span>
-              <span className="absolute -top-1 -right-1 bg-accent text-primary text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center">3</span>
-            </button>
+          {/* Icono persona - solo tablet */}
+          <div className="hidden sm:flex md:hidden items-center ml-auto md:absolute md:right-0">
             <button className="p-1.5 hover:bg-white/10 rounded-full">
               <span className="material-symbols-outlined text-white text-xl">person</span>
             </button>
@@ -128,15 +127,16 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
         </div>
       </header>
 
-      {/* Nav bar */}
-      <nav className="bg-[#4A2070] px-6 py-1.5 border-y-2 border-accent shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 relative">
+      {/* === NAV BAR Mobile: siempre visible, scroll touch === */}
+      <nav className="sm:hidden bg-[#4A2070] px-2 py-1 border-y-2 border-accent shadow-md">
+        {/* Nav items en una fila con scroll */}
+        <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar">
           {showInicio && (
             <button
               onClick={onGoHome}
-              className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all"
+              className="shrink-0 flex items-center gap-1 px-2 py-1 text-[10px] font-semibold bg-accent text-primary rounded-full"
             >
-              <span className="material-symbols-outlined text-base">home</span>
+              <span className="material-symbols-outlined text-sm">home</span>
               Inicio
             </button>
           )}
@@ -144,19 +144,113 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             <button
               key={item.label}
               onClick={() => toggleNav(item.label.toLowerCase())}
-              className={`flex items-center gap-1.5 text-xs font-bold capitalize tracking-wide transition-colors ${
+              className={`shrink-0 flex items-center gap-0.5 py-1 px-1.5 rounded-full text-[10px] font-normal tracking-wide transition-colors whitespace-nowrap ${
+                activeNav === item.label.toLowerCase() || (item.label === 'Negocios' && activeNav === 'locales')
+                  ? 'bg-accent/20 text-accent font-medium'
+                  : 'text-white/60 hover:text-accent'
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+        {/* Buscador + Sesión mobile - misma línea */}
+        <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/10">
+          {/* Buscador izquierda */}
+          <div className="relative group w-[45%] shrink-0">
+            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10">
+              <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-xs">search</span>
+            </div>
+            <input
+              className="w-full rounded-full bg-white/90 text-slate-900 py-1 pl-7 pr-2 border-none placeholder:text-slate-400 text-[10px] focus:ring-2 focus:ring-accent/40 transition-all"
+              placeholder="Buscar..."
+              type="text"
+              value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => query.length >= 3 && setShowResults(true)}
+            />
+            {showResults && results.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50">
+                {results.map((item, i) => (
+                  <button
+                    key={i}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
+                    onClick={() => handleSelect(item)}
+                  >
+                    <span className="material-symbols-outlined text-primary text-sm">{item.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-slate-800 block">{item.label}</span>
+                      <span className="text-[9px] text-slate-400">{item.section}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showResults && query.length >= 3 && results.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 px-3 py-2 text-center text-xs text-slate-400">
+                No se encontraron resultados
+              </div>
+            )}
+          </div>
+          {/* Iconos sesión + Planes derecha */}
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
+            {user ? (
+              <>
+                <a href="/admin" className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">
+                  <span className="material-symbols-outlined text-base">{user.rol === 'programador' ? 'terminal' : 'dashboard'}</span>
+                </a>
+                <button onClick={onLogout} className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">
+                  <span className="material-symbols-outlined text-base">logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setShowRegister(true)} className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors" title="Registrarse">
+                  <span className="material-symbols-outlined text-base">person_add</span>
+                </button>
+                <button onClick={() => setShowLogin(true)} className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors" title="Ingresar">
+                  <span className="material-symbols-outlined text-base">login</span>
+                </button>
+              </>
+            )}
+            <button onClick={() => setShowPlans(true)} className="flex items-center gap-0.5 text-[9px] font-bold bg-accent text-primary px-1.5 py-0.5 rounded-full hover:brightness-110 transition-all">
+              <span className="material-symbols-outlined text-xs">star</span>
+              Planes
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* === NAV BAR - Tablet y Desktop === */}
+      <nav className="hidden sm:block bg-[#4A2070] px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 border-y-2 border-accent shadow-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-4 md:gap-8 relative">
+          {showInicio && (
+            <button
+              onClick={onGoHome}
+              className="flex items-center gap-1 text-[10px] sm:text-xs font-bold bg-accent text-primary px-2 sm:px-3 py-1 rounded-full hover:brightness-110 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm sm:text-base">home</span>
+              Inicio
+            </button>
+          )}
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => toggleNav(item.label.toLowerCase())}
+              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold capitalize tracking-wide transition-colors ${
                 activeNav === item.label.toLowerCase() || (item.label === 'Negocios' && activeNav === 'locales')
                   ? 'text-accent'
                   : 'text-white/90 hover:text-accent'
               }`}
             >
-              <span className="material-symbols-outlined text-base">{item.icon}</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">{item.icon}</span>
               {item.label}
             </button>
           ))}
 
-          {/* Registrarse, Ingresar y Planes */}
-          <div className="absolute right-0 flex items-center gap-4">
+          {/* Registrarse, Ingresar y Planes - Desktop */}
+          <div className="absolute right-0 hidden md:flex items-center gap-4">
             {user ? (
               <>
                 {user.rol !== 'programador' && (
@@ -192,6 +286,30 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             )}
             <button onClick={() => setShowPlans(true)} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
               <span className="material-symbols-outlined text-base">star</span>
+              Planes
+            </button>
+          </div>
+
+          {/* Tablet: solo iconos de sesión compactos */}
+          <div className="absolute right-0 flex sm:flex md:hidden items-center gap-2">
+            {user ? (
+              <>
+                <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel">
+                  <span className="material-symbols-outlined text-lg">{user.rol === 'programador' ? 'terminal' : 'dashboard'}</span>
+                </a>
+                <button onClick={onLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
+                  <span className="material-symbols-outlined text-lg">logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setShowLogin(true)} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Ingresar">
+                  <span className="material-symbols-outlined text-lg">login</span>
+                </button>
+              </>
+            )}
+            <button onClick={() => setShowPlans(true)} className="flex items-center gap-1 text-[10px] font-bold bg-accent text-primary px-2 py-0.5 rounded-full hover:brightness-110 transition-all">
+              <span className="material-symbols-outlined text-sm">star</span>
               Planes
             </button>
           </div>

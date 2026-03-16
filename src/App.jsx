@@ -420,81 +420,74 @@ export default function App() {
       <div className="relative flex min-h-screen flex-col">
         {/* Header fijo: mini barra + header tienda */}
         <div className="sticky top-0 z-50">
-          {/* <div className="bg-primary px-6 border-b border-white/10" style={{ paddingTop: '1px', paddingBottom: '1px' }}>
-            <div className="max-w-7xl mx-auto flex items-center">
-              <button onClick={goHome} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                <div className="bg-accent p-0.5 rounded text-primary leading-none">
-                  <span className="material-symbols-outlined block text-xs font-bold">ads_click</span>
-                </div>
-                <span className="text-[7px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
-                <span className="text-[10px] font-black italic tracking-tight text-white -ml-0.5">un <span className="text-accent uppercase">CLICK</span></span>
-              </button>
-            </div>
-          </div> */}
-          <header className="bg-primary text-white px-6 py-7 shadow-lg">
-            <div className="max-w-7xl mx-auto flex items-center gap-6 relative">
-              <button onClick={goHome} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-                <div className="bg-accent p-1.5 rounded-lg text-primary leading-none">
-                  <span className="material-symbols-outlined block text-2xl font-bold">ads_click</span>
+          <header className="bg-primary text-white px-3 sm:px-4 md:px-6 py-3 sm:py-5 md:py-7 shadow-lg">
+            <div className="max-w-7xl mx-auto flex items-center gap-3 sm:gap-4 md:gap-6 relative">
+              <button onClick={goHome} className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity shrink-0">
+                <div className="bg-accent p-1 sm:p-1.5 rounded-lg text-primary leading-none">
+                  <span className="material-symbols-outlined block text-lg sm:text-xl md:text-2xl font-bold">ads_click</span>
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span className="text-xs font-bold uppercase tracking-widest text-white/70">Solo a</span>
-                  <span className="text-lg font-black italic tracking-tight text-white">un <span className="text-accent uppercase">CLICK</span></span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/70">Solo a</span>
+                  <span className="text-sm sm:text-base md:text-lg font-black italic tracking-tight text-white">un <span className="text-accent uppercase">CLICK</span></span>
                 </div>
               </button>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none">
                 <div className="flex flex-col leading-none text-center">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70">{activeStore.slogan}</span>
-                  <span className="text-3xl font-black italic tracking-tight">{activeStore.name}</span>
+                  <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest text-white/70">{activeStore.slogan}</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl font-black italic tracking-tight">{activeStore.name}</span>
                 </div>
               </div>
-              <div className="flex-1"></div>
-              <label className="relative group shrink-0 w-64">
+              {/* Nombre tienda mobile - debajo del logo */}
+              <div className="sm:hidden flex-1 min-w-0 text-center">
+                <span className="text-base font-black italic tracking-tight block truncate">{activeStore.name}</span>
+              </div>
+              <div className="flex-1 hidden sm:block"></div>
+              <label className="relative group shrink-0 w-48 sm:w-56 md:w-64 hidden sm:block">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary">search</span>
+                  <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-sm">search</span>
                 </div>
                 <input
-                  className="w-full rounded-full bg-white text-slate-900 py-1.5 pl-9 pr-20 focus:ring-4 focus:ring-primary-light/40 border-none transition-all placeholder:text-slate-400 text-xs"
+                  className="w-full rounded-full bg-white text-slate-900 py-1.5 pl-9 pr-16 sm:pr-20 focus:ring-4 focus:ring-primary-light/40 border-none transition-all placeholder:text-slate-400 text-xs"
                   placeholder={`Buscar en ${activeStore.name}...`}
                   type="text"
                 />
-                <button className="absolute right-1 top-1 bottom-1 bg-accent text-primary px-3 rounded-full font-bold text-xs hover:brightness-110 hover:scale-105 transition-all">
+                <button className="absolute right-1 top-1 bottom-1 bg-accent text-primary px-2 sm:px-3 rounded-full font-bold text-[10px] sm:text-xs hover:brightness-110 hover:scale-105 transition-all">
                   Buscar
                 </button>
               </label>
             </div>
           </header>
-          <nav className="bg-[#4A2070] px-6 py-1.5 border-y-2 border-accent shadow-md">
+          <nav className="bg-[#4A2070] px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 border-y-2 border-accent shadow-md">
             <div className="max-w-7xl mx-auto flex items-center justify-between relative">
-              <button onClick={goHome} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
-                <span className="material-symbols-outlined text-base">arrow_back</span>
+              <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-xs font-bold bg-accent text-primary px-2 sm:px-3 py-1 rounded-full hover:brightness-110 transition-all">
+                <span className="material-symbols-outlined text-sm sm:text-base">arrow_back</span>
                 Volver
               </button>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
               {user ? (
                 <>
                   {user.rol !== 'programador' && (
                     <>
-                      <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
+                      <span className="hidden md:inline text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
                         {' '}<span className="text-white/50">Plan {user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
                       </span>
                       <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
-                        <span className="material-symbols-outlined text-xl">dashboard</span>
+                        <span className="material-symbols-outlined text-lg sm:text-xl">dashboard</span>
                       </a>
                     </>
                   )}
                   {user.rol === 'programador' && (
                     <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
-                      <span className="material-symbols-outlined text-xl">terminal</span>
+                      <span className="material-symbols-outlined text-lg sm:text-xl">terminal</span>
                     </a>
                   )}
                   <button onClick={handleLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
-                    <span className="material-symbols-outlined text-xl">logout</span>
+                    <span className="material-symbols-outlined text-lg sm:text-xl">logout</span>
                   </button>
                 </>
               ) : (
-                <button onClick={goHome} className="flex items-center gap-1 text-xs font-bold bg-accent text-primary px-3 py-1 rounded-full hover:brightness-110 transition-all">
-                  <span className="material-symbols-outlined text-base">home</span>
+                <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-xs font-bold bg-accent text-primary px-2 sm:px-3 py-1 rounded-full hover:brightness-110 transition-all">
+                  <span className="material-symbols-outlined text-sm sm:text-base">home</span>
                   Inicio
                 </button>
               )}
@@ -516,7 +509,7 @@ export default function App() {
     <div className="relative flex min-h-screen flex-col">
       <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
-      <div className="w-full flex flex-1 flex-col md:flex-row">
+      <div className="w-full flex flex-1 flex-col md:flex-row relative">
         <Sidebar
           activeNav={activeSidebar}
           onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : null)}
@@ -531,7 +524,7 @@ export default function App() {
           sidebarCategorias={sidebarCategorias}
         />
 
-        <main className="flex-1 flex flex-col gap-8 p-6 overflow-hidden transition-all duration-300">
+        <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">
           {/* <Breadcrumbs /> */}
 
           {currentPage === 'eventos' ? (
@@ -577,17 +570,17 @@ export default function App() {
 
               return (
                 <div>
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                     <button
                       onClick={() => setActiveFilter(null)}
-                      className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-xs font-bold"
+                      className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-[10px] sm:text-xs font-bold"
                     >
                       <span className="material-symbols-outlined text-sm">arrow_back</span>
                       Volver
                     </button>
-                    <div className="w-1 h-5 bg-accent rounded-full"></div>
-                    <h2 className="text-sm font-bold text-slate-700 tracking-wide">{filterLabel}</h2>
-                    <span className="text-[10px] text-slate-400">
+                    <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+                    <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{filterLabel}</h2>
+                    <span className="text-[9px] sm:text-[10px] text-slate-400">
                       {filteredSections.reduce((acc, s) => acc + s.items.length, 0)} resultados
                     </span>
                   </div>

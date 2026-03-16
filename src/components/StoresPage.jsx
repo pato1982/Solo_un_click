@@ -32,7 +32,7 @@ const typeColors = {
 function StoreCard({ store }) {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100">
-      <div className="relative h-40 bg-slate-100 overflow-hidden">
+      <div className="relative h-28 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
         <img
           src={store.image}
           alt={store.name}
@@ -168,19 +168,19 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-xs font-bold"
+          className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-[10px] sm:text-xs font-bold"
         >
           <span className="material-symbols-outlined text-sm">arrow_back</span>
           Volver
         </button>
-        <div className="w-1 h-5 bg-accent rounded-full"></div>
-        <h2 className="text-sm font-bold text-slate-700 tracking-wide">
+        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">
           {activeFilter ? activeFilter : 'Todos los Locales'}
         </h2>
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[9px] sm:text-[10px] text-slate-400">
           {filteredStores.length} {filteredStores.length === 1 ? 'local' : 'locales'}
         </span>
         <div className="flex-1"></div>
@@ -199,7 +199,7 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
         <StoresMap stores={allStores} activeFilter={activeFilter} />
       ) : (
         <>
-          <div className={`grid gap-4 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'} transition-all duration-300`}>
+          <div className={`grid gap-2 sm:gap-3 md:gap-4 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6'} transition-all duration-300`}>
             {pageItems.map((store, idx) => (
               <StoreCard key={`${store.id}-${idx}`} store={store} />
             ))}

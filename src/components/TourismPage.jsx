@@ -23,7 +23,7 @@ function CardFan({ images, crops = [] }) {
     )
   }
   return (
-    <div className="relative shrink-0" style={{ width: '250px', height: '180px' }}>
+    <div className="relative shrink-0 w-[160px] h-[120px] sm:w-[200px] sm:h-[150px] md:w-[250px] md:h-[180px]">
       {images.map((img, i) => {
         const c = crops[i]
         const z = c?.zoom || 1
@@ -32,7 +32,7 @@ function CardFan({ images, crops = [] }) {
         return (
           <div
             key={i}
-            className="absolute w-28 h-[150px] rounded-xl overflow-hidden shadow-2xl border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20"
+            className="absolute w-16 h-[90px] sm:w-20 sm:h-[110px] md:w-28 md:h-[150px] rounded-lg sm:rounded-xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20"
             style={{
               transform: `translateX(calc(-50% + ${fanAngles[i].translateX}px)) rotate(${fanAngles[i].rotate}deg)`,
               transformOrigin: 'bottom center',
@@ -269,17 +269,17 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
       )}
 
       {/* Título */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-6 bg-accent rounded-full"></div>
-        <h2 className="text-lg font-bold text-slate-700 tracking-wide">{company.name}</h2>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="w-1 h-5 sm:h-6 bg-accent rounded-full"></div>
+        <h2 className="text-sm sm:text-base md:text-lg font-bold text-slate-700 tracking-wide">{company.name}</h2>
         <div className="flex-1 h-px bg-slate-200"></div>
       </div>
 
       {/* Fila 1: Imagen izquierda + Texto derecho */}
-      <div className="flex flex-col md:flex-row gap-6 items-center">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
         {imgSup && (
-          <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgSup} alt={company.name} className="w-full h-64 object-cover"
+          <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md">
+            <img src={imgSup} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-cover"
               style={cropSup && (cropSup.zoom > 1 || cropSup.x || cropSup.y) ? {
                 transform: `scale(${cropSup.zoom}) translate(${cropSup.x / cropSup.zoom}px, ${cropSup.y / cropSup.zoom}px)`,
                 transformOrigin: 'center center',
@@ -330,7 +330,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           return visibleTours.length === 0 ? (
             <p className="text-center text-slate-400 text-xs py-6">No hay tours en esta categoría.</p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
               {visibleTours.map((tour) => {
                 const imgIdx = tour.imagen_principal || 0
                 const tourImgs = parseJSON(tour.imagenes) || []
@@ -367,11 +367,11 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
       </div>
 
       {/* Fila 2: Datos empresa + Imagen derecha */}
-      <div className="flex flex-col md:flex-row gap-6 items-center">
-        <div className="md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-5 pl-8">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+        <div className="w-full md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-3 sm:p-4 md:p-5 sm:pl-6 md:pl-8">
           <h3 className="text-sm font-black text-primary mb-4">{tituloInf}</h3>
           {textoInf && <p className="text-xs text-slate-500 leading-relaxed mb-4">{textoInf}</p>}
-          <div className="grid grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-10">
             {/* Columna 1 */}
             <div className="flex flex-col gap-2.5">
               {company.direccion && (
@@ -438,8 +438,8 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           )}
         </div>
         {imgInf && (
-          <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgInf} alt={company.name} className="w-full h-64 object-cover"
+          <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md">
+            <img src={imgInf} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-cover"
               style={cropInf && (cropInf.zoom > 1 || cropInf.x || cropInf.y) ? {
                 transform: `scale(${cropInf.zoom}) translate(${cropInf.x / cropInf.zoom}px, ${cropInf.y / cropInf.zoom}px)`,
                 transformOrigin: 'center center',
@@ -574,9 +574,9 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-1 h-6 bg-accent rounded-full"></div>
-        <h2 className="text-lg font-bold text-slate-700 tracking-wide">
+      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+        <div className="w-1 h-5 sm:h-6 bg-accent rounded-full"></div>
+        <h2 className="text-sm sm:text-base md:text-lg font-bold text-slate-700 tracking-wide">
           {activeFilter ? `Turismo — ${activeFilter}` : 'Turismo y Experiencias en Villarrica'}
         </h2>
         {activeFilter && (
@@ -589,26 +589,26 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
         <p className="text-center text-slate-400 text-xs mt-8">No hay empresas con esta actividad.</p>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
         {filteredCompanies.map((company) => (
           <div
             key={company.id}
-            className="flex flex-row bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-5 gap-4 items-center"
+            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-center"
           >
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <span
-                  className="material-symbols-outlined text-slate-400 text-base cursor-pointer hover:text-primary transition-colors"
+                  className="material-symbols-outlined text-slate-400 text-sm sm:text-base cursor-pointer hover:text-primary transition-colors"
                   onClick={() => { trackCardClick(company.userId); setPopup({ type: 'location', data: company.direccion }) }}
                 >location_on</span>
                 <span
-                  className="material-symbols-outlined text-slate-400 text-base cursor-pointer hover:text-primary transition-colors"
+                  className="material-symbols-outlined text-slate-400 text-sm sm:text-base cursor-pointer hover:text-primary transition-colors"
                   onClick={() => { trackCardClick(company.userId); setPopup({ type: 'schedule', data: company.horarios }) }}
                 >schedule</span>
               </div>
-              <h3 className="text-lg font-black text-primary mb-1">{company.name}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-3 line-clamp-3">{company.description}</p>
-              <div className="flex items-center gap-3">
+              <h3 className="text-sm sm:text-base md:text-lg font-black text-primary mb-1">{company.name}</h3>
+              <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed mb-2 sm:mb-3 line-clamp-2 sm:line-clamp-3">{company.description}</p>
+              <div className="flex items-center gap-2 sm:gap-3">
                 {company.planId >= 3 && (
                   <button
                     onClick={() => {
@@ -643,7 +643,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
             <div className="shrink-0 flex flex-col items-center">
               <CardFan images={company.images} crops={company.imagesCrop} />
               {company.subcategories && company.subcategories.length > 0 && (
-                <div className="flex flex-wrap justify-center items-center gap-x-1 gap-y-0.5 -mt-2 max-w-[250px]">
+                <div className="flex flex-wrap justify-center items-center gap-x-1 gap-y-0.5 -mt-1 sm:-mt-2 max-w-[160px] sm:max-w-[200px] md:max-w-[250px]">
                   {company.subcategories.map((cat, i) => (
                     <span key={cat} className="flex items-center gap-1">
                       {i > 0 && <span className="text-[6px] text-slate-300">●</span>}

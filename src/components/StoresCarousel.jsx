@@ -79,11 +79,11 @@ export default function StoresCarousel({ onViewAll }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-1 h-5 bg-accent rounded-full"></div>
-        <h2 className="text-sm font-bold text-slate-700 tracking-wide">Locales Inscritos</h2>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">Locales Inscritos</h2>
         <div className="flex-1 h-px bg-slate-200"></div>
-        <button onClick={onViewAll} className="text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
+        <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
 
       {stores.length === 0 ? (
@@ -102,13 +102,12 @@ export default function StoresCarousel({ onViewAll }) {
             <button
               key={`${store.id}-${i}`}
               onClick={() => setSelected(store)}
-              className="shrink-0 flex flex-col items-center gap-2 group/item cursor-pointer"
-              style={{ width: 'calc(16.666% - 10px)' }}
+              className="shrink-0 flex flex-col items-center gap-1 sm:gap-2 group/item cursor-pointer w-[calc(33.33%-8px)] sm:w-[calc(25%-9px)] md:w-[calc(16.666%-10px)]"
             >
-              <div className="w-36 h-36 rounded-full overflow-hidden border-3 border-accent shadow-md group-hover/item:scale-110 group-hover/item:border-primary transition-all duration-300">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-3 border-accent shadow-md group-hover/item:scale-110 group-hover/item:border-primary transition-all duration-300">
                 <img src={store.image} alt={store.name} className="w-full h-full object-cover" />
               </div>
-              <p className="text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover/item:text-primary transition-colors -mt-1">{store.name}</p>
+              <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover/item:text-primary transition-colors -mt-0.5 sm:-mt-1">{store.name}</p>
             </button>
           ))}
         </div>

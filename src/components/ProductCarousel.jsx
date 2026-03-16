@@ -43,35 +43,40 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
     }
   }, [resetAutoScroll, restItems.length])
 
-  const cardWidth = sidebarOpen ? 'w-[calc(20%-13px)]' : 'w-[calc(16.66%-14px)]'
+  // Responsive card widths:
+  // Mobile: 2 cards (50%), Tablet: 4 cards (25%), Desktop: 5-6 cards
+  const cardWidthMobile = 'w-[calc(50%-8px)]'
+  const cardWidthTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(25%-12px)]'
+  const cardWidthDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(16.66%-14px)]'
+  const cardWidth = `${cardWidthMobile} ${cardWidthTablet} ${cardWidthDesktop}`
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-5 bg-accent rounded-full"></div>
-        <h2 className="text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
         <div className="flex-1 h-px bg-slate-200"></div>
-        <button onClick={onViewAll} className="text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
+        <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
       {items.length === 0 ? (
-        <div className="flex items-center justify-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="flex items-center justify-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-xs text-gray-400">Próximamente</p>
         </div>
       ) : (
-      <div className="flex gap-4 py-1 px-1">
+      <div className="flex gap-2 sm:gap-3 md:gap-4 py-1 px-1">
         {/* Primera tarjeta fija (solo plan Normal/Premium) */}
         <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
           {featuredItem ? (
             <ProductCard product={featuredItem} hidePrice={hidePrice} isFirst onOpenStore={onOpenStore} />
           ) : (
             <div className="bg-white rounded-xl overflow-hidden shadow-sm border-2 border-dashed border-amber-400 outline outline-2 outline-amber-400 outline-offset-2 flex flex-col">
-              <div className="relative h-40 pt-2 bg-amber-50/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-amber-300">star</span>
-                <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
+              <div className="relative h-28 sm:h-32 md:h-40 pt-2 bg-amber-50/30 flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl sm:text-4xl text-amber-300">star</span>
+                <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
               </div>
-              <div className="px-4 py-3 flex flex-col flex-1 items-center text-center">
-                <h3 className="font-bold text-xs text-amber-400 leading-tight line-clamp-1 mb-1">Destacado</h3>
-                <p className="text-slate-400 text-[10px] line-clamp-2 mb-2">Espacio premium</p>
+              <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-col flex-1 items-center text-center">
+                <h3 className="font-bold text-[10px] sm:text-xs text-amber-400 leading-tight line-clamp-1 mb-1">Destacado</h3>
+                <p className="text-slate-400 text-[9px] sm:text-[10px] line-clamp-2 mb-2">Espacio premium</p>
               </div>
             </div>
           )}
@@ -82,21 +87,21 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
           <div className="relative group/carousel flex-1 min-w-0">
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
             >
-              <span className="material-symbols-outlined">chevron_left</span>
+              <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">chevron_left</span>
             </button>
 
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
             >
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">chevron_right</span>
             </button>
 
             <div
               ref={scrollRef}
-              className="flex gap-4 overflow-x-hidden scroll-smooth"
+              className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-hidden scroll-smooth"
             >
               {restItems.map((product) => (
                 <div

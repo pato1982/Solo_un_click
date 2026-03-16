@@ -19,11 +19,11 @@ export function StoreFooter({ store }) {
   const horarios = Array.isArray(store.horarios) && store.horarios.length > 0 ? store.horarios : null
 
   return (
-    <footer className="bg-primary text-white px-6 py-4">
-      <div className={`mx-auto grid ${horarios ? 'grid-cols-[0.2fr_0.8fr_1.2fr_0.8fr_0.8fr_0.2fr]' : 'grid-cols-[0.3fr_1fr_1.5fr_1fr_0.3fr]'} gap-6 items-start px-6`}>
-        <div></div>
+    <footer className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4">
+      <div className={`mx-auto grid grid-cols-1 sm:grid-cols-2 ${horarios ? 'md:grid-cols-[0.2fr_0.8fr_1.2fr_0.8fr_0.8fr_0.2fr]' : 'md:grid-cols-[0.3fr_1fr_1.5fr_1fr_0.3fr]'} gap-4 sm:gap-6 items-start sm:px-4 md:px-6`}>
+        <div className="hidden md:block"></div>
         <div>
-          <h3 className="text-sm font-black italic tracking-tight mb-3">{store.name}</h3>
+          <h3 className="text-xs sm:text-sm font-black italic tracking-tight mb-2 sm:mb-3">{store.name}</h3>
           <div className="flex items-center justify-center gap-3">
             {store.facebook && (
               <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity" title="Facebook">
@@ -80,7 +80,7 @@ export function StoreFooter({ store }) {
             </div>
           </div>
         )}
-        <div></div>
+        <div className="hidden md:block"></div>
       </div>
     </footer>
   )
@@ -213,8 +213,7 @@ function ImageMarquee({ products, phone, carouselItems, storeUserId }) {
           {displayItems.map((product, i) => (
             <div
               key={`${product.id}-${i}`}
-              className="shrink-0 h-40 rounded-lg bg-white shadow-sm overflow-hidden border border-slate-100 cursor-pointer hover:shadow-md hover:scale-105 transition-all"
-              style={{ width: 'calc((100vw - 280px) / 6 - 12px)' }}
+              className="shrink-0 h-28 sm:h-32 md:h-40 rounded-lg bg-white shadow-sm overflow-hidden border border-slate-100 cursor-pointer hover:shadow-md hover:scale-105 transition-all w-[calc((100vw-32px)/3-8px)] sm:w-[calc((100vw-200px)/4-10px)] md:w-[calc((100vw-280px)/6-12px)]"
               onClick={() => { trackClick(storeUserId, product.id); setSelectedProduct(product) }}
             >
               <img
@@ -274,16 +273,16 @@ function StoreCarousel({ title, items, onOpenStore }) {
     }
   }, [resetAutoScroll, restItems.length])
 
-  const cardWidth = 'w-[calc(20%-13px)]'
+  const cardWidth = 'w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] md:w-[calc(20%-13px)]'
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-5 bg-accent rounded-full"></div>
-        <h2 className="text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
         <div className="flex-1 h-px bg-slate-200"></div>
       </div>
-      <div className="flex gap-4 py-1 px-1">
+      <div className="flex gap-2 sm:gap-3 md:gap-4 py-1 px-1">
         {firstItem && (
           <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
             <ProductCard product={firstItem} isFirst onOpenStore={onOpenStore} inStorePage />
@@ -352,11 +351,11 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
 
   return (
     <>
-      <div className="relative w-full h-72 overflow-hidden mb-2 bg-white">
+      <div className="relative w-full h-48 sm:h-60 md:h-72 overflow-hidden mb-2 bg-white">
         {slides.map((slide, i) => (
           <div
             key={i}
-            className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000"
+            className="absolute inset-0 grid grid-cols-2 sm:grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000"
             style={{ opacity: activeSlide === i ? 1 : 0 }}
           >
             {slide[0] && (
@@ -600,7 +599,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
         </aside>
 
         {/* Contenido principal */}
-        <main className="flex-1 flex flex-col gap-8 pt-4 px-6 pb-6 overflow-hidden transition-all duration-300">
+        <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 pt-3 sm:pt-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 overflow-hidden transition-all duration-300">
           {/* Ver todo - cuando hay filtro activo */}
           {(activeCat || activeSub) && (
             <button

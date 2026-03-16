@@ -188,7 +188,7 @@ export default function ProgramadorEventos() {
           <p className="text-xs text-slate-500 mt-1">Agrega el primer evento</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {eventos.map(evento => {
             const crop = parseCrop(evento.imagen_crop)
             return (
