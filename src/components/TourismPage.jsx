@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
-// Export vacío para compatibilidad con searchIndex.js (antes era hardcodeado)
-export const companies = []
+function parseJSON(val) {
+  if (!val) return null
+  if (typeof val === 'string') try { return JSON.parse(val) } catch { return null }
+  return val
+}
 
 const fanAngles = [
   { rotate: -15, translateX: -50 },
@@ -150,8 +153,9 @@ function SchedulePopup({ horarios, onClose }) {
    Página premium de una empresa
    ========================================= */
 function TourModal({ tour, onClose }) {
-  const imgs = (tour.imagenes || []).map(img => `${API}${img}`).filter(Boolean)
-  const crops = tour.imagenes_crop || []
+  const rawImgs = parseJSON(tour.imagenes) || []
+  const imgs = rawImgs.map(img => `${API}${img}`).filter(Boolean)
+  const crops = parseJSON(tour.imagenes_crop) || []
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -221,6 +225,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
   const [loadingTours, setLoadingTours] = useState(true)
   const [selectedTour, setSelectedTour] = useState(null)
   const [pagina, setPagina] = useState(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   // Registrar visita a la página de turismo
   useEffect(() => {
@@ -241,14 +246,14 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
         setTours(toursData.tours || [])
         setPagina(paginaData.pagina || null)
       })
-      .catch(err => console.error('Error cargando datos:', err))
+      .catch(() => setErrorMsg('Error al cargar los datos. Intenta recargar la página.'))
       .finally(() => setLoadingTours(false))
   }, [company.userId])
 
   const imgSup = pagina?.imagen_superior ? `${API}${pagina.imagen_superior}` : company.images[0]
   const imgInf = pagina?.imagen_inferior ? `${API}${pagina.imagen_inferior}` : company.images[1]
-  const cropSup = pagina?.crop_superior || null
-  const cropInf = pagina?.crop_inferior || null
+  const cropSup = parseJSON(pagina?.crop_superior)
+  const cropInf = parseJSON(pagina?.crop_inferior)
   const tituloSup = pagina?.titulo_superior || 'Sobre Nosotros'
   const textoSup = pagina?.texto_superior || company.description || 'Sin descripción'
   const tituloInf = pagina?.titulo_inferior || 'Datos de la Empresa'
@@ -256,6 +261,13 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
 
   return (
     <div className="flex flex-col gap-8 relative pb-16">
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {errorMsg}
+        </div>
+      )}
+
       {/* Título */}
       <div className="flex items-center gap-3">
         <div className="w-1 h-6 bg-accent rounded-full"></div>
@@ -321,10 +333,12 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {visibleTours.map((tour) => {
                 const imgIdx = tour.imagen_principal || 0
-                const imagen = tour.imagenes && tour.imagenes[imgIdx]
-                  ? `${API}${tour.imagenes[imgIdx]}`
-                  : (tour.imagenes && tour.imagenes[0] ? `${API}${tour.imagenes[0]}` : null)
-                const imgCrop = tour.imagenes_crop && tour.imagenes_crop[imgIdx] ? tour.imagenes_crop[imgIdx] : null
+                const tourImgs = parseJSON(tour.imagenes) || []
+                const tourCrops = parseJSON(tour.imagenes_crop) || []
+                const imagen = tourImgs[imgIdx]
+                  ? `${API}${tourImgs[imgIdx]}`
+                  : (tourImgs[0] ? `${API}${tourImgs[0]}` : null)
+                const imgCrop = tourCrops[imgIdx] || null
                 return (
                   <div
                     key={tour.id}
@@ -454,6 +468,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
   const [loading, setLoading] = useState(true)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [popup, setPopup] = useState(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     fetch(`${API}/api/portada/public`)
@@ -480,7 +495,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
           setEmpresas(mapped)
         }
       })
-      .catch(err => console.error('Error cargando empresas turismo:', err))
+      .catch(() => setErrorMsg('Error al cargar las empresas. Intenta recargar la página.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -552,6 +567,13 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
 
   return (
     <div className="flex flex-col gap-6">
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {errorMsg}
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-2">
         <div className="w-1 h-6 bg-accent rounded-full"></div>
         <h2 className="text-lg font-bold text-slate-700 tracking-wide">

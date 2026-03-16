@@ -1,5 +1,3 @@
-import { companies } from '../components/TourismPage'
-
 // Categorías de locales de barrio (para búsqueda)
 const storeCategories = [
   { icon: 'store', label: 'Abarrotes' },
@@ -119,26 +117,26 @@ const arriendosItems = [
   { icon: 'ac_unit', label: 'Equipos Nieve' },
 ]
 
-// Turismo
-const turismoIconMap = {
-  'Aventura': 'kayaking',
-  'Cabalgatas': 'pets',
-  'Gastronomia': 'restaurant',
-  'Lagos': 'water',
-  'Naturaleza': 'forest',
-  'Nocturno': 'nightlife',
-  'Rafting': 'rowing',
-  'Spa': 'spa',
-  'Termas': 'pool',
-  'Trekking': 'hiking',
-  'Volcanes': 'terrain',
-}
-const turismoSubs = new Set()
-companies.forEach((c) => c.subcategories.forEach((s) => turismoSubs.add(s)))
-const turismoItems = [...turismoSubs].sort().map((label) => ({
-  icon: turismoIconMap[label] || 'tour',
-  label,
-}))
+// Categorías de turismo (para búsqueda)
+const turismoItems = [
+  { icon: 'kayaking', label: 'Aventura' },
+  { icon: 'pets', label: 'Cabalgatas' },
+  { icon: 'museum', label: 'Cultural' },
+  { icon: 'sports_soccer', label: 'Deportivo' },
+  { icon: 'family_restroom', label: 'Familiar' },
+  { icon: 'photo_camera', label: 'Fotografía' },
+  { icon: 'restaurant', label: 'Gastronomía' },
+  { icon: 'water', label: 'Lagos' },
+  { icon: 'forest', label: 'Naturaleza' },
+  { icon: 'ac_unit', label: 'Nieve' },
+  { icon: 'nightlife', label: 'Nocturno' },
+  { icon: 'rowing', label: 'Rafting' },
+  { icon: 'self_improvement', label: 'Relax' },
+  { icon: 'spa', label: 'Spa' },
+  { icon: 'pool', label: 'Termas' },
+  { icon: 'hiking', label: 'Trekking' },
+  { icon: 'terrain', label: 'Volcanes' },
+]
 
 // Construir índice
 export const searchIndex = [
