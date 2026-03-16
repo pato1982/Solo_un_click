@@ -1,6 +1,6 @@
 # Registro de Cambios - Solo a un Click
 
-## 16 de Marzo 2026 (sesión 7) - Conexión API pública + correcciones panel programador
+## 16 de Marzo 2026 (sesión 7) - Conexión API pública + auditoría completa paneles admin
 
 ### Componentes públicos conectados a la API (ya no usan datos hardcodeados)
 - **StoresCarousel** — Carga locales desde `GET /api/locales`, muestra mensaje si no hay datos
@@ -26,9 +26,41 @@
 - **Register devuelve `rol`:** consistente con login (antes faltaba)
 - **Rutas dinámicas en servidor.js:** `/var/www/...` reemplazado por `path.join(__dirname, '..', 'uploads')`
 - **ImageZoomPan:** borde corregido para dark mode (`border-gray-200` → `border-slate-600`)
+- **CORS:** agregado `http://soloaunclick.cl`, `http://www.soloaunclick.cl` y `http://45.236.130.25` a whitelist
+
+### Correcciones panel admin comercio (Productos/Servicios/Arriendos)
+- **N+1 Query eliminado en listings.js:** tallas y medidas ahora se cargan en batch con `WHERE IN (?)` en vez de 1 query por producto
+- **Imagen eliminada del disco al borrar listing:** `DELETE /api/listings/:id` ahora borra el archivo físico
+- **alert() eliminado en todo el panel admin:** reemplazado por toast (AdminProductos, AdminCarruseles, AdminBanner) y error inline (AdminNegocio)
+- **AdminBanner fixes:** `generateCroppedBlob` faltaba fillRect blanco, `clampPos` fórmula incorrecta, `buildBodyFromItem` faltaba campo `categoria`
+
+### Correcciones panel admin turismo
+- **parseJSON seguro:** aplicado en AdminTour (imagenes/crops), AdminPortada (imagenes/categorias/crops), AdminPagina (crop_superior/inferior), AdminEstadisticas (conteo imagenes)
+- **Toast feedback en AdminTour:** notificaciones al crear, editar, eliminar tours
+- **Feedback error en AdminNegocio:** errores del servidor y validación de redes sociales
+
+### Correcciones analytics
+- **Deduplicación page_visits:** `POST /api/analytics/track` con page_view limita 1 registro por IP cada 30 min por user
+
+### Correcciones página premium turismo (pública)
+- **Buscador turismo:** categorías de turismo ahora estáticas en searchIndex.js (17 categorías). Ya no depende de `companies` vacío
+- **parseJSON seguro en TourismPage:** crops de página, imágenes/crops de tours y TourModal
+- **Feedback de error:** mensajes visibles al usuario si fallan las peticiones (lista empresas y detalle empresa)
+- **Eliminado export `companies` vacío** de TourismPage
 
 ### searchIndex.js
-- Categorías de locales y eventos definidas localmente (ya no importa de StoresPage/EventsPage)
+- Categorías de locales, eventos y turismo definidas localmente (ya no importa de componentes)
+
+### Contraseña programador actualizada en producción
+- `patcorher@gmail.com` / `Pmmj8282` — reseteada en BD de producción
+
+### Pendientes para próxima sesión
+- **Analizar página principal pública:** verificar conexiones, flujo de datos, inconsistencias
+- **Analizar página premium de comercio (StorePage):** verificar tienda, carruseles, banners, filtros
+- **Analizar páginas de filtrado "Ver todos":** SectionPage y filtrado por categoría/subcategoría
+- **SMTP Gmail:** pendiente configurar para emails de recuperación de contraseña
+
+---
 
 ---
 
