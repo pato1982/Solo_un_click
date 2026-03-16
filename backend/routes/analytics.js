@@ -17,14 +17,20 @@ router.post('/track', async (req, res) => {
       [user_id, event_type, listing_id || null]
     )
 
-    // Si es page_view, registrar también en page_visits
+    // Si es page_view, registrar también en page_visits (deduplicado: 1 por IP cada 30 min por user)
     if (event_type === 'page_view') {
       const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
       const pagina = req.body.pagina || 'tienda'
-      await pool.query(
-        'INSERT INTO page_visits (user_id, visitor_ip, pagina) VALUES (?, ?, ?)',
-        [user_id, ip, pagina]
+      const [recent] = await pool.query(
+        'SELECT id FROM page_visits WHERE user_id = ? AND visitor_ip = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE) LIMIT 1',
+        [user_id, ip]
       )
+      if (recent.length === 0) {
+        await pool.query(
+          'INSERT INTO page_visits (user_id, visitor_ip, pagina) VALUES (?, ?, ?)',
+          [user_id, ip, pagina]
+        )
+      }
     }
 
     res.json({ ok: true })

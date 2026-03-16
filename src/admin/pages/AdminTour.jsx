@@ -3,6 +3,12 @@ import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
+function parseJSON(val) {
+  if (!val) return null
+  if (typeof val === 'string') try { return JSON.parse(val) } catch { return null }
+  return val
+}
+
 const emptyForm = {
   nombre: '',
   categoria: '',
@@ -26,7 +32,14 @@ export default function AdminTour() {
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
+  const [toast, setToast] = useState(null)
+  const [error, setError] = useState('')
   const fileRefs = [useRef(null), useRef(null), useRef(null)]
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const token = localStorage.getItem('token')
 
@@ -99,7 +112,8 @@ export default function AdminTour() {
 
   const openEdit = (tour) => {
     setEditingId(tour.id)
-    const imgs = tour.imagenes || []
+    const imgs = parseJSON(tour.imagenes) || []
+    const crops = parseJSON(tour.imagenes_crop) || []
     setForm({
       nombre: tour.nombre || '',
       categoria: tour.categoria || '',
@@ -114,11 +128,7 @@ export default function AdminTour() {
         imgs[1] ? `${API}${imgs[1]}` : null,
         imgs[2] ? `${API}${imgs[2]}` : null,
       ],
-      imagenesCrop: [
-        (tour.imagenes_crop && tour.imagenes_crop[0]) || null,
-        (tour.imagenes_crop && tour.imagenes_crop[1]) || null,
-        (tour.imagenes_crop && tour.imagenes_crop[2]) || null,
-      ],
+      imagenesCrop: [crops[0] || null, crops[1] || null, crops[2] || null],
     })
     setActiveTab(0)
     setShowModal(true)
@@ -176,22 +186,31 @@ export default function AdminTour() {
         setShowModal(false)
         setEditingId(null)
         setForm(emptyForm)
+        showToast(editingId ? 'Tour actualizado' : 'Tour creado')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al guardar')
       }
     } catch (err) {
-      console.error('Error guardando tour:', err)
+      setError('Error de conexión al guardar')
     }
     setSaving(false)
   }
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`${API}/api/tours/${id}`, {
+      const res = await fetch(`${API}/api/tours/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
+      if (res.ok) {
+        showToast('Tour eliminado')
+      } else {
+        showToast('Error al eliminar', 'error')
+      }
       fetchTours()
     } catch (err) {
-      console.error('Error eliminando tour:', err)
+      showToast('Error de conexión', 'error')
     }
     setDeleteId(null)
   }
@@ -206,6 +225,21 @@ export default function AdminTour() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {error}
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl font-black text-gray-800">Tour</h1>
         <p className="text-xs text-gray-400 mt-0.5">Administra los tours y experiencias</p>

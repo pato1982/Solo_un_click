@@ -3,6 +3,12 @@ import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
+function parseJSON(val) {
+  if (!val) return null
+  if (typeof val === 'string') try { return JSON.parse(val) } catch { return null }
+  return val
+}
+
 const emptyForm = {
   descripcion: '',
   imagenes: [null, null, null],
@@ -53,10 +59,10 @@ export default function AdminPortada() {
         }
         if (portadaData.portada) {
           const p = portadaData.portada
-          const imgs = p.imagenes || []
+          const imgs = parseJSON(p.imagenes) || []
           setPortadaId(p.id)
-          setCategorias(p.categorias || [])
-          const crops = p.imagenes_crop || []
+          setCategorias(parseJSON(p.categorias) || [])
+          const crops = parseJSON(p.imagenes_crop) || []
           setForm({
             descripcion: p.descripcion || '',
             imagenes: [imgs[0] || null, imgs[1] || null, imgs[2] || null],

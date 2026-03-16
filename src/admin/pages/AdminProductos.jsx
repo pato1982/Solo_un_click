@@ -160,7 +160,13 @@ export default function AdminProductos() {
   const [formData, setFormData] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
+  const [toast, setToast] = useState(null)
   const fileInputRef = useRef(null)
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // Construir tipos para fetch de categorías según permisos
   const tiposUsuario = [
@@ -332,13 +338,13 @@ export default function AdminProductos() {
         setEditingId(null)
         setFormData(emptyForm)
         setShowModal(false)
+        showToast(editingId ? 'Producto actualizado' : 'Producto creado')
       } else {
-        const errData = await res.json()
-        alert(errData.error || 'Error al guardar')
+        const errData = await res.json().catch(() => ({}))
+        showToast(errData.error || 'Error al guardar', 'error')
       }
     } catch (err) {
-      console.error('Error guardando:', err)
-      alert('Error de conexión')
+      showToast('Error de conexión', 'error')
     }
     setSaving(false)
   }
@@ -351,9 +357,12 @@ export default function AdminProductos() {
       })
       if (res.ok) {
         setProductos((prev) => prev.filter((p) => p.id !== id))
+        showToast('Producto eliminado')
+      } else {
+        showToast('Error al eliminar', 'error')
       }
     } catch (err) {
-      console.error('Error eliminando:', err)
+      showToast('Error de conexión', 'error')
     }
     setDeleteId(null)
   }
@@ -409,6 +418,14 @@ export default function AdminProductos() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Productos</h1>
 
       {/* Pestañas */}

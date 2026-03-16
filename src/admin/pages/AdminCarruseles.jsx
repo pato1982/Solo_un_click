@@ -102,7 +102,13 @@ export default function AdminCarruseles() {
   const [carouselNames, setCarouselNames] = useState(['Carrusel 1', 'Carrusel 2', 'Carrusel 3'])
   const [saved, setSaved] = useState(false)
   const [showInfoPopup, setShowInfoPopup] = useState(true)
+  const [toast, setToast] = useState(null)
   const fileInputRef = useRef(null)
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // Tabs visibles según plan
   const visibleTabs = esPremium ? [1, 2, 3] : esNormal ? [1] : []
@@ -235,19 +241,21 @@ export default function AdminCarruseles() {
           })))
         }
         setEditingId(null); setFormData(emptyForm); setShowModal(false)
+        showToast(editingId ? 'Carrusel actualizado' : 'Carrusel creado')
       } else {
-        const err = await res.json()
-        alert(err.error || 'Error al guardar')
+        const err = await res.json().catch(() => ({}))
+        showToast(err.error || 'Error al guardar', 'error')
       }
-    } catch (err) { console.error('Error:', err); alert('Error de conexión') }
+    } catch (err) { showToast('Error de conexión', 'error') }
     setSaving(false)
   }
 
   const handleDelete = async (id) => {
     try {
       const res = await fetch(`${API}/api/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setItems(prev => prev.filter(p => p.id !== id))
-    } catch (err) { console.error('Error eliminando:', err) }
+      if (res.ok) { setItems(prev => prev.filter(p => p.id !== id)); showToast('Eliminado') }
+      else showToast('Error al eliminar', 'error')
+    } catch (err) { showToast('Error de conexión', 'error') }
     setDeleteId(null)
   }
 
@@ -299,6 +307,14 @@ export default function AdminCarruseles() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl font-black text-gray-800">Carruseles</h1>
         <p className="text-xs text-gray-400 mt-0.5">

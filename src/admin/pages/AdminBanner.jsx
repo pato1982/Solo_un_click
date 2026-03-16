@@ -22,6 +22,8 @@ function generateCroppedBlob(src, pos, scale, naturalW, naturalH, size = 400) {
       canvas.width = size; canvas.height = size
       const fitScale = Math.max(size / naturalW, size / naturalH) * scale
       const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, size, size)
       ctx.drawImage(img, pos.x * (size / 208), pos.y * (size / 208), naturalW * fitScale, naturalH * fitScale)
       canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9)
     }
@@ -36,10 +38,12 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   const fitScale = naturalW && naturalH ? Math.max(208 / naturalW, 208 / naturalH) * scale : 1
   const drawW = naturalW * fitScale, drawH = naturalH * fitScale
 
-  const clampPos = useCallback((x, y) => ({
-    x: Math.max(Math.min(0, 208 - drawW), Math.min(0, x)),
-    y: Math.max(Math.min(0, 208 - drawH), Math.min(0, y)),
-  }), [drawW, drawH])
+  const clampPos = useCallback((x, y) => {
+    let minX, maxX, minY, maxY
+    if (drawW >= 208) { minX = 208 - drawW; maxX = 0 } else { minX = 0; maxX = 208 - drawW }
+    if (drawH >= 208) { minY = 208 - drawH; maxY = 0 } else { minY = 0; maxY = 208 - drawH }
+    return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) }
+  }, [drawW, drawH])
 
   const handleStart = (cx, cy) => { dragging.current = true; startPoint.current = { x: cx, y: cy }; startPos.current = { ...pos } }
   const handleMove = useCallback((cx, cy) => {
@@ -166,7 +170,13 @@ export default function AdminBanner() {
   const [formData, setFormData] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
+  const [toast, setToast] = useState(null)
   const fileInputRef = useRef(null)
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const fetchItems = () => {
     fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
@@ -276,25 +286,27 @@ export default function AdminBanner() {
       if (res.ok) {
         fetchItems()
         setEditingId(null); setFormData(emptyForm); setShowModal(false)
+        showToast(editingId ? 'Banner actualizado' : 'Banner creado')
       } else {
-        const err = await res.json()
-        alert(err.error || 'Error al guardar')
+        const err = await res.json().catch(() => ({}))
+        showToast(err.error || 'Error al guardar', 'error')
       }
-    } catch (err) { console.error('Error:', err); alert('Error de conexión') }
+    } catch (err) { showToast('Error de conexión', 'error') }
     setSaving(false)
   }
 
   const handleDelete = async (id) => {
     try {
       const res = await fetch(`${API}/api/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setItems(prev => prev.filter(p => p.id !== id))
-    } catch (err) { console.error('Error eliminando:', err) }
+      if (res.ok) { setItems(prev => prev.filter(p => p.id !== id)); showToast('Eliminado') }
+      else showToast('Error al eliminar', 'error')
+    } catch (err) { showToast('Error de conexión', 'error') }
     setDeleteId(null)
   }
 
   const buildBodyFromItem = (item) => ({
     tipo: item.tipo || 'producto', seccion: 'destacados', nombre: item.nombre, descripcion: item.descripcion,
-    precio: item.precio || 0, precio_original: item.precioOriginal || null, subcategoria: item.subcategoria,
+    precio: item.precio || 0, precio_original: item.precioOriginal || null, categoria: item.categoria || '', subcategoria: item.subcategoria,
     badge: item.badge, genero: item.genero || null, imagen: item.imagenUrl,
     tallas: item.tallas, medidas: item.medidas,
   })
@@ -355,6 +367,14 @@ export default function AdminBanner() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 animate-slide-in ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          <span className="material-symbols-outlined text-sm">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+          {toast.msg}
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl font-black text-gray-800">Banner</h1>
         <p className="text-xs text-gray-400 mt-0.5">Productos destacados en el banner de tu página premium (2 slides, {MAX_PER_SLIDE} por slide)</p>

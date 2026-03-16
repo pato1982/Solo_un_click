@@ -29,6 +29,7 @@ export default function AdminNegocio() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const token = localStorage.getItem('token')
@@ -86,9 +87,10 @@ export default function AdminNegocio() {
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!fbValid) return alert('La URL de Facebook debe ser un enlace válido de facebook.com')
-    if (!igValid) return alert('Instagram debe ser una URL de instagram.com o un @usuario')
+    if (!fbValid) { setError('La URL de Facebook debe ser un enlace válido de facebook.com'); return }
+    if (!igValid) { setError('Instagram debe ser una URL de instagram.com o un @usuario'); return }
     setSaving(true)
+    setError('')
     try {
       const res = await fetch(`${API}/api/business`, {
         method: 'POST',
@@ -101,9 +103,12 @@ export default function AdminNegocio() {
       if (res.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Error al guardar')
       }
     } catch (err) {
-      console.error('Error guardando negocio:', err)
+      setError('Error de conexión al guardar')
     }
     setSaving(false)
   }
@@ -124,6 +129,13 @@ export default function AdminNegocio() {
           <p className="text-xs text-gray-400 mt-0.5">Información de tu emprendimiento, local o servicio</p>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">error</span>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-2 gap-6">

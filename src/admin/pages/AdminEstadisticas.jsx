@@ -170,8 +170,14 @@ export default function AdminEstadisticas() {
   const pctTotal = Math.min((totalUsado / totalMax) * 100, 100)
 
   // --- Datos turismo ---
-  const totalImagenesTours = tours.reduce((acc, t) => acc + (t.imagenes ? t.imagenes.length : 0), 0)
-  const portadaImagenes = portada?.imagenes ? portada.imagenes.length : 0
+  const totalImagenesTours = tours.reduce((acc, t) => {
+    const imgs = t.imagenes
+    const arr = typeof imgs === 'string' ? (function() { try { return JSON.parse(imgs) } catch { return [] } })() : (imgs || [])
+    return acc + arr.length
+  }, 0)
+  const portadaImgsRaw = portada?.imagenes
+  const portadaImgsArr = typeof portadaImgsRaw === 'string' ? (function() { try { return JSON.parse(portadaImgsRaw) } catch { return [] } })() : (portadaImgsRaw || [])
+  const portadaImagenes = portadaImgsArr.length
   const pctTours = Math.min((tours.length / 12) * 100, 100)
   const pctImgTours = Math.min((totalImagenesTours / 36) * 100, 100)
   const pctPortada = Math.min((portadaImagenes / 3) * 100, 100)

@@ -1,9 +1,12 @@
 const express = require('express')
+const path = require('path')
+const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
 
 const router = express.Router()
+const uploadsDir = path.join(__dirname, '..', 'uploads')
 
 // Sanitización: elimina tags HTML
 function sanitize(str) {
@@ -85,19 +88,32 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Agregar tallas y medidas a cada listing
-    for (const row of rows) {
-      const [sizes] = await pool.query(
-        'SELECT tipo_talla, valor FROM listing_sizes WHERE listing_id = ?',
-        [row.id]
+    // Agregar tallas y medidas en batch (evita N+1 queries)
+    if (rows.length > 0) {
+      const ids = rows.map(r => r.id)
+      const [allSizes] = await pool.query(
+        'SELECT listing_id, tipo_talla, valor FROM listing_sizes WHERE listing_id IN (?)',
+        [ids]
       )
-      row.tallas = sizes.length > 0 ? { tipo: sizes[0].tipo_talla, seleccion: sizes.map(s => s.valor) } : null
+      const [allDims] = await pool.query(
+        'SELECT listing_id, alto, ancho, profundidad FROM listing_dimensions WHERE listing_id IN (?)',
+        [ids]
+      )
 
-      const [dims] = await pool.query(
-        'SELECT alto, ancho, profundidad FROM listing_dimensions WHERE listing_id = ?',
-        [row.id]
-      )
-      row.medidas = dims.length > 0 ? dims[0] : null
+      const sizesMap = {}
+      allSizes.forEach(s => {
+        if (!sizesMap[s.listing_id]) sizesMap[s.listing_id] = []
+        sizesMap[s.listing_id].push(s)
+      })
+      const dimsMap = {}
+      allDims.forEach(d => { dimsMap[d.listing_id] = d })
+
+      for (const row of rows) {
+        const sizes = sizesMap[row.id] || []
+        row.tallas = sizes.length > 0 ? { tipo: sizes[0].tipo_talla, seleccion: sizes.map(s => s.valor) } : null
+        const dim = dimsMap[row.id]
+        row.medidas = dim ? { alto: dim.alto, ancho: dim.ancho, profundidad: dim.profundidad } : null
+      }
     }
 
     res.json({ listings: rows })
@@ -119,18 +135,31 @@ router.get('/mine', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
-    for (const row of rows) {
-      const [sizes] = await pool.query(
-        'SELECT tipo_talla, valor FROM listing_sizes WHERE listing_id = ?',
-        [row.id]
+    if (rows.length > 0) {
+      const ids = rows.map(r => r.id)
+      const [allSizes] = await pool.query(
+        'SELECT listing_id, tipo_talla, valor FROM listing_sizes WHERE listing_id IN (?)',
+        [ids]
       )
-      row.tallas = sizes.length > 0 ? { tipo: sizes[0].tipo_talla, seleccion: sizes.map(s => s.valor) } : null
+      const [allDims] = await pool.query(
+        'SELECT listing_id, alto, ancho, profundidad FROM listing_dimensions WHERE listing_id IN (?)',
+        [ids]
+      )
 
-      const [dims] = await pool.query(
-        'SELECT alto, ancho, profundidad FROM listing_dimensions WHERE listing_id = ?',
-        [row.id]
-      )
-      row.medidas = dims.length > 0 ? dims[0] : null
+      const sizesMap = {}
+      allSizes.forEach(s => {
+        if (!sizesMap[s.listing_id]) sizesMap[s.listing_id] = []
+        sizesMap[s.listing_id].push(s)
+      })
+      const dimsMap = {}
+      allDims.forEach(d => { dimsMap[d.listing_id] = d })
+
+      for (const row of rows) {
+        const sizes = sizesMap[row.id] || []
+        row.tallas = sizes.length > 0 ? { tipo: sizes[0].tipo_talla, seleccion: sizes.map(s => s.valor) } : null
+        const dim = dimsMap[row.id]
+        row.medidas = dim ? { alto: dim.alto, ancho: dim.ancho, profundidad: dim.profundidad } : null
+      }
     }
 
     res.json({ listings: rows })
@@ -258,6 +287,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+
+    // Eliminar imagen del disco
+    const [imgRows] = await pool.query('SELECT url FROM listing_images WHERE listing_id = ?', [id])
+    if (imgRows.length > 0 && imgRows[0].url) {
+      const filePath = path.join(uploadsDir, path.basename(imgRows[0].url))
+      try { fs.unlinkSync(filePath) } catch (e) {}
+    }
 
     // Eliminar (CASCADE borra imágenes, tallas y medidas)
     await pool.query('DELETE FROM listings WHERE id = ?', [id])

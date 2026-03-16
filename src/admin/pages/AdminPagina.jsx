@@ -3,6 +3,12 @@ import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
 
+function parseJSON(val) {
+  if (!val) return null
+  if (typeof val === 'string') try { return JSON.parse(val) } catch { return null }
+  return val
+}
+
 const tabsDef = [
   { key: 'superior', label: 'Imagen + Texto Superior', icon: 'vertical_align_top' },
   { key: 'inferior', label: 'Imagen + Texto Inferior', icon: 'vertical_align_bottom' },
@@ -63,8 +69,8 @@ export default function AdminPagina() {
             setInfImagen(p.imagen_inferior)
             setInfPreview(`${API}${p.imagen_inferior}`)
           }
-          if (p.crop_superior) setSupCrop(p.crop_superior)
-          if (p.crop_inferior) setInfCrop(p.crop_inferior)
+          if (p.crop_superior) setSupCrop(parseJSON(p.crop_superior))
+          if (p.crop_inferior) setInfCrop(parseJSON(p.crop_inferior))
         }
       })
       .catch(err => console.error('Error cargando página:', err))
