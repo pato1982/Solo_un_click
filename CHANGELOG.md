@@ -1,5 +1,56 @@
 # Registro de Cambios - Solo a un Click
 
+## 16 de Marzo 2026 (sesión 8) - Responsive mobile y tablet
+
+### Configuración de breakpoints
+- **tailwind.config.js:** breakpoints personalizados `sm: 700px` (tablet), `md: 1101px` (desktop)
+- Modo normal (desktop 1101px+) no fue modificado en ningún componente
+
+### Header mobile (0-699px)
+- Logo e icono más grandes (`text-2xl`, `py-4`)
+- Buscador movido a la barra de navegación inferior (no en el header)
+- Nav items (Productos, Servicios, Arriendos, Turismo, Negocios) siempre visibles en fila horizontal con scroll touch
+- Registrarse e Ingresar como solo iconos, alineados a la derecha junto a botón Planes
+- Eliminado botón hamburguesa (menú siempre visible)
+- Eliminado carrito de compras de todos los modos (no se venden productos)
+
+### Sidebar mobile/tablet
+- Panel vertical flotante (`absolute`) sobre el contenido, no empuja el main
+- Ancho ajustado al contenido (`w-fit`, `min-w-[180px]`, `max-w-[55%]`)
+- Se cierra al: seleccionar opción, click fuera del panel, o botón X
+- Categorías y subcategorías en lista vertical con scroll
+- Desktop: sidebar lateral sin cambios
+
+### Footer mobile
+- Logo + descripción en una sola fila (icono izquierda, texto derecha)
+- Fila 1: Accesos | Legal | Mi cuenta (3 columnas centradas con contenido alineado izquierda)
+- Fila 2: Contacto | Redes Sociales (2 columnas centradas)
+- Textos compactos (`text-[9px]`, `text-[8px]`)
+
+### Componentes de contenido adaptados
+- **ProductCarousel:** 2 tarjetas mobile, 3-4 tablet, 5-6 desktop
+- **ProductCard:** imagen más corta, textos reducidos
+- **Banner:** layout vertical en mobile (título → cartas abanico → beneficios), horizontal compacto en tablet
+- **EventsSection:** grid 2→3→4 columnas responsive
+- **StoresCarousel:** círculos 80px→112px→144px según modo
+- **PlansModal:** planes en scroll horizontal con snap en mobile
+
+### Páginas secundarias
+- **SectionPage, StoresPage, EventsPage:** grids 2→3→5/6 columnas
+- **TourismPage:** CardFan escalado, grilla tours 2→3→6 cols, tarjetas empresa compactas
+- **StorePage:** banner 2→4 cols, footer responsivo, marquee adaptado
+
+### Admin (compatibilidad breakpoints)
+- Reemplazados `lg:`/`xl:` por `md:` en AdminDashboard, ProgramadorEventos, ProgramadorLocales
+
+### Pendientes próxima sesión
+- Ajustar modo tablet (700-1100px) con más detalle
+- Revisar StorePage premium en mobile
+- **SMTP Gmail para emails de recuperación de contraseña**
+- **Analizar páginas públicas:** página principal, StorePage premium, páginas filtrado "Ver todos"
+
+---
+
 ## 16 de Marzo 2026 (sesión 7) - Conexión API pública + auditoría completa paneles admin
 
 ### Componentes públicos conectados a la API (ya no usan datos hardcodeados)
