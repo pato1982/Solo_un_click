@@ -69,11 +69,15 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     onClose()
   }
 
-  // Reportar que el sidebar está abierto (para min-height del contenedor → footer)
+  // Medir altura del sidebar y reportar al padre
+  const [sidebarH, setSidebarH] = useState(0)
   useEffect(() => {
     if (mobileRef.current && !mobileClosed && activeNav) {
-      if (onSidebarHeight) onSidebarHeight(mobileRef.current.offsetHeight + 8)
+      const h = mobileRef.current.offsetHeight
+      setSidebarH(h)
+      if (onSidebarHeight) onSidebarHeight(h + 8)
     } else {
+      setSidebarH(0)
       if (onSidebarHeight) onSidebarHeight(0)
     }
   })
@@ -273,7 +277,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   return (
     <>
       {/* ===== Mobile/Tablet: barra vertical inline debajo del header ===== */}
-      <div ref={mobileRef} className={`md:hidden fixed left-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl flex flex-col ${mobileClosed ? 'hidden' : ''}`} style={{ top: String(headerHeight) + 'px', maxHeight: String(window.innerHeight - headerHeight - 40) + 'px', overflowY: 'hidden', overflowX: 'hidden' }}>
+      <div ref={mobileRef} className={`md:hidden fixed left-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl flex flex-col ${mobileClosed ? 'hidden' : ''}`} style={{ top: headerHeight + 'px', maxHeight: 'calc(100vh - ' + headerHeight + 'px - 40px)' }}>
         {/* Título + cerrar */}
         <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
           <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">{panel.title}</h3>
