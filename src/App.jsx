@@ -130,6 +130,42 @@ function mixProductsByPlan(products) {
   return result
 }
 
+// Datos de ejemplo para visualizar tarjetas
+const DEMO_IMG = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80'
+const DEMO_NAMES = {
+  destacados: ['Parlante Bluetooth', 'Reloj Smart', 'Audífonos Pro', 'Mochila Urban', 'Zapatillas Running', 'Lámpara LED', 'Termo Acero', 'Cargador Solar'],
+  ofertas: ['Polera Algodón -30%', 'Jeans Slim -40%', 'Sweater Lana -25%', 'Gorro Invierno -50%', 'Bufanda Polar -35%', 'Guantes Cuero -20%', 'Chaqueta Down -45%', 'Botas Trek -30%'],
+  arriendos: ['Cabaña Lago 4p', 'Depto Centro 2p', 'Casa Volcán 6p', 'Suite Termas 2p', 'Loft Céntrico 3p', 'Hostal Familiar', 'Cabaña Bosque 5p', 'Domo Glamping 2p'],
+  novedades: ['Tablet 10"', 'Mouse Ergonómico', 'Teclado Mecánico', 'Monitor 24"', 'Webcam HD', 'Hub USB-C', 'SSD 1TB', 'Power Bank 20K'],
+  servicios: ['Electricista 24h', 'Gasfiter Urgencia', 'Jardinería', 'Limpieza Hogar', 'Pintor Interior', 'Mudanzas', 'Cerrajería', 'Instalación TV'],
+  liquidacion: ['Silla Oficina -60%', 'Escritorio -50%', 'Estante -40%', 'Alfombra -55%', 'Cortina -45%', 'Cojín Deco -70%', 'Florero -35%', 'Cuadro Arte -50%'],
+  tendencia: ['Air Fryer 5L', 'Aspiradora Robot', 'Cafetera Express', 'Licuadora Pro', 'Olla Programable', 'Sandwichera XL', 'Batidora 800W', 'Tostador Digital'],
+  tecnologia: ['Notebook i5', 'Smartphone 128GB', 'Tablet Niños', 'Drone Mini', 'Cámara 4K', 'Impresora WiFi', 'Router Mesh', 'Smart TV 50"'],
+}
+const DEMO_PRICES = [9990, 14990, 19990, 24990, 29990, 34990, 39990, 49990]
+
+function makeDemoProducts(sectionId) {
+  const names = DEMO_NAMES[sectionId] || DEMO_NAMES.destacados
+  return names.map((name, i) => ({
+    id: `demo-${sectionId}-${i}`,
+    user_id: null,
+    name,
+    description: `Ejemplo de ${SECTION_TITLES[sectionId] || sectionId} - producto de demostración`,
+    image: DEMO_IMG,
+    alt: name,
+    price: sectionId === 'servicios' ? null : DEMO_PRICES[i],
+    originalPrice: sectionId === 'ofertas' || sectionId === 'liquidacion' ? DEMO_PRICES[i] + 15000 : null,
+    badge: sectionId === 'ofertas' ? '-30%' : sectionId === 'liquidacion' ? '-50%' : null,
+    badgeColor: 'bg-primary text-white',
+    rating: null,
+    category: sectionId === 'servicios' ? 'servicios' : sectionId === 'arriendos' ? 'arriendos' : 'productos',
+    tipo: sectionId === 'servicios' ? 'servicio' : sectionId === 'arriendos' ? 'arriendo' : 'producto',
+    subcategory: null,
+    owner_plan_id: i === 0 ? 3 : i < 3 ? 2 : 1,
+    nombre_negocio: `Tienda Demo ${i + 1}`,
+  }))
+}
+
 function buildSectionsFromAPI(listings) {
   const grouped = {}
   listings.forEach((l) => {
@@ -138,12 +174,15 @@ function buildSectionsFromAPI(listings) {
     grouped[sec].push(mapListingToProduct(l))
   })
 
-  return SECTION_ORDER.map((id) => ({
-    id,
-    title: SECTION_TITLES[id] || id,
-    hidePrice: id === 'servicios',
-    items: mixProductsByPlan(grouped[id] || []),
-  }))
+  return SECTION_ORDER.map((id) => {
+    const realItems = mixProductsByPlan(grouped[id] || [])
+    return {
+      id,
+      title: SECTION_TITLES[id] || id,
+      hidePrice: id === 'servicios',
+      items: realItems.length > 0 ? realItems : makeDemoProducts(id),
+    }
+  })
 }
 
 export default function App() {
@@ -153,6 +192,7 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
   const [sidebarMobileH, setSidebarMobileH] = useState(0)
+  const [sidebarOpenKey, setSidebarOpenKey] = useState(0)
   const [activeStore, setActiveStore] = useState(null)
   const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
   const [sections, setSections] = useState([])
@@ -252,39 +292,47 @@ export default function App() {
 
   const toggleNav = (nav) => {
     if (nav === 'negocios') {
-      // Ya estamos en locales: no hacer nada
-      if (currentPage === 'locales') return
-      // Desde cualquier otra página: ir a locales
+      if (currentPage === 'locales') {
+        // Ya estamos en locales: reabrir sidebar si estaba cerrado
+        setSidebarOpenKey(k => k + 1)
+        return
+      }
       handleViewAllStores()
+      setSidebarOpenKey(k => k + 1)
       return
     }
     if (nav === 'turismo') {
-      // Ya estamos en turismo: no hacer nada
-      if (currentPage === 'turismo') return
-      // Desde cualquier otra página: ir a turismo
+      if (currentPage === 'turismo') {
+        setSidebarOpenKey(k => k + 1)
+        return
+      }
       setCurrentPage('turismo')
       setActiveSidebar('turismo')
       setActiveSection(null)
       setActiveFilter(null)
       setTurismoResetKey(k => k + 1)
+      setSidebarOpenKey(k => k + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     // Productos, servicios, arriendos
     if (currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos') {
-      // Desde subpágina: volver a inicio con sidebar abierto
       setCurrentPage(null)
       setActiveStore(null)
       setStoreMapMode(false)
       setActiveSidebar(nav)
       setActiveFilter(null)
+      setSidebarOpenKey(k => k + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
-      // En inicio: si ya tenemos este sidebar abierto, no hacer nada (mantener filtrado)
-      if (activeSidebar === nav) return
-      // Abrir sidebar del nav seleccionado
+      if (activeSidebar === nav) {
+        // Mismo li: reabrir sidebar si estaba cerrado
+        setSidebarOpenKey(k => k + 1)
+        return
+      }
       setActiveSidebar(nav)
       setActiveFilter(null)
+      setSidebarOpenKey(k => k + 1)
     }
   }
 
@@ -518,6 +566,7 @@ export default function App() {
           listingSubcategorias={listingSubcategorias}
           sidebarCategorias={sidebarCategorias}
           onMobileHeight={setSidebarMobileH}
+          openKey={sidebarOpenKey}
         />
 
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">

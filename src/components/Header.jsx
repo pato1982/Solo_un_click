@@ -61,21 +61,21 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
   return (
     <div className="sticky top-0 z-50">
       {/* === HEADER PRINCIPAL === */}
-      <header className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4 sm:py-2.5 md:py-3 shadow-lg">
+      <header className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4 sm:py-4 md:py-3 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-4 md:gap-8 md:justify-center relative">
           {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-2 md:absolute md:left-0 shrink-0">
-            <div className="bg-accent p-1.5 sm:p-1.5 rounded-lg text-primary">
-              <span className="material-symbols-outlined block text-2xl sm:text-xl md:text-2xl font-bold">ads_click</span>
+            <div className="bg-accent p-1.5 sm:p-2 md:p-1.5 rounded-lg text-primary">
+              <span className="material-symbols-outlined block text-2xl sm:text-3xl md:text-2xl font-bold">ads_click</span>
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-[9px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
-              <span className="text-lg sm:text-base md:text-xl font-black italic tracking-tight">un <span className="text-accent uppercase">CLICK</span></span>
+              <span className="text-[9px] sm:text-[10px] md:text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
+              <span className="text-lg sm:text-xl md:text-xl font-black italic tracking-tight">un <span className="text-accent uppercase">CLICK</span></span>
             </div>
           </div>
 
           {/* Buscador - oculto en mobile, visible en tablet/desktop */}
-          <div className="hidden sm:block sm:flex-initial w-full sm:max-w-sm md:max-w-lg relative group md:flex-none" ref={searchRef}>
+          <div className="hidden sm:block sm:flex-initial w-full sm:max-w-[280px] md:max-w-lg relative group md:flex-none sm:mx-auto" ref={searchRef}>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
               <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-sm sm:text-base">search</span>
             </div>

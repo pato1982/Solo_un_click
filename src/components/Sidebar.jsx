@@ -35,7 +35,7 @@ const SIDEBAR_TITLES = {
   arriendos: 'Arriendos',
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [], onMobileHeight }) {
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [], onMobileHeight, openKey }) {
   const [expandedCat, setExpandedCat] = useState(null)
   const [localeCategorias, setLocaleCategorias] = useState([])
   const [eventoCategorias, setEventoCategorias] = useState([])
@@ -43,10 +43,10 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   const [mobileHeight, setMobileHeight] = useState(0)
   const mobileRef = useRef(null)
 
-  // Reset mobileClosed cuando cambia la sección activa
+  // Reset mobileClosed cuando cambia la sección activa o se pide reabrir
   useEffect(() => {
     setMobileClosed(false)
-  }, [activeNav])
+  }, [activeNav, openKey])
 
   const handleMobileClose = () => {
     setMobileClosed(true)

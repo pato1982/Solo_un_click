@@ -245,26 +245,26 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
   return (
     <>
       <div className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group ${isFirst ? 'border-2 border-amber-400 outline outline-2 outline-amber-400 outline-offset-2' : 'border border-slate-100'}`}>
-        <div className="relative h-28 sm:h-32 md:h-40 pt-2 bg-white overflow-hidden flex items-center justify-center">
+        <div className="relative h-20 sm:h-32 md:h-40 pt-1 sm:pt-2 bg-white overflow-hidden flex items-center justify-center">
           <img
             alt={product.alt}
             className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
             src={product.image}
           />
           {isFirst && (
-            <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow">
+            <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-400 text-amber-900 px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow">
               Popular
             </span>
           )}
         </div>
-        <div className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 flex flex-col flex-1 items-center text-center">
-          <h3 className="font-bold text-[10px] sm:text-xs text-slate-900 leading-tight line-clamp-1 mb-0.5 sm:mb-1">{product.name}</h3>
-          <p className="text-slate-500 text-[9px] sm:text-[10px] line-clamp-2 mb-1 sm:mb-2">{product.description}</p>
+        <div className="px-1 sm:px-3 md:px-4 py-1 sm:py-3 flex flex-col flex-1 items-center text-center">
+          <h3 className="font-bold text-[8px] sm:text-xs text-slate-900 leading-tight line-clamp-1 mb-0 sm:mb-1">{product.name}</h3>
+          <p className="text-slate-500 text-[7px] sm:text-[10px] line-clamp-1 sm:line-clamp-2 mb-0.5 sm:mb-2">{product.description}</p>
           <div className="mt-auto flex items-end justify-between w-full">
             {hidePrice ? (
               <button
                 onClick={() => { trackProductClick(product); setShowModal(true) }}
-                className="w-full bg-primary hover:bg-primary-light text-white py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all"
+                className="w-full bg-primary hover:bg-primary-light text-white py-1 sm:py-1.5 rounded-lg text-[8px] sm:text-[10px] font-bold uppercase tracking-wide transition-all"
               >
                 Solicitar
               </button>
@@ -272,28 +272,28 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
               <>
                 <div className="text-left">
                   {product.originalPrice && (
-                    <p className="text-[8px] font-bold text-slate-400 line-through leading-none">
+                    <p className="text-[6px] sm:text-[8px] font-bold text-slate-400 line-through leading-none">
                       ${product.originalPrice.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                     </p>
                   )}
-                  <p className="text-[10px] sm:text-xs font-black text-primary leading-tight">
+                  <p className="text-[8px] sm:text-xs font-black text-primary leading-tight">
                     ${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   <button
                     onClick={() => { trackProductClick(product); setShowModal(true) }}
-                    className="bg-primary/10 hover:bg-primary hover:text-white text-primary h-7 w-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                    className="bg-primary/10 hover:bg-primary hover:text-white text-primary h-5 w-5 sm:h-7 sm:w-7 rounded-md sm:rounded-lg flex items-center justify-center transition-all hover:scale-110"
                   >
-                    <span className="material-symbols-outlined text-sm font-bold">visibility</span>
+                    <span className="material-symbols-outlined text-[10px] sm:text-sm font-bold">visibility</span>
                   </button>
                   {store && !inStorePage && product.owner_plan_id && product.owner_plan_id >= 2 && (
                     <button
                       onClick={() => onOpenStore && onOpenStore(store)}
-                      className="bg-accent/20 hover:bg-accent hover:text-primary text-accent h-7 w-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                      className="bg-accent/20 hover:bg-accent hover:text-primary text-accent h-5 w-5 sm:h-7 sm:w-7 rounded-md sm:rounded-lg flex items-center justify-center transition-all hover:scale-110"
                       title={store.name}
                     >
-                      <span className="material-symbols-outlined text-sm font-bold">storefront</span>
+                      <span className="material-symbols-outlined text-[10px] sm:text-sm font-bold">storefront</span>
                     </button>
                   )}
                 </div>

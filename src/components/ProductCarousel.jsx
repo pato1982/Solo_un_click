@@ -11,8 +11,8 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
 
   const scrollOne = useCallback((direction) => {
     if (!scrollRef.current) return
-    const cardWidth = scrollRef.current.querySelector(':first-child')?.offsetWidth || 200
-    const amount = cardWidth + 16
+    const cardW = scrollRef.current.querySelector(':first-child')?.offsetWidth || 200
+    const amount = cardW + 8
     scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
   }, [])
 
@@ -31,11 +31,11 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
       } else {
         scrollOne('right')
       }
-    }, 5000)
+    }, 4000)
   }, [scrollOne])
 
   useEffect(() => {
-    if (restItems.length > 0) {
+    if (items.length > 0) {
       resetAutoScroll()
     }
     return () => {
@@ -43,12 +43,12 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
     }
   }, [resetAutoScroll, restItems.length])
 
-  // Responsive card widths:
-  // Mobile: 2 cards (50%), Tablet: 4 cards (25%), Desktop: 5-6 cards
-  const cardWidthMobile = 'w-[calc(50%-8px)]'
-  const cardWidthTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(25%-12px)]'
-  const cardWidthDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(16.66%-14px)]'
-  const cardWidth = `${cardWidthMobile} ${cardWidthTablet} ${cardWidthDesktop}`
+  // Ancho de la tarjeta destacada (fija)
+  const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
+  // Ancho de tarjetas del carrusel: en mobile 50% del carrusel (2 visibles), tablet/desktop igual que antes
+  const carouselCardTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(25%-12px)]'
+  const carouselCardDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(16.66%-14px)]'
+  const carouselCardWidth = `w-[calc(50%-4px)] ${carouselCardTablet} ${carouselCardDesktop}`
 
   return (
     <div>
@@ -64,19 +64,19 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
         </div>
       ) : (
       <div className="flex gap-2 sm:gap-3 md:gap-4 py-1 px-1">
-        {/* Primera tarjeta fija (solo plan Normal/Premium) */}
-        <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
+        {/* Primera tarjeta fija (destacada) - no rota */}
+        <div className={`shrink-0 ${featuredWidth} transition-all duration-300`}>
           {featuredItem ? (
             <ProductCard product={featuredItem} hidePrice={hidePrice} isFirst onOpenStore={onOpenStore} />
           ) : (
             <div className="bg-white rounded-xl overflow-hidden shadow-sm border-2 border-dashed border-amber-400 outline outline-2 outline-amber-400 outline-offset-2 flex flex-col">
-              <div className="relative h-28 sm:h-32 md:h-40 pt-2 bg-amber-50/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-3xl sm:text-4xl text-amber-300">star</span>
-                <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
+              <div className="relative h-20 sm:h-32 md:h-40 pt-1 sm:pt-2 bg-amber-50/30 flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl sm:text-4xl text-amber-300">star</span>
+                <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-400 text-amber-900 px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
               </div>
-              <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-col flex-1 items-center text-center">
-                <h3 className="font-bold text-[10px] sm:text-xs text-amber-400 leading-tight line-clamp-1 mb-1">Destacado</h3>
-                <p className="text-slate-400 text-[9px] sm:text-[10px] line-clamp-2 mb-2">Espacio premium</p>
+              <div className="px-1 sm:px-4 py-1 sm:py-3 flex flex-col flex-1 items-center text-center">
+                <h3 className="font-bold text-[8px] sm:text-xs text-amber-400 leading-tight line-clamp-1 mb-0.5 sm:mb-1">Destacado</h3>
+                <p className="text-slate-400 text-[7px] sm:text-[10px] line-clamp-1 sm:line-clamp-2">Espacio premium</p>
               </div>
             </div>
           )}
@@ -106,7 +106,7 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
               {restItems.map((product) => (
                 <div
                   key={product.id}
-                  className={`shrink-0 ${cardWidth} transition-all duration-300`}
+                  className={`shrink-0 ${carouselCardWidth} transition-all duration-300`}
                 >
                   <ProductCard product={product} hidePrice={hidePrice} onOpenStore={onOpenStore} />
                 </div>
