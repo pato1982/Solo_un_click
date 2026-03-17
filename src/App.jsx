@@ -152,6 +152,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(null)
   const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
+  const [sidebarMobileH, setSidebarMobileH] = useState(0)
   const [activeStore, setActiveStore] = useState(null)
   const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
   const [sections, setSections] = useState([])
@@ -251,45 +252,39 @@ export default function App() {
 
   const toggleNav = (nav) => {
     if (nav === 'negocios') {
-      if (currentPage === 'locales' && activeSidebar === 'locales') {
-        goHome()
-      } else {
-        handleViewAllStores()
-      }
+      // Ya estamos en locales: no hacer nada
+      if (currentPage === 'locales') return
+      // Desde cualquier otra página: ir a locales
+      handleViewAllStores()
       return
     }
     if (nav === 'turismo') {
-      if (currentPage === 'turismo') {
-        // Ya estamos en turismo: volver a la lista principal y scroll arriba
-        setActiveSidebar('turismo')
-        setActiveSection(null)
-        setActiveFilter(null)
-        setTurismoResetKey(k => k + 1)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      } else {
-        setCurrentPage('turismo')
-        setActiveSidebar('turismo')
-        setActiveSection(null)
-        setActiveFilter(null)
-        setTurismoResetKey(k => k + 1)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
+      // Ya estamos en turismo: no hacer nada
+      if (currentPage === 'turismo') return
+      // Desde cualquier otra página: ir a turismo
+      setCurrentPage('turismo')
+      setActiveSidebar('turismo')
+      setActiveSection(null)
+      setActiveFilter(null)
+      setTurismoResetKey(k => k + 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    // Productos, servicios, arriendos
+    if (currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos') {
+      // Desde subpágina: volver a inicio con sidebar abierto
+      setCurrentPage(null)
+      setActiveStore(null)
+      setStoreMapMode(false)
+      setActiveSidebar(nav)
+      setActiveFilter(null)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
-      if (currentPage === 'turismo') {
-        // Estamos en turismo: solo cambiar el sidebar, no salir de la página
-        setActiveSidebar(activeSidebar === nav ? 'turismo' : nav)
-      } else if (currentPage === 'locales') {
-        setActiveSidebar(activeSidebar === nav ? 'locales' : nav)
-        setActiveFilter(null)
-      } else if (currentPage === 'eventos') {
-        setActiveSidebar(activeSidebar === nav ? 'eventos' : nav)
-        setActiveFilter(null)
-      } else {
-        // Estamos en inicio o SectionPage: toggle sidebar y limpiar filtro al cambiar
-        const newSidebar = activeSidebar === nav ? null : nav
-        setActiveSidebar(newSidebar)
-        setActiveFilter(null)
-      }
+      // En inicio: si ya tenemos este sidebar abierto, no hacer nada (mantener filtrado)
+      if (activeSidebar === nav) return
+      // Abrir sidebar del nav seleccionado
+      setActiveSidebar(nav)
+      setActiveFilter(null)
     }
   }
 
@@ -509,7 +504,7 @@ export default function App() {
     <div className="relative flex min-h-screen flex-col">
       <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
-      <div className="w-full flex flex-1 flex-col md:flex-row relative">
+      <div className="w-full flex flex-1 flex-col md:flex-row relative" style={sidebarMobileH > 0 ? { minHeight: sidebarMobileH } : undefined}>
         <Sidebar
           activeNav={activeSidebar}
           onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : null)}
@@ -522,6 +517,7 @@ export default function App() {
           turismoCategorias={turismoCategorias}
           listingSubcategorias={listingSubcategorias}
           sidebarCategorias={sidebarCategorias}
+          onMobileHeight={setSidebarMobileH}
         />
 
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">

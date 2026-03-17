@@ -35,18 +35,43 @@ const SIDEBAR_TITLES = {
   arriendos: 'Arriendos',
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [] }) {
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [], onMobileHeight }) {
   const [expandedCat, setExpandedCat] = useState(null)
   const [localeCategorias, setLocaleCategorias] = useState([])
   const [eventoCategorias, setEventoCategorias] = useState([])
+  const [mobileClosed, setMobileClosed] = useState(false)
+  const [mobileHeight, setMobileHeight] = useState(0)
   const mobileRef = useRef(null)
+
+  // Reset mobileClosed cuando cambia la sección activa
+  useEffect(() => {
+    setMobileClosed(false)
+  }, [activeNav])
+
+  const handleMobileClose = () => {
+    setMobileClosed(true)
+    setMobileHeight(0)
+    if (onMobileHeight) onMobileHeight(0)
+    onClose()
+  }
+
+  // Medir altura del menú mobile y notificar al padre
+  useEffect(() => {
+    if (mobileRef.current && !mobileClosed && activeNav) {
+      const h = mobileRef.current.offsetHeight
+      setMobileHeight(h)
+      if (onMobileHeight) onMobileHeight(h)
+    } else if (mobileClosed || !activeNav) {
+      if (onMobileHeight) onMobileHeight(0)
+    }
+  })
 
   // Cerrar al hacer click fuera (solo mobile/tablet)
   useEffect(() => {
-    if (!activeNav) return
+    if (!activeNav || mobileClosed) return
     const handleClickOutside = (e) => {
       if (mobileRef.current && !mobileRef.current.contains(e.target)) {
-        onClose()
+        handleMobileClose()
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -55,7 +80,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('touchstart', handleClickOutside)
     }
-  }, [activeNav, onClose])
+  }, [activeNav, mobileClosed, onClose])
 
   useEffect(() => {
     if (activeNav === 'locales') {
@@ -194,17 +219,17 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   return (
     <>
       {/* ===== Mobile/Tablet: barra vertical inline debajo del header ===== */}
-      <div ref={mobileRef} className="md:hidden absolute left-0 top-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl">
+      <div ref={mobileRef} className={`md:hidden absolute left-0 top-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl max-h-[calc(100dvh-120px)] flex flex-col ${mobileClosed ? 'hidden' : ''}`}>
         {/* Título + cerrar */}
-        <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1">
+        <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
           <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">{panel.title}</h3>
-          <button onClick={onClose} className="hover:bg-white/10 rounded-full p-0.5 transition-colors shrink-0">
+          <button onClick={handleMobileClose} className="hover:bg-white/10 rounded-full p-0.5 transition-colors shrink-0">
             <span className="material-symbols-outlined text-white/60 text-base hover:text-white">close</span>
           </button>
         </div>
 
         {/* Categorías en lista vertical */}
-        <div className="flex flex-col gap-0.5 px-2 pb-2 max-h-[50vh] overflow-y-auto sidebar-scroll">
+        <div className="flex flex-col gap-0.5 px-2 pb-2 overflow-y-auto sidebar-scroll">
           {panel.categories ? (
             panel.categories.map((cat) => {
               const isExpanded = expandedCat === cat.label
@@ -226,7 +251,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
                       {cat.subcategories.map((sub) => (
                         <button
                           key={sub}
-                          onClick={() => { onFilterSelect && onFilterSelect(sub); onClose() }}
+                          onClick={() => { onFilterSelect && onFilterSelect(sub); handleMobileClose() }}
                           className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10px] transition-colors ${
                             activeFilter === sub ? 'text-white font-bold' : 'text-white/40 hover:text-accent'
                           }`}
@@ -247,7 +272,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
             panel.items.map((item) => (
               <button
                 key={item.label}
-                onClick={() => { onFilterSelect && onFilterSelect(item.label); onClose() }}
+                onClick={() => { onFilterSelect && onFilterSelect(item.label); handleMobileClose() }}
                 className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
                   activeFilter === item.label
                     ? 'bg-white/10 text-accent font-bold'

@@ -105,7 +105,7 @@ function BenefitItem({ icon, title, subtitle, textColor = 'text-slate-800', subt
         <span className="material-symbols-outlined text-primary text-[10px] sm:text-xs md:text-sm">{icon}</span>
       </div>
       <div>
-        <p className={`${textColor} text-[9px] sm:text-[10px] md:text-[11px] font-black leading-tight`}>{title}</p>
+        <p className={`${textColor} text-[11px] sm:text-[10px] md:text-[11px] font-black leading-tight`}>{title}</p>
         <p className={`${subtitleColor} text-[8px] sm:text-[9px] md:text-[10px] leading-tight hidden sm:block`}>{subtitle}</p>
       </div>
     </div>
@@ -148,7 +148,7 @@ function Slide1() {
       </div>
 
       {/* === MOBILE: Layout vertical === */}
-      <div className="sm:hidden relative z-10 flex flex-col items-center w-full p-4 gap-3">
+      <div className="sm:hidden relative z-10 flex flex-col items-center w-full p-4 gap-1">
         <div className="text-center">
           <p className="text-primary/60 text-[8px] font-black uppercase tracking-[0.2em] mb-1">Solo a un Click te ofrece</p>
           <h3 className="text-2xl font-black text-primary leading-[0.95] tracking-tight">
@@ -158,7 +158,7 @@ function Slide1() {
         <div className="flex items-start justify-center pointer-events-none">
           <FanCards cards={fanCards1} cardsSmall={fanCards1Small} borderColor="border-white" />
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 w-full mt-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-0 w-full -mt-3">
           <BenefitItem icon="storefront" title="Tienda online gratis" subtitle="Publica sin costo" />
           <BenefitItem icon="groups" title="Cientos de compradores" subtitle="Buscan a diario" />
           <BenefitItem icon="bolt" title="Rápido y simple" subtitle="Sube en minutos" />
@@ -273,17 +273,17 @@ function Slide2() {
       </div>
 
       {/* === MOBILE: Layout vertical === */}
-      <div className="sm:hidden relative z-10 flex flex-col items-center w-full p-4 gap-3">
+      <div className="sm:hidden relative z-10 flex flex-col items-center w-full p-4 gap-1">
         <div className="text-center">
           <p className="text-primary/60 text-[8px] font-black uppercase tracking-[0.2em] mb-1">Compra con seguridad</p>
-          <h3 className="text-2xl font-black text-primary leading-[0.95] tracking-tight">
-            CONOCE<br />ANTES DE<br />COMPRAR
+          <h3 className="text-[22px] font-black text-primary leading-[0.95] tracking-tight">
+            CONOCE ANTES<br />DE COMPRAR
           </h3>
         </div>
         <div className="flex items-start justify-center pointer-events-none">
           <FanCards cards={fanCards2} cardsSmall={fanCards2Small} borderColor="border-accent" />
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 w-full mt-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-0 w-full -mt-3">
           <BenefitItem icon="lock" title="Datos protegidos" subtitle="Tu info segura" textColor="text-primary" subtitleColor="text-primary/50" />
           <BenefitItem icon="visibility" title="Verifica el vendedor" subtitle="Conoce antes de pagar" textColor="text-primary" subtitleColor="text-primary/50" />
           <BenefitItem icon="block" title="No transfieras a ciegas" subtitle="Confirma el producto" textColor="text-primary" subtitleColor="text-primary/50" />

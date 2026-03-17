@@ -118,12 +118,8 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             )}
           </div>
 
-          {/* Icono persona - solo tablet */}
-          <div className="hidden sm:flex md:hidden items-center ml-auto md:absolute md:right-0">
-            <button className="p-1.5 hover:bg-white/10 rounded-full">
-              <span className="material-symbols-outlined text-white text-xl">person</span>
-            </button>
-          </div>
+          {/* Espacio para mantener layout en tablet */}
+          <div className="hidden sm:flex md:hidden items-center ml-auto" />
         </div>
       </header>
 
@@ -303,6 +299,9 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
               </>
             ) : (
               <>
+                <button onClick={() => setShowRegister(true)} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Registrarse">
+                  <span className="material-symbols-outlined text-lg">person_add</span>
+                </button>
                 <button onClick={() => setShowLogin(true)} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Ingresar">
                   <span className="material-symbols-outlined text-lg">login</span>
                 </button>

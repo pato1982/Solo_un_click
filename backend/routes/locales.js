@@ -36,7 +36,13 @@ function sanitize(str) {
 // GET /api/locales/categorias — categorías de barrio (público)
 router.get('/categorias', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, nombre, icono FROM categorias_barrio WHERE activo = 1 ORDER BY orden ASC')
+    const [rows] = await pool.query(
+      `SELECT DISTINCT cb.id, cb.nombre, cb.icono
+       FROM categorias_barrio cb
+       INNER JOIN locales_barrio l ON l.categoria_barrio_id = cb.id AND l.activo = 1
+       WHERE cb.activo = 1
+       ORDER BY cb.orden ASC`
+    )
     res.json({ categorias: rows })
   } catch (err) {
     console.error('Error al obtener categorías de barrio:', err)
