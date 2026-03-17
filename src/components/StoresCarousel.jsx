@@ -28,6 +28,18 @@ function StoreModal({ store, onClose }) {
   )
 }
 
+const DEMO_STORE_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80'
+const DEMO_STORES = [
+  { id: 'demo-s1', name: 'Panadería Don Luis', address: 'Av. Pedro de Valdivia 234' },
+  { id: 'demo-s2', name: 'Ferretería El Clavo', address: 'Camilo Henríquez 567' },
+  { id: 'demo-s3', name: 'Minimarket La Esquina', address: 'Anfión Muñoz 123' },
+  { id: 'demo-s4', name: 'Peluquería Estilo', address: 'General Korner 890' },
+  { id: 'demo-s5', name: 'Librería Austral', address: 'Valentín Letelier 456' },
+  { id: 'demo-s6', name: 'Café del Lago', address: 'Costanera 789' },
+  { id: 'demo-s7', name: 'Veterinaria Patitas', address: 'Gerónimo de Alderete 321' },
+  { id: 'demo-s8', name: 'Bazar Todo Hogar', address: 'Vicente Reyes 654' },
+]
+
 export default function StoresCarousel({ onViewAll }) {
   const [stores, setStores] = useState([])
   const [selected, setSelected] = useState(null)
@@ -46,9 +58,9 @@ export default function StoresCarousel({ onViewAll }) {
           image: l.imagen ? `${API}${l.imagen}` : '',
           address: l.direccion || '',
         }))
-        setStores(mapped)
+        setStores(mapped.length > 0 ? mapped : DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG })))
       })
-      .catch(() => {})
+      .catch(() => setStores(DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG }))))
   }, [])
 
   // Duplicate stores for seamless loop
@@ -104,10 +116,10 @@ export default function StoresCarousel({ onViewAll }) {
               onClick={() => setSelected(store)}
               className="shrink-0 flex flex-col items-center gap-1 sm:gap-2 group/item cursor-pointer w-[calc(33.33%-8px)] sm:w-[calc(25%-9px)] md:w-[calc(16.666%-10px)]"
             >
-              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-3 border-accent shadow-md group-hover/item:scale-110 group-hover/item:border-primary transition-all duration-300">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-3 border-accent shadow-md group-hover/item:scale-110 group-hover/item:border-primary transition-all duration-300">
                 <img src={store.image} alt={store.name} className="w-full h-full object-cover" />
               </div>
-              <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover/item:text-primary transition-colors -mt-0.5 sm:-mt-1">{store.name}</p>
+              <p className="text-xs sm:text-[9px] md:text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover/item:text-primary transition-colors">{store.name}</p>
             </button>
           ))}
         </div>

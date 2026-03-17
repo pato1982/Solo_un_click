@@ -191,7 +191,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(null)
   const [activeFilter, setActiveFilter] = useState(null)
   const [storeMapMode, setStoreMapMode] = useState(false)
-  const [sidebarMobileH, setSidebarMobileH] = useState(0)
+  const [sidebarH, setSidebarH] = useState(0)
   const [sidebarOpenKey, setSidebarOpenKey] = useState(0)
   const [activeStore, setActiveStore] = useState(null)
   const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
@@ -552,7 +552,7 @@ export default function App() {
     <div className="relative flex min-h-screen flex-col">
       <Header activeNav={activeNav} toggleNav={toggleNav} onGoHome={goHome} showInicio={showInicio} onSearchSelect={handleSearchSelect} user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
 
-      <div className="w-full flex flex-1 flex-col md:flex-row relative" style={sidebarMobileH > 0 ? { minHeight: sidebarMobileH } : undefined}>
+      <div className="w-full flex flex-1 flex-col md:flex-row relative" style={sidebarH > 0 ? { minHeight: sidebarH } : undefined}>
         <Sidebar
           activeNav={activeSidebar}
           onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : null)}
@@ -565,8 +565,8 @@ export default function App() {
           turismoCategorias={turismoCategorias}
           listingSubcategorias={listingSubcategorias}
           sidebarCategorias={sidebarCategorias}
-          onMobileHeight={setSidebarMobileH}
           openKey={sidebarOpenKey}
+          onSidebarHeight={setSidebarH}
         />
 
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">

@@ -2,18 +2,25 @@ import { useRef, useEffect, useCallback } from 'react'
 import ProductCard from './ProductCard'
 
 export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, onViewAll, onOpenStore }) {
-  const scrollRef = useRef(null)
+  const mobileScrollRef = useRef(null)
+  const desktopScrollRef = useRef(null)
   const intervalRef = useRef(null)
+
+  const getScrollEl = () => {
+    if (window.innerWidth < 640 && mobileScrollRef.current) return mobileScrollRef.current
+    return desktopScrollRef.current
+  }
 
   // La tarjeta dorada (primera posición) solo para plan Normal o Premium
   const featuredItem = items.find(p => p.owner_plan_id && p.owner_plan_id >= 2) || null
   const restItems = featuredItem ? items.filter(p => p !== featuredItem) : items
 
   const scrollOne = useCallback((direction) => {
-    if (!scrollRef.current) return
-    const cardW = scrollRef.current.querySelector(':first-child')?.offsetWidth || 200
+    const el = getScrollEl()
+    if (!el) return
+    const cardW = el.querySelector(':first-child')?.offsetWidth || 200
     const amount = cardW + 8
-    scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
   }, [])
 
   const scroll = (direction) => {
@@ -24,10 +31,11 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
   const resetAutoScroll = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
     intervalRef.current = setInterval(() => {
-      if (!scrollRef.current) return
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      const el = getScrollEl()
+      if (!el) return
+      const { scrollLeft, scrollWidth, clientWidth } = el
       if (scrollLeft + clientWidth >= scrollWidth - 5) {
-        scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+        el.scrollTo({ left: 0, behavior: 'smooth' })
       } else {
         scrollOne('right')
       }
@@ -63,20 +71,39 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
           <p className="text-xs text-gray-400">Próximamente</p>
         </div>
       ) : (
-      <div className="flex gap-2 sm:gap-3 md:gap-4 py-1 px-1">
-        {/* Primera tarjeta fija (destacada) - no rota */}
+      <>
+      {/* ===== MOBILE: todas las tarjetas en carrusel, 2 por fila, sin destacada fija ===== */}
+      <div className="sm:hidden relative group/carousel">
+        <div
+          ref={mobileScrollRef}
+          className="flex gap-2 overflow-x-hidden scroll-smooth py-1 px-1"
+        >
+          {items.map((product) => (
+            <div
+              key={product.id}
+              className="shrink-0 w-[calc(50%-4px)] transition-all duration-300"
+            >
+              <ProductCard product={product} hidePrice={hidePrice} onOpenStore={onOpenStore} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== TABLET/DESKTOP: destacada fija + carrusel ===== */}
+      <div className="hidden sm:flex gap-3 md:gap-4 py-1 px-1">
+        {/* Primera tarjeta fija (destacada) */}
         <div className={`shrink-0 ${featuredWidth} transition-all duration-300`}>
           {featuredItem ? (
             <ProductCard product={featuredItem} hidePrice={hidePrice} isFirst onOpenStore={onOpenStore} />
           ) : (
             <div className="bg-white rounded-xl overflow-hidden shadow-sm border-2 border-dashed border-amber-400 outline outline-2 outline-amber-400 outline-offset-2 flex flex-col">
-              <div className="relative h-20 sm:h-32 md:h-40 pt-1 sm:pt-2 bg-amber-50/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl sm:text-4xl text-amber-300">star</span>
-                <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-400 text-amber-900 px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
+              <div className="relative h-32 md:h-40 pt-2 bg-amber-50/30 flex items-center justify-center">
+                <span className="material-symbols-outlined text-4xl text-amber-300">star</span>
+                <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow">Popular</span>
               </div>
-              <div className="px-1 sm:px-4 py-1 sm:py-3 flex flex-col flex-1 items-center text-center">
-                <h3 className="font-bold text-[8px] sm:text-xs text-amber-400 leading-tight line-clamp-1 mb-0.5 sm:mb-1">Destacado</h3>
-                <p className="text-slate-400 text-[7px] sm:text-[10px] line-clamp-1 sm:line-clamp-2">Espacio premium</p>
+              <div className="px-4 py-3 flex flex-col flex-1 items-center text-center">
+                <h3 className="font-bold text-xs text-amber-400 leading-tight line-clamp-1 mb-1">Destacado</h3>
+                <p className="text-slate-400 text-[10px] line-clamp-2">Espacio premium</p>
               </div>
             </div>
           )}
@@ -87,22 +114,19 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
           <div className="relative group/carousel flex-1 min-w-0">
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
             >
-              <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">chevron_left</span>
+              <span className="material-symbols-outlined text-base md:text-lg">chevron_left</span>
             </button>
 
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
             >
-              <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">chevron_right</span>
+              <span className="material-symbols-outlined text-base md:text-lg">chevron_right</span>
             </button>
 
-            <div
-              ref={scrollRef}
-              className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-hidden scroll-smooth"
-            >
+            <div ref={desktopScrollRef} className="flex gap-3 md:gap-4 overflow-x-hidden scroll-smooth">
               {restItems.map((product) => (
                 <div
                   key={product.id}
@@ -115,6 +139,7 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
           </div>
         )}
       </div>
+      </>
       )}
     </div>
   )

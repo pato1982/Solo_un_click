@@ -32,24 +32,26 @@ const typeColors = {
 function StoreCard({ store }) {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100">
-      <div className="relative h-28 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
+      <div className="relative h-32 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
         <img
           src={store.image}
           alt={store.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         {store.type && (
-          <span className="absolute top-2 right-2 bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider">
+          <span className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-primary/80 backdrop-blur text-white px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-bold uppercase tracking-wider">
             {store.type}
           </span>
         )}
       </div>
-      <div className="px-4 py-3 flex flex-col flex-1">
-        <h3 className="font-bold text-xs text-slate-900 leading-tight line-clamp-1 mb-1">{store.name}</h3>
+      <div className="px-1.5 sm:px-4 py-1.5 sm:py-3 flex flex-col flex-1">
+        <div className="min-h-[24px] sm:min-h-0 flex items-start">
+          <h3 className="font-bold text-xs sm:text-xs text-slate-900 leading-tight line-clamp-2 sm:line-clamp-1 mb-0.5 sm:mb-1">{store.name}</h3>
+        </div>
         {store.address && (
-          <div className="flex items-start gap-1 mb-1">
-            <span className="material-symbols-outlined text-slate-400 text-xs mt-0.5 shrink-0">location_on</span>
-            <p className="text-[10px] text-slate-500 line-clamp-2">{store.address}</p>
+          <div className="flex items-start gap-0.5 sm:gap-1 mb-0.5 sm:mb-1">
+            <span className="material-symbols-outlined text-slate-400 text-[10px] sm:text-xs mt-0.5 shrink-0">location_on</span>
+            <p className="text-[10px] sm:text-[10px] text-slate-500 line-clamp-2">{store.address}</p>
           </div>
         )}
       </div>
@@ -131,6 +133,18 @@ function StoresMap({ stores, activeFilter }) {
   )
 }
 
+const DEMO_STORE_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80'
+const DEMO_STORES = [
+  { id: 'demo-s1', name: 'Panadería Don Luis', address: 'Av. Pedro de Valdivia 234', type: 'Panadería' },
+  { id: 'demo-s2', name: 'Ferretería El Clavo', address: 'Camilo Henríquez 567', type: 'Ferretería' },
+  { id: 'demo-s3', name: 'Minimarket La Esquina', address: 'Anfión Muñoz 123', type: 'Abarrotes' },
+  { id: 'demo-s4', name: 'Peluquería Estilo', address: 'General Korner 890', type: 'Peluquería' },
+  { id: 'demo-s5', name: 'Librería Austral', address: 'Valentín Letelier 456', type: 'Librería' },
+  { id: 'demo-s6', name: 'Café del Lago', address: 'Costanera 789', type: 'Comida' },
+  { id: 'demo-s7', name: 'Veterinaria Patitas', address: 'Gerónimo de Alderete 321', type: 'Mascotas' },
+  { id: 'demo-s8', name: 'Bazar Todo Hogar', address: 'Vicente Reyes 654', type: 'Bazar' },
+]
+
 export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode, onToggleMap }) {
   const [allStores, setAllStores] = useState([])
   const [currentPage, setCurrentPage] = useState(0)
@@ -146,9 +160,9 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
           address: l.direccion || '',
           type: l.categoria_nombre || '',
         }))
-        setAllStores(mapped)
+        setAllStores(mapped.length > 0 ? mapped : DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG })))
       })
-      .catch(() => {})
+      .catch(() => setAllStores(DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG }))))
   }, [])
 
   const filteredStores = activeFilter

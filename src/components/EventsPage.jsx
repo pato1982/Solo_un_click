@@ -33,34 +33,48 @@ function isGratis(precio) {
 
 function EventCard({ event }) {
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100">
-      <div className="relative h-28 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
+    <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100">
+      <div className="relative h-32 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
         <img
           src={event.image}
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <span className={`absolute top-2 left-2 ${event.badgeColor} px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow`}>
+        <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 ${event.badgeColor} px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow`}>
           {event.badge}
         </span>
       </div>
-      <div className="px-4 py-3 flex flex-col flex-1">
-        <h3 className="font-bold text-xs text-slate-900 leading-tight line-clamp-1 mb-1.5">{event.title}</h3>
-        <div className="flex items-center gap-1 mb-1">
-          <span className="material-symbols-outlined text-accent text-xs shrink-0">calendar_month</span>
-          <p className="text-[10px] font-bold text-slate-600">{event.date}</p>
+      <div className="px-1.5 sm:px-4 py-1.5 sm:py-3 flex flex-col flex-1">
+        <div className="min-h-[24px] sm:min-h-0 flex items-start">
+          <h3 className="font-bold text-[10px] sm:text-xs text-slate-900 leading-tight line-clamp-2 sm:line-clamp-1 mb-0.5 sm:mb-1.5">{event.title}</h3>
         </div>
-        <div className="flex items-start gap-1 mb-2">
-          <span className="material-symbols-outlined text-slate-400 text-xs mt-0.5 shrink-0">location_on</span>
-          <p className="text-[10px] text-slate-500 line-clamp-1">{event.location}</p>
+        <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5 sm:mb-1">
+          <span className="material-symbols-outlined text-accent text-[9px] sm:text-xs shrink-0">calendar_month</span>
+          <p className="text-[9px] sm:text-[10px] font-bold text-slate-600">{event.date}</p>
+        </div>
+        <div className="flex items-start gap-0.5 sm:gap-1 mb-0.5 sm:mb-2">
+          <span className="material-symbols-outlined text-slate-400 text-[9px] sm:text-xs mt-0.5 shrink-0">location_on</span>
+          <p className="text-[9px] sm:text-[10px] text-slate-500 line-clamp-1">{event.location}</p>
         </div>
         <div className="mt-auto text-center">
-          <span className="text-xs font-black text-primary">{event.price}</span>
+          <span className="text-[10px] sm:text-xs font-black text-primary">{event.price}</span>
         </div>
       </div>
     </div>
   )
 }
+
+const DEMO_EVENT_IMG = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&q=80'
+const DEMO_EVENTS = [
+  { id: 'demo-e1', title: 'Festival de la Cerveza Artesanal', date: '22 Mar 2026', location: 'Plaza de Armas', price: '$5.000', type: 'Gastronomía', badge: 'Gastronomía', badgeColor: 'bg-accent text-primary font-black' },
+  { id: 'demo-e2', title: 'Noche de Música en Vivo', date: '25 Mar 2026', location: 'Anfiteatro Municipal', price: 'Entrada libre', type: 'Música', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
+  { id: 'demo-e3', title: 'Feria Artesanal de Otoño', date: '28 Mar 2026', location: 'Costanera Villarrica', price: 'Entrada libre', type: 'Artesanía', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
+  { id: 'demo-e4', title: 'Torneo de Fútbol Amateur', date: '30 Mar 2026', location: 'Estadio Municipal', price: '$2.000', type: 'Deporte', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
+  { id: 'demo-e5', title: 'Obra de Teatro Infantil', date: '2 Abr 2026', location: 'Centro Cultural', price: '$3.000', type: 'Cultura', badge: 'Cultura', badgeColor: 'bg-primary text-white' },
+  { id: 'demo-e6', title: 'Caminata Volcán Villarrica', date: '5 Abr 2026', location: 'Base Volcán', price: '$15.000', type: 'Naturaleza', badge: 'Naturaleza', badgeColor: 'bg-green-600 text-white' },
+  { id: 'demo-e7', title: 'Fiesta Costumbrista', date: '8 Abr 2026', location: 'Parque Municipal', price: '$1.000', type: 'Familiar', badge: 'Familiar', badgeColor: 'bg-blue-400 text-white' },
+  { id: 'demo-e8', title: 'Taller de Cerámica Mapuche', date: '12 Abr 2026', location: 'Museo Leandro Penchulef', price: '$8.000', type: 'Artesanía', badge: 'Artesanía', badgeColor: 'bg-amber-500 text-white' },
+]
 
 export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
   const [allEvents, setAllEvents] = useState([])
@@ -81,9 +95,9 @@ export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
           badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
           badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
         }))
-        setAllEvents(mapped)
+        setAllEvents(mapped.length > 0 ? mapped : DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG })))
       })
-      .catch(() => {})
+      .catch(() => setAllEvents(DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG }))))
   }, [])
 
   const filteredEvents = activeFilter

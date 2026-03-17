@@ -59,7 +59,7 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
   ]
 
   return (
-    <div className="sticky top-0 z-50">
+    <div id="main-header" className="sticky top-0 z-50">
       {/* === HEADER PRINCIPAL === */}
       <header className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4 sm:py-4 md:py-3 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-4 md:gap-8 md:justify-center relative">
@@ -154,7 +154,7 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
         {/* Buscador + Sesión mobile - misma línea */}
         <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/10">
           {/* Buscador izquierda */}
-          <div className="relative group w-[45%] shrink-0">
+          <div className="relative group w-[55%] shrink-0">
             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10">
               <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-xs">search</span>
             </div>

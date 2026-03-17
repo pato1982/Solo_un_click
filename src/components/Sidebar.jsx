@@ -35,13 +35,28 @@ const SIDEBAR_TITLES = {
   arriendos: 'Arriendos',
 }
 
-export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [], onMobileHeight, openKey }) {
+export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFilterSelect, activeFilter, onMapClick, onCategorySelect, turismoCategorias = [], listingSubcategorias = [], sidebarCategorias = [], openKey, onSidebarHeight }) {
   const [expandedCat, setExpandedCat] = useState(null)
   const [localeCategorias, setLocaleCategorias] = useState([])
   const [eventoCategorias, setEventoCategorias] = useState([])
   const [mobileClosed, setMobileClosed] = useState(false)
-  const [mobileHeight, setMobileHeight] = useState(0)
+  const [headerHeight, setHeaderHeight] = useState(150)
   const mobileRef = useRef(null)
+
+  // Medir la altura real del header sticky - en cada cambio y resize
+  useEffect(() => {
+    const measure = () => {
+      const headerEl = document.getElementById('main-header')
+      if (headerEl) {
+        setHeaderHeight(headerEl.offsetHeight + 8)
+      }
+    }
+    measure()
+    // Re-medir después de un frame por si el DOM no estaba listo
+    requestAnimationFrame(measure)
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [activeNav, mobileClosed])
 
   // Reset mobileClosed cuando cambia la sección activa o se pide reabrir
   useEffect(() => {
@@ -50,19 +65,16 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
 
   const handleMobileClose = () => {
     setMobileClosed(true)
-    setMobileHeight(0)
-    if (onMobileHeight) onMobileHeight(0)
+    if (onSidebarHeight) onSidebarHeight(0)
     onClose()
   }
 
-  // Medir altura del menú mobile y notificar al padre
+  // Reportar que el sidebar está abierto (para min-height del contenedor → footer)
   useEffect(() => {
     if (mobileRef.current && !mobileClosed && activeNav) {
-      const h = mobileRef.current.offsetHeight
-      setMobileHeight(h)
-      if (onMobileHeight) onMobileHeight(h)
-    } else if (mobileClosed || !activeNav) {
-      if (onMobileHeight) onMobileHeight(0)
+      if (onSidebarHeight) onSidebarHeight(mobileRef.current.offsetHeight + 8)
+    } else {
+      if (onSidebarHeight) onSidebarHeight(0)
     }
   })
 
@@ -116,6 +128,30 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     const tipo = tipoMap[activeNav]
     const catsDelTipo = sidebarCategorias.filter(c => c.tipo === tipo)
 
+    // Demo categorías si no hay reales
+    const DEMO_CATS = {
+      productos: [
+        { icon: 'devices', label: 'Tecnología', subcategories: ['Celulares', 'Notebooks', 'Tablets', 'Accesorios'] },
+        { icon: 'checkroom', label: 'Vestuario', subcategories: ['Hombre', 'Mujer', 'Niños', 'Calzado'] },
+        { icon: 'weekend', label: 'Hogar', subcategories: ['Muebles', 'Decoración', 'Cocina', 'Baño'] },
+        { icon: 'sports_esports', label: 'Deportes', subcategories: ['Bicicletas', 'Camping', 'Fitness', 'Running'] },
+        { icon: 'toys', label: 'Juguetería', subcategories: ['Didácticos', 'Muñecas', 'Autos', 'Juegos de mesa'] },
+      ],
+      servicios: [
+        { icon: 'construction', label: 'Construcción', subcategories: ['Electricista', 'Gasfiter', 'Albañil', 'Pintor'] },
+        { icon: 'local_car_wash', label: 'Automotriz', subcategories: ['Mecánica', 'Lavado', 'Grúa', 'Neumáticos'] },
+        { icon: 'school', label: 'Educación', subcategories: ['Clases particulares', 'Idiomas', 'Música', 'Computación'] },
+        { icon: 'spa', label: 'Belleza y Salud', subcategories: ['Peluquería', 'Masajes', 'Manicure', 'Podología'] },
+        { icon: 'pets', label: 'Mascotas', subcategories: ['Veterinaria', 'Peluquería canina', 'Paseo', 'Pensión'] },
+      ],
+      arriendos: [
+        { icon: 'cottage', label: 'Cabañas', subcategories: ['Lago', 'Volcán', 'Bosque', 'Centro'] },
+        { icon: 'apartment', label: 'Departamentos', subcategories: ['1 dormitorio', '2 dormitorios', 'Studio', 'Amoblado'] },
+        { icon: 'house', label: 'Casas', subcategories: ['Familiar', 'Vacaciones', 'Temporada', 'Larga estadía'] },
+        { icon: 'night_shelter', label: 'Hospedajes', subcategories: ['Hostal', 'Habitación', 'Domo', 'Glamping'] },
+      ],
+    }
+
     if (catsDelTipo.length > 0) {
       panel = {
         title: SIDEBAR_TITLES[activeNav],
@@ -128,28 +164,46 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     } else {
       panel = {
         title: SIDEBAR_TITLES[activeNav],
-        items: [],
+        categories: DEMO_CATS[activeNav] || [],
       }
     }
   }
   // Locales: categorías desde API
   else if (activeNav === 'locales') {
+    const DEMO_LOCALE_CATS = [
+      { icon: 'bakery_dining', label: 'Panadería' },
+      { icon: 'hardware', label: 'Ferretería' },
+      { icon: 'local_grocery_store', label: 'Abarrotes' },
+      { icon: 'content_cut', label: 'Peluquería' },
+      { icon: 'menu_book', label: 'Librería' },
+      { icon: 'local_cafe', label: 'Cafetería' },
+      { icon: 'pets', label: 'Mascotas' },
+      { icon: 'storefront', label: 'Bazar' },
+    ]
     panel = {
       title: 'Negocios',
-      items: localeCategorias.map(c => ({
-        icon: c.icono || 'storefront',
-        label: c.nombre,
-      })),
+      items: localeCategorias.length > 0
+        ? localeCategorias.map(c => ({ icon: c.icono || 'storefront', label: c.nombre }))
+        : DEMO_LOCALE_CATS,
     }
   }
   // Eventos: categorías desde API
   else if (activeNav === 'eventos') {
+    const DEMO_EVENT_CATS = [
+      { icon: 'music_note', label: 'Música' },
+      { icon: 'restaurant', label: 'Gastronomía' },
+      { icon: 'sports_soccer', label: 'Deporte' },
+      { icon: 'theater_comedy', label: 'Cultura' },
+      { icon: 'palette', label: 'Artesanía' },
+      { icon: 'family_restroom', label: 'Familiar' },
+      { icon: 'forest', label: 'Naturaleza' },
+      { icon: 'nightlife', label: 'Nocturno' },
+    ]
     panel = {
       title: 'Eventos',
-      items: eventoCategorias.map(c => ({
-        icon: c.icono || 'event',
-        label: c.nombre,
-      })),
+      items: eventoCategorias.length > 0
+        ? eventoCategorias.map(c => ({ icon: c.icono || 'event', label: c.nombre }))
+        : DEMO_EVENT_CATS,
     }
   }
 
@@ -219,7 +273,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   return (
     <>
       {/* ===== Mobile/Tablet: barra vertical inline debajo del header ===== */}
-      <div ref={mobileRef} className={`md:hidden absolute left-0 top-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl max-h-[calc(100dvh-120px)] flex flex-col ${mobileClosed ? 'hidden' : ''}`}>
+      <div ref={mobileRef} className={`md:hidden fixed left-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl flex flex-col ${mobileClosed ? 'hidden' : ''}`} style={{ top: String(headerHeight) + 'px', maxHeight: String(window.innerHeight - headerHeight - 40) + 'px', overflowY: 'hidden', overflowX: 'hidden' }}>
         {/* Título + cerrar */}
         <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
           <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">{panel.title}</h3>
@@ -228,8 +282,8 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
           </button>
         </div>
 
-        {/* Categorías en lista vertical */}
-        <div className="flex flex-col gap-0.5 px-2 pb-2 overflow-y-auto sidebar-scroll">
+        {/* Categorías en lista vertical con scroll */}
+        <div className="flex-1 min-h-0 flex flex-col gap-0.5 px-2 pb-2 overflow-y-auto sidebar-scroll">
           {panel.categories ? (
             panel.categories.map((cat) => {
               const isExpanded = expandedCat === cat.label
@@ -289,7 +343,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
         </div>
 
         {/* Botón de acción */}
-        <div className="px-2 pb-2">
+        <div className="px-2 pb-2 shrink-0">
           <button
             onClick={activeNav === 'locales' ? onMapClick : undefined}
             className="w-full bg-accent text-primary py-1 rounded-md text-[9px] font-black uppercase tracking-wide hover:brightness-110 transition-all text-center"
