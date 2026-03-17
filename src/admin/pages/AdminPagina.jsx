@@ -365,33 +365,33 @@ export default function AdminPagina() {
         </p>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 max-w-2xl">
           {activeTab === 'superior' ? (
-            <div className="flex flex-col md:flex-row gap-5 items-center">
+            <div className="flex flex-col sm:flex-row gap-5 items-center">
               {current.preview ? (
-                <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
+                <div className="sm:w-1/2 rounded-xl overflow-hidden shadow-md">
                   <img src={current.preview} alt="Superior" className="w-full h-48 object-cover" />
                 </div>
               ) : (
-                <div className="md:w-1/2 h-48 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
+                <div className="sm:w-1/2 h-48 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
                   <span className="material-symbols-outlined text-3xl text-gray-300">image</span>
                 </div>
               )}
-              <div className="md:w-1/2 flex flex-col">
+              <div className="sm:w-1/2 flex flex-col">
                 <h3 className="text-sm font-black text-primary mb-2">{current.titulo || 'Sobre Nosotros'}</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">{current.texto || 'Tu texto aparecerá aquí...'}</p>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col md:flex-row gap-5 items-center">
-              <div className="md:w-1/2 flex flex-col">
+            <div className="flex flex-col sm:flex-row gap-5 items-center">
+              <div className="sm:w-1/2 flex flex-col">
                 <h3 className="text-sm font-black text-primary mb-2">{current.titulo || 'Nuestra Historia'}</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">{current.texto || 'Tu texto aparecerá aquí...'}</p>
               </div>
               {current.preview ? (
-                <div className="md:w-1/2 rounded-xl overflow-hidden shadow-md">
+                <div className="sm:w-1/2 rounded-xl overflow-hidden shadow-md">
                   <img src={current.preview} alt="Inferior" className="w-full h-48 object-cover" />
                 </div>
               ) : (
-                <div className="md:w-1/2 h-48 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
+                <div className="sm:w-1/2 h-48 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
                   <span className="material-symbols-outlined text-3xl text-gray-300">image</span>
                 </div>
               )}

@@ -28,7 +28,7 @@ const menuProgramador = [
 
 const PLAN_NAMES = { 2: 'Normal', 3: 'Premium' }
 
-export default function AdminSidebar({ open }) {
+export default function AdminSidebar({ open, onClose }) {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const planId = user.plan_id || 1
   const tipoCuenta = user.tipo_cuenta || 'general'
@@ -52,6 +52,11 @@ export default function AdminSidebar({ open }) {
   }, [planId])
 
   return (
+    <>
+    {/* Overlay mobile/tablet */}
+    {open && (
+      <div className="md:hidden fixed inset-0 z-30 bg-black/40" onClick={onClose}></div>
+    )}
     <aside
       className={`fixed top-16 left-0 bottom-0 z-40 w-64 border-r shadow-sm transition-transform duration-300 ${
         isProg ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
@@ -102,6 +107,7 @@ export default function AdminSidebar({ open }) {
               key={item.path}
               to={item.path}
               end={item.path === '/admin'}
+              onClick={() => { if (window.innerWidth < 1101 && onClose) onClose() }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isProg
@@ -174,5 +180,6 @@ export default function AdminSidebar({ open }) {
         </div>
       )}
     </aside>
+    </>
   )
 }

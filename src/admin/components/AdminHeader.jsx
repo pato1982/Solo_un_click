@@ -503,30 +503,30 @@ export default function AdminHeader({ onToggleSidebar }) {
   return (
     <>
       <header className={`sticky top-0 z-50 text-white shadow-lg ${isProg ? 'bg-slate-950' : 'bg-primary'}`}>
-        <div className="flex items-center h-16 px-6">
+        <div className="flex items-center h-14 sm:h-16 px-3 sm:px-4 md:px-6">
           {/* Botón hamburguesa */}
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <span className="material-symbols-outlined text-2xl">menu</span>
+            <span className="material-symbols-outlined text-xl sm:text-2xl">menu</span>
           </button>
 
           {/* Icono usuario */}
           {!isProg && (
             <button
               onClick={() => setShowProfile(true)}
-              className="p-1 rounded-lg hover:bg-white/10 transition-colors ml-1 mr-4"
+              className="p-1 rounded-lg hover:bg-white/10 transition-colors ml-1 mr-2 sm:mr-4"
               title="Mi perfil"
             >
-              <span className="material-symbols-outlined text-2xl text-white/70">account_circle</span>
+              <span className="material-symbols-outlined text-xl sm:text-2xl text-white/70">account_circle</span>
             </button>
           )}
 
-          {/* Título centrado (solo admin normal) */}
+          {/* Título centrado (solo admin normal, oculto en mobile) */}
           <div className="flex-1 flex items-center justify-center">
             {!isProg && (
-              <span className="text-lg font-bold uppercase tracking-wider text-white">
+              <span className="hidden sm:inline text-sm md:text-lg font-bold uppercase tracking-wider text-white">
                 Panel Administrador
               </span>
             )}
@@ -536,22 +536,22 @@ export default function AdminHeader({ onToggleSidebar }) {
           {isProg && (
             <button
               onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/' }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors mr-3"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors mr-1 sm:mr-3"
               title="Cerrar sesión"
             >
-              <span className="material-symbols-outlined text-lg">logout</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Salir</span>
+              <span className="material-symbols-outlined text-base sm:text-lg">logout</span>
+              <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">Salir</span>
             </button>
           )}
 
           {/* Logo Solo a un Click a la derecha */}
-          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-            <div className={`p-1.5 rounded-lg leading-none ${isProg ? 'bg-emerald-500/20 text-emerald-400' : 'bg-accent text-primary'}`}>
-              <span className="material-symbols-outlined block text-2xl font-bold">ads_click</span>
+          <a href="/" className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity shrink-0">
+            <div className={`p-1 sm:p-1.5 rounded-lg leading-none ${isProg ? 'bg-emerald-500/20 text-emerald-400' : 'bg-accent text-primary'}`}>
+              <span className="material-symbols-outlined block text-xl sm:text-2xl font-bold">ads_click</span>
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
-              <span className="text-xl font-black italic tracking-tight text-white">
+              <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white/70">Solo a</span>
+              <span className="text-base sm:text-xl font-black italic tracking-tight text-white">
                 un <span className={`uppercase ${isProg ? 'text-emerald-400' : 'text-accent'}`}>CLICK</span>
               </span>
             </div>

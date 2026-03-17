@@ -455,8 +455,8 @@ export default function AdminProductos() {
         </div>
 
         {/* Grid de productos */}
-        <div className="p-6">
-          <div className="grid grid-cols-5 gap-4">
+        <div className="p-3 sm:p-4 md:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             <button
               onClick={openModal}
               className="group flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-xl p-6 min-h-[200px] hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
@@ -516,17 +516,17 @@ export default function AdminProductos() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h3 className="text-sm font-bold text-gray-800">{editingId ? 'Editar producto' : 'Nuevo producto'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex gap-4 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 p-4">
               {/* Columna izquierda - Imagen */}
-              <div className="w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0">
                 {formData.imagenPreview ? (
                   <div className="relative">
                     {formData.imagenNaturalW > 0 ? (
@@ -558,7 +558,7 @@ export default function AdminProductos() {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
 
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Precio *</label>
                     <div className="relative">
@@ -588,7 +588,7 @@ export default function AdminProductos() {
                   <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
                     <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
@@ -603,7 +603,7 @@ export default function AdminProductos() {
                     <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
                     <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
@@ -625,7 +625,7 @@ export default function AdminProductos() {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
                       <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-xs py-1 focus:ring-primary focus:border-primary">
@@ -670,7 +670,7 @@ export default function AdminProductos() {
                   )}
 
                   {formData.attrMedidas && (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 gap-2">
                       {[{ name: 'medidasAlto', label: 'Alto' }, { name: 'medidasAncho', label: 'Ancho' }, { name: 'medidasProfundidad', label: 'Profundidad' }].map(({ name, label }) => (
                         <div key={name}>
                           <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{label} (cm)</label>
