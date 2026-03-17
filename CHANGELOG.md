@@ -1,5 +1,93 @@
 # Registro de Cambios - Solo a un Click
 
+## 17 de Marzo 2026 (sesión 9) - Mejoras mobile/tablet, datos demo, sidebar panel fixed
+
+### Sidebar mobile/tablet - Panel fixed con límites dinámicos
+- Panel fixed que va desde debajo del header hasta el borde superior del footer
+- Overlay semitransparente para cerrar tocando fuera
+- `bottom` dinámico: se ajusta al scrollear según visibilidad del footer (8px margen)
+- `top` dinámico: mide la altura real del header con `getElementById`
+- Scroll interno en lista de categorías cuando excede el espacio disponible
+- Botón de acción y título siempre visibles (shrink-0)
+- `openKey` para reabrir menú al tocar el mismo li después de cerrarlo
+- Desktop: sidebar sticky lateral sin cambios
+
+### Sidebar - Categorías demo para todos los menús
+- **Productos:** Tecnología, Vestuario, Hogar, Deportes, Juguetería (c/u con 4 subcategorías)
+- **Servicios:** Construcción, Automotriz, Educación, Belleza y Salud, Mascotas (con subs)
+- **Arriendos:** Cabañas, Departamentos, Casas, Hospedajes (con subcategorías)
+- **Negocios:** Panadería, Ferretería, Abarrotes, Peluquería, Librería, Cafetería, Mascotas, Bazar
+- **Eventos:** Música, Gastronomía, Deporte, Cultura, Artesanía, Familiar, Naturaleza, Nocturno
+- **Turismo:** 13 categorías dinámicas desde empresas demo
+
+### Navegación mejorada
+- Desde turismo/locales/eventos: tocar productos/servicios/arriendos vuelve a inicio filtrado
+- Tocar el mismo li no redirige a inicio, mantiene la vista actual
+- Botón "Inicio" visible al seleccionar cualquier li (activeSidebar !== null)
+- Backend: categorías de locales solo muestran las que tienen locales activos (INNER JOIN)
+
+### Tarjetas de productos - Datos demo
+- 8 productos demo por sección con nombres coherentes (tecnología, ropa, arriendos, etc.)
+- Precios variados, ofertas con precio anterior tachado + badge descuento
+- Se reemplazan automáticamente cuando hay datos reales
+
+### Carrusel productos mobile
+- Sin tarjeta destacada fija — todas rotan juntas
+- 2 tarjetas por fila (w-50%), rotación cada 4 segundos
+- Tablet/desktop: destacada fija con borde amarillo + carrusel separado
+
+### ProductCard mobile (página principal y "ver todos")
+- Imagen más alta: h-32
+- Nombre: text-xs, line-clamp-2, min-h-[24px] fijo (siempre 2 líneas de espacio)
+- Descripción: text-[10px], line-clamp-3, min-h-[36px] fijo (siempre 3 líneas)
+- Precio: text-[10px], botones h-6 w-6
+- Todas las tarjetas misma altura gracias a min-h fijos
+- "Ver todos": grid 2 columnas en mobile
+
+### Eventos - Datos demo y carrusel mobile
+- 8 eventos demo: Festival Cerveza, Música en Vivo, Feria Artesanal, Fútbol, Teatro, etc.
+- Mobile: carrusel 2 filas con rotación cada 4 segundos
+- Tarjetas con mismos tamaños que productos (imagen h-32, textos text-[10px])
+- EventsPage: datos demo, grid 2 cols mobile, tarjetas compactas
+
+### Locales/Negocios - Datos demo
+- 8 negocios demo: Panadería Don Luis, Ferretería El Clavo, Minimarket, etc.
+- StoresCarousel: imagen nueva, nombre text-xs, avatares w-24 h-24
+- StoresPage: datos demo con categorías, grid 2 cols mobile, tarjetas con min-h
+
+### Turismo - Datos demo completos
+- 5 empresas demo: Aventura Villarrica, Termas del Sur, Cabalgatas Mapuche, Kayak, Trekking
+- Cada una con 3 imágenes, descripción, dirección, horarios, contacto, subcategorías
+- Página premium: 6 tours demo con precios, ubicación, descripción detallada
+- Sección "Sobre Nosotros" y "Datos de la Empresa" con textos demo
+- Abanico mobile: más junto (translateX ±28px, rotate ±12°, contenedor 120x100)
+- Tarjetas turismo mobile: min-h-[195px], descripción line-clamp-5, botón "Ver más" whitespace-nowrap
+- Categorías debajo del abanico: text-[10px], min-h-[28px] para 2 filas
+- Modal tour mobile: carrusel 1 imagen con flechas y indicadores (no grid)
+
+### Banner mobile
+- Textos beneficios: text-[11px] (más grandes)
+- Filas más juntas: gap-y-0, -mt-3
+- Slides parejos: "CONOCE ANTES / DE COMPRAR" en 2 líneas como "TU VITRINA / DIGITAL"
+
+### Header tablet
+- Más alto: py-4, icono text-3xl con p-2, nombre text-xl
+- Quitar icono persona del header, agregar icono registrarse en nav bar
+- Buscador centrado y más angosto: max-w-[280px] con mx-auto
+- Buscador mobile más ancho: w-[55%]
+
+### Footer tablet
+- Layout propio: logo + descripción en misma fila, 5 columnas debajo
+- Columnas: Accesos, Legal, Mi cuenta, Contacto, Redes Sociales
+- id="main-footer" para medición dinámica del sidebar
+
+### Pendientes próxima sesión
+- Revisar StorePage premium (comercio) en mobile
+- **SMTP Gmail para emails de recuperación de contraseña**
+- Eliminar datos demo cuando haya contenido real
+
+---
+
 ## 16 de Marzo 2026 (sesión 8) - Responsive mobile y tablet
 
 ### Configuración de breakpoints
