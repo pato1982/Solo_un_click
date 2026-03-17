@@ -235,10 +235,11 @@ export default function App() {
       .catch(err => console.error('Error cargando listings:', err))
 
     // Cargar categorías de turismo desde portadas activas
+    const DEMO_TURISMO_CATS = ['Acuático', 'Aventura', 'Cabalgatas', 'Cultural', 'Familiar', 'Fotografía', 'Naturaleza', 'Rafting', 'Relax', 'Spa', 'Termas', 'Trekking', 'Volcanes']
     fetch(`${API}/api/portada/public`)
       .then(r => r.json())
       .then(data => {
-        if (data.portadas) {
+        if (data.portadas && data.portadas.length > 0) {
           const cats = new Set()
           data.portadas.forEach(p => {
             if (p.categorias && Array.isArray(p.categorias)) {
@@ -248,9 +249,15 @@ export default function App() {
           const sorted = [...cats].sort()
           setTurismoCategorias(sorted)
           setTurismoCategoriasAll(sorted)
+        } else {
+          setTurismoCategorias(DEMO_TURISMO_CATS)
+          setTurismoCategoriasAll(DEMO_TURISMO_CATS)
         }
       })
-      .catch(err => console.error('Error cargando categorías turismo:', err))
+      .catch(() => {
+        setTurismoCategorias(DEMO_TURISMO_CATS)
+        setTurismoCategoriasAll(DEMO_TURISMO_CATS)
+      })
 
     // Cargar categorías del sidebar: solo las que tienen productos publicados
     fetch(`${API}/api/categorias/sidebar`)
@@ -456,7 +463,7 @@ export default function App() {
   const activeNav = activeSidebar
 
   // Determinar si mostrar botón Inicio
-  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || activeSection !== null || activeFilter !== null || activeStore !== null
+  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || activeSection !== null || activeFilter !== null || activeStore !== null || activeSidebar !== null
 
   if (activeStore) {
     return (

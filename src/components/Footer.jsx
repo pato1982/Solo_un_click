@@ -1,6 +1,6 @@
 export default function Footer({ onNavigate }) {
   return (
-    <footer className="bg-primary text-white pt-6 sm:pt-8 pb-3 px-3 sm:px-4 md:px-6">
+    <footer id="main-footer" className="bg-primary text-white pt-6 sm:pt-8 pb-3 px-3 sm:px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
 
         {/* ===== MOBILE: layout compacto ===== */}

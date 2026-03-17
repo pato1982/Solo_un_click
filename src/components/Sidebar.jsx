@@ -41,21 +41,40 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   const [eventoCategorias, setEventoCategorias] = useState([])
   const [mobileClosed, setMobileClosed] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(150)
+  const [bottomOffset, setBottomOffset] = useState(0)
   const mobileRef = useRef(null)
 
-  // Medir la altura real del header sticky - en cada cambio y resize
+  // Medir header una vez al montar
   useEffect(() => {
+    const headerEl = document.getElementById('main-header')
+    if (headerEl) setHeaderHeight(headerEl.offsetHeight + 8)
+  }, [])
+
+  // Calcular bottom según visibilidad del footer - siempre activo mientras sidebar abierto
+  useEffect(() => {
+    if (!activeNav || mobileClosed) {
+      setBottomOffset(0)
+      return
+    }
     const measure = () => {
-      const headerEl = document.getElementById('main-header')
-      if (headerEl) {
-        setHeaderHeight(headerEl.offsetHeight + 8)
+      const footerEl = document.getElementById('main-footer')
+      if (footerEl) {
+        const footerRect = footerEl.getBoundingClientRect()
+        const viewH = window.innerHeight
+        if (footerRect.top < viewH) {
+          setBottomOffset(viewH - footerRect.top + 8)
+        } else {
+          setBottomOffset(0)
+        }
       }
     }
     measure()
-    // Re-medir después de un frame por si el DOM no estaba listo
-    requestAnimationFrame(measure)
+    window.addEventListener('scroll', measure, { passive: true })
     window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
   }, [activeNav, mobileClosed])
 
   // Reset mobileClosed cuando cambia la sección activa o se pide reabrir
@@ -82,21 +101,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     }
   })
 
-  // Cerrar al hacer click fuera (solo mobile/tablet)
-  useEffect(() => {
-    if (!activeNav || mobileClosed) return
-    const handleClickOutside = (e) => {
-      if (mobileRef.current && !mobileRef.current.contains(e.target)) {
-        handleMobileClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('touchstart', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('touchstart', handleClickOutside)
-    }
-  }, [activeNav, mobileClosed, onClose])
+  // Click fuera del menú se maneja con el overlay en el JSX
 
   useEffect(() => {
     if (activeNav === 'locales') {
@@ -277,7 +282,11 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   return (
     <>
       {/* ===== Mobile/Tablet: barra vertical inline debajo del header ===== */}
-      <div ref={mobileRef} className={`md:hidden fixed left-0 z-40 min-w-[180px] w-fit max-w-[55%] bg-primary text-white shadow-lg rounded-br-xl flex flex-col ${mobileClosed ? 'hidden' : ''}`} style={{ top: headerHeight + 'px', maxHeight: 'calc(100vh - ' + headerHeight + 'px - 40px)' }}>
+      <div ref={mobileRef} className={`md:hidden fixed left-0 right-0 z-40 flex ${mobileClosed ? 'hidden' : ''}`} style={{ top: headerHeight + 'px', bottom: bottomOffset + 'px' }}>
+        {/* Overlay para cerrar al tocar fuera */}
+        <div className="absolute inset-0 bg-black/20" onClick={handleMobileClose}></div>
+        {/* Panel del menú */}
+        <div className="relative min-w-[180px] w-fit max-w-[55%] h-full bg-primary text-white shadow-lg flex flex-col">
         {/* Título + cerrar */}
         <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
           <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">{panel.title}</h3>
@@ -354,6 +363,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
           >
             {activeNav === 'locales' ? 'Buscar en mapa' : 'Todas las categorias'}
           </button>
+        </div>
         </div>
       </div>
 

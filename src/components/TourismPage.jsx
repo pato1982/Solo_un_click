@@ -14,6 +14,12 @@ const fanAngles = [
   { rotate: 15, translateX: 50 },
 ]
 
+const fanAnglesMobile = [
+  { rotate: -12, translateX: -28 },
+  { rotate: 0, translateX: 0 },
+  { rotate: 12, translateX: 28 },
+]
+
 function CardFan({ images, crops = [] }) {
   if (!images || images.length === 0) {
     return (
@@ -22,8 +28,8 @@ function CardFan({ images, crops = [] }) {
       </div>
     )
   }
-  return (
-    <div className="relative shrink-0 w-[160px] h-[120px] sm:w-[200px] sm:h-[150px] md:w-[250px] md:h-[180px]">
+  const renderFan = (angles, containerClass, cardClass) => (
+    <div className={`relative shrink-0 ${containerClass}`}>
       {images.map((img, i) => {
         const c = crops[i]
         const z = c?.zoom || 1
@@ -32,9 +38,9 @@ function CardFan({ images, crops = [] }) {
         return (
           <div
             key={i}
-            className="absolute w-16 h-[90px] sm:w-20 sm:h-[110px] md:w-28 md:h-[150px] rounded-lg sm:rounded-xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20"
+            className={`absolute ${cardClass} rounded-lg sm:rounded-xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20`}
             style={{
-              transform: `translateX(calc(-50% + ${fanAngles[i].translateX}px)) rotate(${fanAngles[i].rotate}deg)`,
+              transform: `translateX(calc(-50% + ${angles[i].translateX}px)) rotate(${angles[i].rotate}deg)`,
               transformOrigin: 'bottom center',
               left: '50%',
               top: '0px',
@@ -54,6 +60,17 @@ function CardFan({ images, crops = [] }) {
         )
       })}
     </div>
+  )
+
+  return (
+    <>
+      {/* Mobile: más junto */}
+      <div className="sm:hidden">{renderFan(fanAnglesMobile, 'w-[120px] h-[100px]', 'w-14 h-[75px]')}</div>
+      {/* Tablet */}
+      <div className="hidden sm:block md:hidden">{renderFan(fanAngles, 'w-[200px] h-[150px]', 'w-20 h-[110px]')}</div>
+      {/* Desktop */}
+      <div className="hidden md:block">{renderFan(fanAngles, 'w-[250px] h-[180px]', 'w-28 h-[150px]')}</div>
+    </>
   )
 }
 
@@ -153,8 +170,9 @@ function SchedulePopup({ horarios, onClose }) {
    Página premium de una empresa
    ========================================= */
 function TourModal({ tour, onClose }) {
+  const [currentImg, setCurrentImg] = useState(0)
   const rawImgs = parseJSON(tour.imagenes) || []
-  const imgs = rawImgs.map(img => `${API}${img}`).filter(Boolean)
+  const imgs = rawImgs.map(img => img.startsWith('http') ? img : `${API}${img}`).filter(Boolean)
   const crops = parseJSON(tour.imagenes_crop) || []
 
   return (
@@ -168,10 +186,37 @@ function TourModal({ tour, onClose }) {
           </button>
         </div>
 
-        {/* Imágenes lado a lado */}
+        {/* Imágenes */}
         {imgs.length > 0 && (
           <div className="px-4 pt-3">
-            <div className={`grid gap-2 ${imgs.length === 1 ? 'grid-cols-1' : imgs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            {/* Mobile: carrusel de 1 imagen con flechas */}
+            <div className="sm:hidden relative">
+              <div className="rounded-lg overflow-hidden">
+                <img src={imgs[currentImg]} alt={`${tour.nombre} ${currentImg + 1}`} className="w-full h-48 object-cover"
+                  style={crops[currentImg] && (crops[currentImg].zoom > 1 || crops[currentImg].x || crops[currentImg].y) ? {
+                    transform: `scale(${crops[currentImg].zoom}) translate(${crops[currentImg].x / crops[currentImg].zoom}px, ${crops[currentImg].y / crops[currentImg].zoom}px)`,
+                    transformOrigin: 'center center',
+                  } : undefined}
+                />
+              </div>
+              {imgs.length > 1 && (
+                <>
+                  <button onClick={() => setCurrentImg(i => i === 0 ? imgs.length - 1 : i - 1)} className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow text-primary">
+                    <span className="material-symbols-outlined text-sm">chevron_left</span>
+                  </button>
+                  <button onClick={() => setCurrentImg(i => i === imgs.length - 1 ? 0 : i + 1)} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow text-primary">
+                    <span className="material-symbols-outlined text-sm">chevron_right</span>
+                  </button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {imgs.map((_, i) => (
+                      <button key={i} onClick={() => setCurrentImg(i)} className={`h-1.5 rounded-full transition-all ${i === currentImg ? 'w-4 bg-primary' : 'w-1.5 bg-white/60'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            {/* Tablet/Desktop: grid lado a lado */}
+            <div className={`hidden sm:grid gap-2 ${imgs.length === 1 ? 'grid-cols-1' : imgs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
               {imgs.map((src, i) => {
                 const c = crops[i]
                 return (
@@ -236,7 +281,38 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
     }).catch(() => {})
   }, [company.userId])
 
+  const DEMO_TOUR_IMGS = [
+    'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=600&q=80',
+    'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80',
+    'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=600&q=80',
+  ]
+  const DEMO_TOURS = [
+    { id: 'dt1', nombre: 'Ascenso al Volcán Villarrica', categoria: 'Aventura', ubicacion: 'Base Volcán Villarrica', detalle: 'Vive la experiencia única de ascender al volcán más activo de Chile. Incluye equipamiento completo, guía certificado y transporte. Apto para personas con buena condición física. Salida a las 6:00 AM, retorno aproximado 15:00.', precio: 85000, precio_antes: 95000, imagenes: JSON.stringify(DEMO_TOUR_IMGS), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+    { id: 'dt2', nombre: 'Rafting Río Trancura Alto', categoria: 'Rafting', ubicacion: 'Río Trancura, Pucón', detalle: 'Descenso de clase III-IV por los rápidos del Trancura. Incluye traje neopreno, casco, chaleco y guía profesional. Duración aproximada 2 horas. No se requiere experiencia previa.', precio: 35000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[0]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+    { id: 'dt3', nombre: 'Kayak Atardecer Lago Villarrica', categoria: 'Acuático', ubicacion: 'Costanera Villarrica', detalle: 'Travesía guiada en kayak al atardecer con vista al volcán. Incluye equipo, instrucción básica y fotografías. Ideal para parejas y familias. Duración 1.5 horas.', precio: 25000, precio_antes: 30000, imagenes: JSON.stringify([DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[1]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+    { id: 'dt4', nombre: 'Trekking Parque Nacional Huerquehue', categoria: 'Trekking', ubicacion: 'Parque Nacional Huerquehue', detalle: 'Recorrido por senderos entre araucarias milenarias y lagunas de montaña. Sendero Los Lagos de dificultad media. Incluye transporte, guía y snack. Duración 6 horas.', precio: 45000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[1], DEMO_TOUR_IMGS[0], DEMO_TOUR_IMGS[2]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+    { id: 'dt5', nombre: 'Termas Geométricas', categoria: 'Termas', ubicacion: 'Camino Coñaripe Km 16', detalle: 'Visita guiada a las famosas Termas Geométricas. Circuito de 17 piscinas de aguas termales entre la naturaleza. Incluye transporte ida y vuelta y entrada. Día completo.', precio: 55000, precio_antes: 65000, imagenes: JSON.stringify([DEMO_TOUR_IMGS[1], DEMO_TOUR_IMGS[2]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+    { id: 'dt6', nombre: 'Cabalgata Senderos Mapuche', categoria: 'Cabalgatas', ubicacion: 'Comunidad Huilio', detalle: 'Paseo a caballo por senderos ancestrales con guía de la comunidad mapuche. Incluye almuerzo típico y relato cultural. Apto para principiantes. Medio día.', precio: 40000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[0], DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[1]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
+  ]
+  const DEMO_PAGINA = {
+    titulo_superior: 'Sobre Nosotros',
+    texto_superior: 'Somos una empresa de turismo aventura con más de 10 años de experiencia en la Araucanía. Nuestro equipo de guías certificados te acompañará en cada experiencia, garantizando seguridad y diversión. Trabajamos con los mejores equipos y mantenemos los más altos estándares de calidad para que tu aventura sea inolvidable.',
+    imagen_superior: null,
+    crop_superior: null,
+    titulo_inferior: 'Datos de la Empresa',
+    texto_inferior: 'Contamos con oficina en el centro de Villarrica donde podrás visitarnos, resolver dudas y coordinar tu próxima aventura. Aceptamos todos los medios de pago.',
+    imagen_inferior: null,
+    crop_inferior: null,
+  }
+
   useEffect(() => {
+    if (!company.userId) {
+      // Datos demo
+      setTours(DEMO_TOURS)
+      setPagina(DEMO_PAGINA)
+      setLoadingTours(false)
+      return
+    }
     // Cargar tours y datos de página en paralelo, filtrados por userId
     Promise.all([
       fetch(`${API}/api/tours/public/${company.userId}`).then(r => r.json()),
@@ -470,11 +546,22 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
   const [popup, setPopup] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
+  const DEMO_TOUR_IMG = 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=600&q=80'
+  const DEMO_TOUR_IMG2 = 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80'
+  const DEMO_TOUR_IMG3 = 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=600&q=80'
+  const DEMO_EMPRESAS = [
+    { id: 'demo-t1', userId: null, name: 'Aventura Villarrica', description: 'Vive la adrenalina con nuestros tours al volcán, rafting en el río Trancura y excursiones en kayak por el lago. Guías certificados y equipamiento de primera.', images: [DEMO_TOUR_IMG, DEMO_TOUR_IMG2, DEMO_TOUR_IMG3], imagesCrop: [], subcategories: ['Aventura', 'Volcanes', 'Rafting'], direccion: 'Av. Pedro de Valdivia 500', horarios: [{ dia: 'Lunes a Domingo', hora: '08:00 - 20:00' }], telefono: '+56 9 8765 4321', whatsapp: '+56 9 8765 4321', correo: 'info@aventuravillarrica.cl', facebook: '', instagram: '', planId: 3 },
+    { id: 'demo-t2', userId: null, name: 'Termas del Sur', description: 'Relájate en nuestras piscinas termales con vista al volcán. Circuito de aguas calientes, frías y temperadas. Masajes y spa disponibles todo el año.', images: [DEMO_TOUR_IMG2, DEMO_TOUR_IMG3, DEMO_TOUR_IMG], imagesCrop: [], subcategories: ['Termas', 'Spa', 'Relax'], direccion: 'Camino Villarrica-Pucón Km 15', horarios: [{ dia: 'Lunes a Domingo', hora: '09:00 - 21:00' }], telefono: '+56 9 1234 5678', whatsapp: '+56 9 1234 5678', correo: 'reservas@termasdelsur.cl', facebook: '', instagram: '', planId: 3 },
+    { id: 'demo-t3', userId: null, name: 'Cabalgatas Mapuche', description: 'Recorre los senderos ancestrales a caballo con guías de la comunidad mapuche. Paseos de medio día y día completo por bosques nativos y miradores.', images: [DEMO_TOUR_IMG3, DEMO_TOUR_IMG, DEMO_TOUR_IMG2], imagesCrop: [], subcategories: ['Cabalgatas', 'Naturaleza', 'Cultural'], direccion: 'Comunidad Huilio, Villarrica', horarios: [{ dia: 'Martes a Domingo', hora: '09:00 - 18:00' }], telefono: '+56 9 5555 1234', whatsapp: '+56 9 5555 1234', correo: '', facebook: '', instagram: '', planId: 1 },
+    { id: 'demo-t4', userId: null, name: 'Kayak Villarrica', description: 'Explora el lago Villarrica en kayak. Travesías guiadas al atardecer, clases para principiantes y arriendo de equipos. La mejor vista desde el agua.', images: [DEMO_TOUR_IMG, DEMO_TOUR_IMG3, DEMO_TOUR_IMG2], imagesCrop: [], subcategories: ['Acuático', 'Aventura', 'Familiar'], direccion: 'Costanera s/n, Villarrica', horarios: [{ dia: 'Lunes a Sábado', hora: '10:00 - 19:00' }], telefono: '+56 9 7777 8888', whatsapp: '+56 9 7777 8888', correo: 'hola@kayakvillarrica.cl', facebook: '', instagram: '', planId: 3 },
+    { id: 'demo-t5', userId: null, name: 'Trekking Araucanía', description: 'Rutas de trekking por parques nacionales y reservas. Senderos para todos los niveles con vistas impresionantes al volcán y los lagos de la región.', images: [DEMO_TOUR_IMG2, DEMO_TOUR_IMG, DEMO_TOUR_IMG3], imagesCrop: [], subcategories: ['Trekking', 'Naturaleza', 'Fotografía'], direccion: 'General Korner 234, Villarrica', horarios: [{ dia: 'Lunes a Domingo', hora: '07:00 - 17:00' }], telefono: '+56 9 3333 4444', whatsapp: '+56 9 3333 4444', correo: 'contacto@trekkingaraucania.cl', facebook: '', instagram: '', planId: 1 },
+  ]
+
   useEffect(() => {
     fetch(`${API}/api/portada/public`)
       .then(r => r.json())
       .then(data => {
-        if (data.portadas) {
+        if (data.portadas && data.portadas.length > 0) {
           const mapped = data.portadas.map(p => ({
             id: p.id,
             userId: p.user_id,
@@ -493,9 +580,11 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
             planId: p.plan_id || 1,
           }))
           setEmpresas(mapped)
+        } else {
+          setEmpresas(DEMO_EMPRESAS)
         }
       })
-      .catch(() => setErrorMsg('Error al cargar las empresas. Intenta recargar la página.'))
+      .catch(() => setEmpresas(DEMO_EMPRESAS))
       .finally(() => setLoading(false))
   }, [])
 
@@ -593,7 +682,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
         {filteredCompanies.map((company) => (
           <div
             key={company.id}
-            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-center"
+            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-stretch min-h-[195px] sm:min-h-0"
           >
             <div className="flex-1 flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
@@ -607,8 +696,8 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
                 >schedule</span>
               </div>
               <h3 className="text-sm sm:text-base md:text-lg font-black text-primary mb-1">{company.name}</h3>
-              <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed mb-2 sm:mb-3 line-clamp-2 sm:line-clamp-3">{company.description}</p>
-              <div className="flex items-center gap-2 sm:gap-3">
+              <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed mb-2 sm:mb-3 line-clamp-5 sm:line-clamp-3">{company.description}</p>
+              <div className="mt-auto flex items-center gap-2 sm:gap-3">
                 {company.planId >= 3 && (
                   <button
                     onClick={() => {
@@ -616,7 +705,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
                       setSelectedCompany(company)
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
-                    className="bg-primary hover:bg-primary-light text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5"
+                    className="bg-primary hover:bg-primary-light text-white px-5 sm:px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <span className="material-symbols-outlined text-sm">visibility</span>
                     Ver más
@@ -642,16 +731,14 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
 
             <div className="shrink-0 flex flex-col items-center">
               <CardFan images={company.images} crops={company.imagesCrop} />
-              {company.subcategories && company.subcategories.length > 0 && (
-                <div className="flex flex-wrap justify-center items-center gap-x-1 gap-y-0.5 -mt-1 sm:-mt-2 max-w-[160px] sm:max-w-[200px] md:max-w-[250px]">
-                  {company.subcategories.map((cat, i) => (
-                    <span key={cat} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-[6px] text-slate-300">●</span>}
-                      <span className="text-[9px] text-slate-400 font-medium">{cat}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
+              <div className="min-h-[28px] sm:min-h-0 flex flex-wrap justify-center items-start content-start gap-x-1 gap-y-0.5 -mt-1 sm:-mt-2 max-w-[120px] sm:max-w-[200px] md:max-w-[250px]">
+                {company.subcategories && company.subcategories.length > 0 && company.subcategories.map((cat, i) => (
+                  <span key={cat} className="flex items-center gap-0.5 sm:gap-1">
+                    {i > 0 && <span className="text-[5px] sm:text-[6px] text-slate-300">●</span>}
+                    <span className="text-[10px] sm:text-[9px] text-slate-400 font-medium">{cat}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         ))}
