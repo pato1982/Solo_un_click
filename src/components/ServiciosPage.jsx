@@ -236,10 +236,31 @@ function FloatingButton({ label, icon, onClick }) {
 }
 
 const DEMO_SERVICIOS = [
-  { user_id: 'd1', name: 'Electricidad Villarrica', description: 'Servicios eléctricos profesionales para hogares y empresas. Instalaciones, reparaciones y mantenciones con más de 10 años de experiencia.', images: [], categorias: ['Construcción'], direccion: 'Av. Pedro de Valdivia 456', whatsapp: '56912345678' },
-  { user_id: 'd2', name: 'Gasfiter Express', description: 'Soluciones rápidas en gasfitería. Destapes, instalaciones sanitarias, calefones y termos. Atención de emergencia 24/7.', images: [], categorias: ['Construcción'], direccion: 'General Korner 234', telefono: '56945123456' },
-  { user_id: 'd3', name: 'Clases de Inglés Villarrica', description: 'Profesor certificado TOEFL. Clases particulares y grupales para todos los niveles. Preparación de exámenes internacionales.', images: [], categorias: ['Educación'], direccion: 'Camilo Henríquez 789' },
-  { user_id: 'd4', name: 'Peluquería Estilo', description: 'Cortes, tinturas, tratamientos capilares y más. Atención personalizada con productos de primera calidad.', images: [], categorias: ['Belleza y Salud'], direccion: 'Anfión Muñoz 321', whatsapp: '56987654321' },
+  { user_id: 'd1', name: 'Electricidad Villarrica', description: 'Servicios eléctricos profesionales para hogares y empresas. Instalaciones, reparaciones y mantenciones con más de 10 años de experiencia en el rubro. Trabajamos con materiales certificados y garantía en todos nuestros trabajos.', images: [
+    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80',
+    'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80',
+    'https://images.unsplash.com/photo-1513828583688-c52646db42da?w=400&q=80',
+    'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&q=80',
+    'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&q=80',
+  ], categorias: ['Construcción'], direccion: 'Av. Pedro de Valdivia 456', whatsapp: '56912345678', planId: 2, horarios: [{ dia: 'Lunes', activo: true, apertura: '08:00', cierre: '18:00' }, { dia: 'Sábado', activo: true, apertura: '09:00', cierre: '14:00' }, { dia: 'Domingo', activo: false }] },
+  { user_id: 'd2', name: 'Gasfiter Express', description: 'Soluciones rápidas en gasfitería. Destapes, instalaciones sanitarias, calefones y termos. Atención de emergencia 24/7 en toda la comuna de Villarrica.', images: [
+    'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400&q=80',
+    'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80',
+    'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&q=80',
+  ], categorias: ['Construcción'], direccion: 'General Korner 234', telefono: '56945123456', planId: 1, horarios: [{ dia: 'Lunes', activo: true, apertura: '08:00', cierre: '19:00' }] },
+  { user_id: 'd3', name: 'Clases de Inglés Villarrica', description: 'Profesor certificado TOEFL. Clases particulares y grupales para todos los niveles. Preparación de exámenes internacionales. Metodología comunicativa y personalizada.', images: [
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80',
+    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400&q=80',
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80',
+    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&q=80',
+  ], categorias: ['Educación'], direccion: 'Camilo Henríquez 789', planId: 2 },
+  { user_id: 'd4', name: 'Peluquería Estilo', description: 'Cortes, tinturas, tratamientos capilares y más. Atención personalizada con productos de primera calidad. Más de 15 años embelleciendo a Villarrica.', images: [
+    'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=80',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80',
+    'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=400&q=80',
+    'https://images.unsplash.com/photo-1559599101-f09722fb4948?w=400&q=80',
+    'https://images.unsplash.com/photo-1521590832167-7228fcb555e4?w=400&q=80',
+  ], categorias: ['Belleza y Salud'], direccion: 'Anfión Muñoz 321', whatsapp: '56987654321', planId: 1 },
 ]
 
 export default function ServiciosPage({ activeFilter, onClearFilter, onOpenStore }) {
@@ -348,10 +369,10 @@ export default function ServiciosPage({ activeFilter, onClearFilter, onOpenStore
                     Ver más
                   </button>
                 )}
-                {empresa.images.length > 0 && empresa.planId < 2 && (
+                {empresa.images.length > 0 && (
                   <button
                     onClick={() => setSelectedEmpresa(empresa)}
-                    className="bg-primary hover:bg-primary-light text-white px-5 sm:px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5 whitespace-nowrap"
+                    className="border border-primary/20 text-primary px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-primary/5 transition-all flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <span className="material-symbols-outlined text-sm">photo_library</span>
                     Ver fotos
