@@ -273,9 +273,9 @@ export default function ProgramadorLocales() {
               </button>
             </div>
 
-            <div className="p-6 flex gap-6">
-              {/* Columna izquierda: imagen */}
-              <div className="shrink-0">
+            <div className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 max-h-[70vh] overflow-y-auto">
+              {/* Imagen */}
+              <div className="shrink-0 mx-auto sm:mx-0">
                 {imagePreview ? (
                   <ImageZoomPan
                     src={imagePreview}

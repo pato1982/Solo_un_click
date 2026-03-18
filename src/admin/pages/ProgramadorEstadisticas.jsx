@@ -65,7 +65,7 @@ export default function ProgramadorEstadisticas() {
       {/* KPIs Usuarios */}
       <div className="mb-6">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Usuarios registrados</h2>
-        <div className="grid grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
           <KpiCard label="Total registrados" value={kpis.total} color="text-emerald-400" />
           <KpiCard label="Plan Gratuito" value={kpis.general_gratis} color="text-slate-300" />
           <KpiCard label="Plan Normal" value={kpis.general_normal} color="text-blue-400" />
@@ -78,7 +78,7 @@ export default function ProgramadorEstadisticas() {
       {/* KPIs Visitas */}
       <div className="mb-6">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Visitas al sitio</h2>
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 sm:gap-3">
           <KpiCard label="Visitas hoy" value={visitas.hoy} color="text-green-400" />
           <KpiCard label="Promedio diario" value={visitas.promedio_diario} color="text-emerald-400" />
           <KpiCard label="Visitas semanales" value={visitas.semanales} color="text-blue-400" />

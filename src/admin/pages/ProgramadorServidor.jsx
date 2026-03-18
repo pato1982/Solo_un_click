@@ -102,7 +102,7 @@ export default function ProgramadorServidor() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {/* DISCO */}
         <div className="bg-slate-900 border border-slate-700 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-5">
