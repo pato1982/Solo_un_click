@@ -66,6 +66,25 @@
 - `handleSearchSelect` redirige a página dedicada según tipo
 - `showInicio` y `onClose` sidebar incluyen arriendos y servicios
 
+### StorePage - Carruseles distribuidos (Opción B)
+- **Plan Normal (1 carrusel):**
+  - Múltiples secciones: carrusel como separador entre secciones
+  - 1 sección con 1 fila: carrusel al final
+  - 1 sección con +1 fila: carrusel después de la primera fila
+- **Plan Premium (3 carruseles + banner):**
+  - Banner publicitario siempre arriba
+  - Secciones ordenadas por tamaño (la más grande primero)
+  - Carruseles se insertan dentro de la sección más grande (después de fila 1 y fila 3)
+  - Carruseles sobrantes como separadores entre secciones
+  - Si aún sobran, van al cierre como broche final
+  - 1 sección chica (≤10): solo 1 carrusel al final
+  - 1 sección grande (50+): C1 después fila 1, C2 después fila 3, C3 cierre
+
+### ArriendosPage - Iconos de acción en tarjetas
+- Icono ojo (visibility): abre popup/modal con detalle completo del arriendo
+- Icono tienda (storefront): visible solo para plan Normal/Premium (2+), navega a la StorePage
+- Precio e iconos en la misma línea inferior de la tarjeta
+
 ### Archivos nuevos
 - `src/components/ArriendosPage.jsx`
 - `src/components/ServiciosPage.jsx`
@@ -74,9 +93,9 @@
 ### Archivos modificados
 - `src/components/Header.jsx` — hamburguesa mobile
 - `src/components/Sidebar.jsx` — ResizeObserver, mobileClosed por activeNav/openKey
-- `src/components/StorePage.jsx` — agrupación por tipo, límites plan, mapListing completo
+- `src/components/StorePage.jsx` — agrupación por tipo, límites plan, mapListing completo, carruseles distribuidos
 - `src/components/ProductCard.jsx` — object-cover, fix precio 0
-- `src/admin/pages/AdminNegocio.jsx` — textarea descripción
+- `src/admin/pages/AdminNegocio.jsx` — textarea descripción, margen botón guardar
 - `backend/routes/business.js` — campo descripcion
 - `backend/server.js` — ruta servicios
 - `src/App.jsx` — routing arriendos/servicios, toggleNav openSidebar
