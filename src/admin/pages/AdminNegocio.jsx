@@ -15,6 +15,7 @@ const MAX_SLOGAN_WORDS = 10
 const emptyForm = {
   nombre_negocio: '',
   slogan: '',
+  descripcion: '',
   direccion: '',
   whatsapp: '',
   telefono: '',
@@ -50,6 +51,7 @@ export default function AdminNegocio() {
           setForm({
             nombre_negocio: data.business.nombre_negocio || '',
             slogan: data.business.slogan || '',
+            descripcion: data.business.descripcion || '',
             direccion: data.business.direccion || '',
             whatsapp: data.business.whatsapp || '',
             telefono: data.business.telefono || '',
@@ -169,6 +171,17 @@ export default function AdminNegocio() {
                   />
                 </div>
               )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Descripción del negocio</label>
+              <textarea
+                value={form.descripcion}
+                onChange={(e) => update('descripcion', e.target.value)}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none resize-none"
+                placeholder="Describe tu negocio, qué ofreces, tu experiencia..."
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

@@ -15,7 +15,6 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
   const [results, setResults] = useState([])
   const [showResults, setShowResults] = useState(false)
   const searchRef = useRef(null)
-
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
@@ -46,7 +45,6 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
     setQuery('')
     setResults([])
     setShowResults(false)
-    setMobileMenuOpen(false)
     if (onSearchSelect) onSearchSelect(item)
   }
 
@@ -139,7 +137,7 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           {navItems.map((item) => (
             <button
               key={item.label}
-              onClick={() => toggleNav(item.label.toLowerCase())}
+              onClick={() => toggleNav(item.label.toLowerCase(), false)}
               className={`shrink-0 flex items-center gap-0.5 py-1 px-1.5 rounded-full text-[10px] font-normal tracking-wide transition-colors whitespace-nowrap ${
                 activeNav === item.label.toLowerCase() || (item.label === 'Negocios' && activeNav === 'locales')
                   ? 'bg-accent/20 text-accent font-medium'
@@ -151,10 +149,17 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
             </button>
           ))}
         </div>
-        {/* Buscador + Sesión mobile - misma línea */}
-        <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/10">
-          {/* Buscador izquierda */}
-          <div className="relative group w-[55%] shrink-0">
+        {/* Segunda fila: Hamburguesa + Buscador + Sesión + Planes */}
+        <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-white/10">
+          {/* Botón hamburguesa — abre sidebar de categorías */}
+          <button
+            onClick={() => { if (activeNav) toggleNav(activeNav) }}
+            className="shrink-0 p-0.5 rounded-md hover:bg-white/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-xl text-white/70">menu</span>
+          </button>
+          {/* Buscador (angosto) */}
+          <div className="relative group flex-1 min-w-0">
             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10">
               <span className="material-symbols-outlined text-slate-400 group-focus-within:text-primary text-xs">search</span>
             </div>
@@ -189,8 +194,8 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
               </div>
             )}
           </div>
-          {/* Iconos sesión + Planes derecha */}
-          <div className="flex items-center gap-1 shrink-0 ml-auto">
+          {/* Iconos sesión + Planes */}
+          <div className="flex items-center gap-1 shrink-0">
             {user ? (
               <>
                 <a href="/admin" className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">

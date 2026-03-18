@@ -11,6 +11,8 @@ import Footer from './components/Footer'
 import SectionPage from './components/SectionPage'
 import StoresPage from './components/StoresPage'
 import EventsPage from './components/EventsPage'
+import ArriendosPage from './components/ArriendosPage'
+import ServiciosPage from './components/ServiciosPage'
 import StorePage, { StoreFooter } from './components/StorePage'
 // import { sections as staticSections } from './data/products'
 
@@ -297,20 +299,19 @@ export default function App() {
     setUser(null)
   }
 
-  const toggleNav = (nav) => {
+  const toggleNav = (nav, openSidebar = true) => {
     if (nav === 'negocios') {
       if (currentPage === 'locales') {
-        // Ya estamos en locales: reabrir sidebar si estaba cerrado
-        setSidebarOpenKey(k => k + 1)
+        if (openSidebar) setSidebarOpenKey(k => k + 1)
         return
       }
       handleViewAllStores()
-      setSidebarOpenKey(k => k + 1)
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
       return
     }
     if (nav === 'turismo') {
       if (currentPage === 'turismo') {
-        setSidebarOpenKey(k => k + 1)
+        if (openSidebar) setSidebarOpenKey(k => k + 1)
         return
       }
       setCurrentPage('turismo')
@@ -318,28 +319,45 @@ export default function App() {
       setActiveSection(null)
       setActiveFilter(null)
       setTurismoResetKey(k => k + 1)
-      setSidebarOpenKey(k => k + 1)
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    // Productos, servicios, arriendos
-    if (currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos') {
+    if (nav === 'arriendos') {
+      if (currentPage === 'arriendos') {
+        if (openSidebar) setSidebarOpenKey(k => k + 1)
+        return
+      }
+      handleViewAllArriendos()
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
+      return
+    }
+    if (nav === 'servicios') {
+      if (currentPage === 'servicios') {
+        if (openSidebar) setSidebarOpenKey(k => k + 1)
+        return
+      }
+      handleViewAllServicios()
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
+      return
+    }
+    // Productos
+    if (currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || currentPage === 'arriendos' || currentPage === 'servicios') {
       setCurrentPage(null)
       setActiveStore(null)
       setStoreMapMode(false)
       setActiveSidebar(nav)
       setActiveFilter(null)
-      setSidebarOpenKey(k => k + 1)
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       if (activeSidebar === nav) {
-        // Mismo li: reabrir sidebar si estaba cerrado
-        setSidebarOpenKey(k => k + 1)
+        if (openSidebar) setSidebarOpenKey(k => k + 1)
         return
       }
       setActiveSidebar(nav)
       setActiveFilter(null)
-      setSidebarOpenKey(k => k + 1)
+      if (openSidebar) setSidebarOpenKey(k => k + 1)
     }
   }
 
@@ -430,6 +448,22 @@ export default function App() {
     setActiveFilter(null)
   }
 
+  const handleViewAllArriendos = () => {
+    window.scrollTo({ top: 0 })
+    setCurrentPage('arriendos')
+    setActiveSidebar('arriendos')
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
+  const handleViewAllServicios = () => {
+    window.scrollTo({ top: 0 })
+    setCurrentPage('servicios')
+    setActiveSidebar('servicios')
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
   const handleSearchSelect = (item) => {
     window.scrollTo({ top: 0 })
     setStoreMapMode(false)
@@ -447,8 +481,16 @@ export default function App() {
       setCurrentPage('eventos')
       setActiveSidebar('eventos')
       setActiveFilter(item.label)
+    } else if (item.nav === 'arriendos') {
+      setCurrentPage('arriendos')
+      setActiveSidebar('arriendos')
+      setActiveFilter(item.label)
+    } else if (item.nav === 'servicios') {
+      setCurrentPage('servicios')
+      setActiveSidebar('servicios')
+      setActiveFilter(item.label)
     } else {
-      // productos, servicios, arriendos
+      // productos
       setCurrentPage(null)
       setActiveSidebar(item.nav)
       if (item.type === 'category' && item.subcategories) {
@@ -463,7 +505,7 @@ export default function App() {
   const activeNav = activeSidebar
 
   // Determinar si mostrar botón Inicio
-  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || activeSection !== null || activeFilter !== null || activeStore !== null || activeSidebar !== null
+  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || currentPage === 'arriendos' || currentPage === 'servicios' || activeSection !== null || activeFilter !== null || activeStore !== null || activeSidebar !== null
 
   if (activeStore) {
     return (
@@ -562,7 +604,7 @@ export default function App() {
       <div className="w-full flex flex-1 flex-col md:flex-row relative" style={sidebarH > 0 ? { minHeight: sidebarH } : undefined}>
         <Sidebar
           activeNav={activeSidebar}
-          onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : null)}
+          onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : currentPage === 'arriendos' ? 'arriendos' : currentPage === 'servicios' ? 'servicios' : null)}
           onGoHome={goHome}
           showInicio={showInicio}
           onFilterSelect={handleFilterSelect}
@@ -579,7 +621,19 @@ export default function App() {
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">
           {/* <Breadcrumbs /> */}
 
-          {currentPage === 'eventos' ? (
+          {currentPage === 'servicios' ? (
+            <ServiciosPage
+              activeFilter={activeFilter}
+              onClearFilter={() => setActiveFilter(null)}
+            />
+          ) : currentPage === 'arriendos' ? (
+            <ArriendosPage
+              sidebarOpen={!!activeSidebar}
+              onBack={goHome}
+              activeFilter={activeFilter}
+              onOpenStore={handleOpenStore}
+            />
+          ) : currentPage === 'eventos' ? (
             <EventsPage
               sidebarOpen={!!activeSidebar}
               onBack={goHome}

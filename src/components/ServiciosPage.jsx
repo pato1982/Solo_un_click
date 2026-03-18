@@ -1,0 +1,407 @@
+import { useState, useEffect } from 'react'
+
+const API = import.meta.env.VITE_API || ''
+
+// Fan de 4 tarjetas
+const fanAngles4 = [
+  { rotate: -18, translateX: -60 },
+  { rotate: -6, translateX: -20 },
+  { rotate: 6, translateX: 20 },
+  { rotate: 18, translateX: 60 },
+]
+const fanAngles4Mobile = [
+  { rotate: -14, translateX: -36 },
+  { rotate: -5, translateX: -12 },
+  { rotate: 5, translateX: 12 },
+  { rotate: 14, translateX: 36 },
+]
+
+function CardFan4({ images }) {
+  if (!images || images.length === 0) {
+    return (
+      <div className="relative shrink-0 flex items-center justify-center w-[120px] h-[100px] sm:w-[200px] sm:h-[150px] md:w-[260px] md:h-[180px]">
+        <span className="material-symbols-outlined text-5xl text-slate-200">image</span>
+      </div>
+    )
+  }
+  const imgs = images.slice(0, 4)
+
+  const renderFan = (angles, containerClass, cardClass) => (
+    <div className={`relative shrink-0 ${containerClass}`}>
+      {imgs.map((img, i) => (
+        <div
+          key={i}
+          className={`absolute ${cardClass} rounded-lg sm:rounded-xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20`}
+          style={{
+            transform: `translateX(calc(-50% + ${angles[i].translateX}px)) rotate(${angles[i].rotate}deg)`,
+            transformOrigin: 'bottom center',
+            left: '50%',
+            top: '0px',
+            zIndex: i >= 1 ? 12 : 10,
+          }}
+        >
+          <img src={img} alt="Servicio" className="w-full h-full object-cover" />
+        </div>
+      ))}
+    </div>
+  )
+
+  return (
+    <>
+      <div className="sm:hidden">{renderFan(fanAngles4Mobile, 'w-[130px] h-[100px]', 'w-12 h-[70px]')}</div>
+      <div className="hidden sm:block md:hidden">{renderFan(fanAngles4, 'w-[210px] h-[150px]', 'w-[70px] h-[105px]')}</div>
+      <div className="hidden md:block">{renderFan(fanAngles4, 'w-[260px] h-[180px]', 'w-24 h-[140px]')}</div>
+    </>
+  )
+}
+
+function GalleryPopup({ empresa, onClose }) {
+  const [current, setCurrent] = useState(0)
+  const images = empresa.images || []
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+          <div>
+            <h3 className="text-sm font-black text-primary">{empresa.name}</h3>
+            {empresa.categorias && empresa.categorias.length > 0 && (
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                {empresa.categorias.join(' · ')}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+            <span className="material-symbols-outlined text-slate-500 text-sm">close</span>
+          </button>
+        </div>
+
+        {/* Galería */}
+        {images.length > 0 && (
+          <div className="relative bg-slate-100 shrink-0">
+            <img
+              src={images[current]}
+              alt={`Imagen ${current + 1}`}
+              className="w-full h-48 sm:h-64 md:h-72 object-cover"
+            />
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrent((current - 1 + images.length) % images.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm text-slate-700">chevron_left</span>
+                </button>
+                <button
+                  onClick={() => setCurrent((current + 1) % images.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm text-slate-700">chevron_right</span>
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrent(i)}
+                      className={`w-2 h-2 rounded-full transition-all ${i === current ? 'bg-white scale-125' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Thumbnails */}
+        {images.length > 1 && (
+          <div className="flex gap-1.5 px-4 py-2 overflow-x-auto shrink-0">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`shrink-0 w-14 h-10 rounded-lg overflow-hidden border-2 transition-all ${i === current ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'}`}
+              >
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Descripción completa */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
+          <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{empresa.description}</p>
+        </div>
+
+        {/* Contacto */}
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 shrink-0">
+          <div className="flex items-center gap-1.5">
+            {empresa.facebook && (
+              <a href={empresa.facebook} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-lg bg-[#1877F2]/10 hover:bg-[#1877F2] hover:text-white text-[#1877F2] flex items-center justify-center transition-all" title="Facebook">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+            )}
+            {empresa.instagram && (
+              <a href={empresa.instagram.startsWith('http') ? empresa.instagram : `https://instagram.com/${empresa.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-lg bg-pink-500/10 hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 hover:text-white text-pink-500 flex items-center justify-center transition-all" title="Instagram">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+              </a>
+            )}
+          </div>
+          {empresa.direccion && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-400">
+              <span className="material-symbols-outlined text-xs">location_on</span>
+              {empresa.direccion}
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            {empresa.whatsapp && (
+              <a href={`https://wa.me/${empresa.whatsapp.replace(/[\s+]/g, '')}`} target="_blank" rel="noopener noreferrer" className="h-8 px-3 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center gap-1.5 transition-all text-xs font-bold">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                Contactar
+              </a>
+            )}
+            {!empresa.whatsapp && empresa.telefono && (
+              <a href={`tel:${empresa.telefono}`} className="h-8 px-3 rounded-lg bg-primary hover:bg-primary/90 text-white flex items-center gap-1.5 transition-all text-xs font-bold">
+                <span className="material-symbols-outlined text-sm">call</span>
+                Llamar
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Horario popup (reutilizable)
+function HorarioPopup({ horarios, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30"></div>
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-xs w-full p-4" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-2 right-2 h-5 w-5 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200">
+          <span className="material-symbols-outlined text-slate-500 text-xs">close</span>
+        </button>
+        <h4 className="text-xs font-bold text-primary mb-2 flex items-center gap-1">
+          <span className="material-symbols-outlined text-sm">schedule</span>
+          Horarios
+        </h4>
+        <div className="space-y-1">
+          {horarios.map((h, i) => (
+            <div key={i} className="flex justify-between text-[11px]">
+              <span className={h.activo ? 'font-semibold text-slate-700' : 'text-slate-400'}>{h.dia}</span>
+              <span className={h.activo ? 'text-slate-600' : 'text-slate-400 italic'}>{h.activo ? `${h.apertura} - ${h.cierre}` : 'Cerrado'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const DEMO_SERVICIOS = [
+  { user_id: 'd1', name: 'Electricidad Villarrica', description: 'Servicios eléctricos profesionales para hogares y empresas. Instalaciones, reparaciones y mantenciones con más de 10 años de experiencia.', images: [], categorias: ['Construcción'], direccion: 'Av. Pedro de Valdivia 456', whatsapp: '56912345678' },
+  { user_id: 'd2', name: 'Gasfiter Express', description: 'Soluciones rápidas en gasfitería. Destapes, instalaciones sanitarias, calefones y termos. Atención de emergencia 24/7.', images: [], categorias: ['Construcción'], direccion: 'General Korner 234', telefono: '56945123456' },
+  { user_id: 'd3', name: 'Clases de Inglés Villarrica', description: 'Profesor certificado TOEFL. Clases particulares y grupales para todos los niveles. Preparación de exámenes internacionales.', images: [], categorias: ['Educación'], direccion: 'Camilo Henríquez 789' },
+  { user_id: 'd4', name: 'Peluquería Estilo', description: 'Cortes, tinturas, tratamientos capilares y más. Atención personalizada con productos de primera calidad.', images: [], categorias: ['Belleza y Salud'], direccion: 'Anfión Muñoz 321', whatsapp: '56987654321' },
+]
+
+export default function ServiciosPage({ activeFilter, onClearFilter }) {
+  const [empresas, setEmpresas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedEmpresa, setSelectedEmpresa] = useState(null)
+  const [horarioPopup, setHorarioPopup] = useState(null)
+  const [direccionPopup, setDireccionPopup] = useState(null)
+
+  useEffect(() => {
+    fetch(`${API}/api/servicios/public`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.servicios && data.servicios.length > 0) {
+          const mapped = data.servicios.map(s => ({
+            user_id: s.user_id,
+            name: s.nombre_negocio,
+            description: s.descripcion || '',
+            images: s.imagenes.map(img => `${API}${img}`),
+            categorias: s.categorias || [],
+            direccion: s.direccion || '',
+            whatsapp: s.whatsapp || '',
+            telefono: s.telefono || '',
+            correo: s.correo || '',
+            facebook: s.facebook || '',
+            instagram: s.instagram || '',
+            horarios: s.horarios || [],
+            planId: s.plan_id,
+          }))
+          setEmpresas(mapped)
+        } else {
+          setEmpresas(DEMO_SERVICIOS)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setEmpresas(DEMO_SERVICIOS)
+        setLoading(false)
+      })
+  }, [])
+
+  const filtered = activeFilter
+    ? empresas.filter(e => e.categorias.includes(activeFilter))
+    : empresas
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">
+          {activeFilter || 'Servicios en Villarrica'}
+        </h2>
+        <span className="text-[9px] sm:text-[10px] text-slate-400">
+          {filtered.length} {filtered.length === 1 ? 'empresa' : 'empresas'}
+        </span>
+      </div>
+
+      {activeFilter && (
+        <button
+          onClick={onClearFilter}
+          className="mb-4 flex items-center gap-1 text-[10px] text-primary hover:text-accent font-bold transition-colors"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+          Limpiar filtro
+        </button>
+      )}
+
+      {/* Lista de empresas */}
+      <div className="flex flex-col gap-4 sm:gap-5">
+        {filtered.map((empresa) => (
+          <div key={empresa.user_id} className="bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 sm:p-4">
+            <div className="flex gap-3 sm:gap-4">
+              {/* Info izquierda */}
+              <div className="flex-1 min-w-0 flex flex-col">
+                <h3 className="text-xs sm:text-sm font-black text-primary mb-0.5 sm:mb-1 line-clamp-1">{empresa.name}</h3>
+
+                {/* Categorías */}
+                {empresa.categorias.length > 0 && (
+                  <p className="text-[9px] sm:text-[10px] text-slate-400 mb-1 sm:mb-2">
+                    {empresa.categorias.join(' · ')}
+                  </p>
+                )}
+
+                {/* Descripción resumida - 3 líneas */}
+                <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed line-clamp-3 mb-2 sm:mb-3 flex-1">
+                  {empresa.description || 'Sin descripción'}
+                </p>
+
+                {/* Botones */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {empresa.images.length > 0 && (
+                    <button
+                      onClick={() => setSelectedEmpresa(empresa)}
+                      className="flex items-center gap-1 bg-primary/10 hover:bg-primary hover:text-white text-primary px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold transition-all"
+                    >
+                      <span className="material-symbols-outlined text-xs sm:text-sm">photo_library</span>
+                      Ver fotos ({empresa.images.length})
+                    </button>
+                  )}
+
+                  {empresa.direccion && (
+                    <button
+                      onClick={() => setDireccionPopup(empresa.direccion)}
+                      className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-slate-400 hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-xs">location_on</span>
+                      <span className="hidden sm:inline">{empresa.direccion}</span>
+                      <span className="sm:hidden">Ubicación</span>
+                    </button>
+                  )}
+
+                  {empresa.horarios && empresa.horarios.length > 0 && (
+                    <button
+                      onClick={() => setHorarioPopup(empresa.horarios)}
+                      className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-slate-400 hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-xs">schedule</span>
+                      Horarios
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* CardFan derecha + contacto */}
+              <div className="shrink-0 flex flex-col items-center gap-2">
+                <CardFan4 images={empresa.images} />
+
+                {/* Botón contacto */}
+                {empresa.whatsapp ? (
+                  <a
+                    href={`https://wa.me/${empresa.whatsapp.replace(/[\s+]/g, '')}?text=${encodeURIComponent(`Hola, me interesa su servicio: ${empresa.name}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold transition-all"
+                  >
+                    <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    Contactar
+                  </a>
+                ) : empresa.telefono ? (
+                  <a
+                    href={`tel:${empresa.telefono}`}
+                    className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold transition-all"
+                  >
+                    <span className="material-symbols-outlined text-xs">call</span>
+                    Llamar
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="text-center text-slate-400 text-xs mt-8">No hay servicios para mostrar.</p>
+      )}
+
+      {/* Popup galería */}
+      {selectedEmpresa && (
+        <GalleryPopup empresa={selectedEmpresa} onClose={() => setSelectedEmpresa(null)} />
+      )}
+
+      {/* Popup horarios */}
+      {horarioPopup && (
+        <HorarioPopup horarios={horarioPopup} onClose={() => setHorarioPopup(null)} />
+      )}
+
+      {/* Popup dirección */}
+      {direccionPopup && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={() => setDireccionPopup(null)}>
+          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-xs w-full p-5" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setDireccionPopup(null)} className="absolute top-2 right-2 h-5 w-5 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200">
+              <span className="material-symbols-outlined text-slate-500 text-xs">close</span>
+            </button>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xl">location_on</span>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ubicación</p>
+              <p className="text-sm font-bold text-slate-800 text-center select-all">{direccionPopup}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

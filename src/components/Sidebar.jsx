@@ -44,11 +44,16 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
   const [bottomOffset, setBottomOffset] = useState(0)
   const mobileRef = useRef(null)
 
-  // Medir header una vez al montar
+  // Medir header con ResizeObserver + recalcular al cambiar sección
   useEffect(() => {
     const headerEl = document.getElementById('main-header')
-    if (headerEl) setHeaderHeight(headerEl.offsetHeight + 8)
-  }, [])
+    if (!headerEl) return
+    const update = () => setHeaderHeight(headerEl.offsetHeight + 4)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(headerEl)
+    return () => ro.disconnect()
+  }, [activeNav])
 
   // Calcular bottom según visibilidad del footer - siempre activo mientras sidebar abierto
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
       const footerEl = document.getElementById('main-footer')
       if (footerEl) {
         const footerRect = footerEl.getBoundingClientRect()
-        const viewH = window.innerHeight
+        const viewH = window.visualViewport?.height ?? window.innerHeight
         if (footerRect.top < viewH) {
           setBottomOffset(viewH - footerRect.top + 8)
         } else {
@@ -71,16 +76,23 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     measure()
     window.addEventListener('scroll', measure, { passive: true })
     window.addEventListener('resize', measure)
+    window.visualViewport?.addEventListener('resize', measure)
     return () => {
       window.removeEventListener('scroll', measure)
       window.removeEventListener('resize', measure)
+      window.visualViewport?.removeEventListener('resize', measure)
     }
   }, [activeNav, mobileClosed])
 
-  // Reset mobileClosed cuando cambia la sección activa o se pide reabrir
+  // Cerrar sidebar mobile al cambiar de sección (nav item click)
+  useEffect(() => {
+    if (window.innerWidth < 1101) setMobileClosed(true)
+  }, [activeNav])
+
+  // Abrir sidebar solo cuando se aprieta hamburguesa (openKey cambia)
   useEffect(() => {
     setMobileClosed(false)
-  }, [activeNav, openKey])
+  }, [openKey])
 
   const handleMobileClose = () => {
     setMobileClosed(true)
