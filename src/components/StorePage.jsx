@@ -628,7 +628,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
           )}
           {filteredProducts.length > 0 ? (
             (() => {
-              // Agrupar por tipo si hay más de un tipo
+              // Agrupar por tipo
               const tipos = {}
               filteredProducts.forEach(p => {
                 const t = p.tipo || 'producto'
@@ -638,28 +638,59 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               const tipoKeys = Object.keys(tipos)
               const hasMixedTypes = tipoKeys.length > 1
 
-              // Separar carouseles por posición
+              // Carruseles disponibles según plan
               const carousel1 = carouselItems.filter(c => c.carousel_posicion === 1)
               const carousel2 = carouselItems.filter(c => c.carousel_posicion === 2)
               const carousel3 = carouselItems.filter(c => c.carousel_posicion === 3)
-              const hasCarousel1 = carousel1.length > 0 && store.plan_id >= 2
+              const hasC1 = carousel1.length > 0 && store.plan_id >= 2
+              const hasC2 = carousel2.length > 0 && store.plan_id >= 3
+              const hasC3 = carousel3.length > 0 && store.plan_id >= 3
+              const carousels = []
+              if (hasC1) carousels.push(carousel1)
+              if (hasC2) carousels.push(carousel2)
+              if (hasC3) carousels.push(carousel3)
 
               const TIPO_LABELS = { producto: 'Productos', servicio: 'Servicios', arriendo: 'Arriendos' }
               const TIPO_ICONS = { producto: 'inventory_2', servicio: 'work', arriendo: 'home' }
 
-              const renderCarousel = () => (
-                hasCarousel1 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />
+              const renderMarquee = (cItems) => (
+                <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={cItems} storeUserId={store.userId} />
               )
 
-              if (hasMixedTypes && !activeCat && !activeSub) {
-                // Múltiples tipos: carrusel entre cada sección
+              // Renderizar filas de una sección con carruseles intercalados
+              const renderSectionRows = (rows, availableCarousels) => {
                 const elements = []
-                tipoKeys.forEach((tipo, sIdx) => {
+                rows.forEach((row, idx) => {
+                  elements.push(
+                    <div key={`row-${idx}`}>
+                      <StoreCarousel title="" items={row} onOpenStore={onOpenStore} />
+                    </div>
+                  )
+                  // Insertar carrusel después de fila 1 y fila 3
+                  if (idx === 0 && availableCarousels.length > 0) {
+                    elements.push(<div key={`c-${idx}`}>{renderMarquee(availableCarousels.shift())}</div>)
+                  } else if (idx === 2 && availableCarousels.length > 0) {
+                    elements.push(<div key={`c-${idx}`}>{renderMarquee(availableCarousels.shift())}</div>)
+                  }
+                })
+                return elements
+              }
+
+              if (hasMixedTypes && !activeCat && !activeSub) {
+                // Múltiples tipos
+                // Ordenar secciones: la más grande primero (recibe carruseles internos)
+                const sortedKeys = [...tipoKeys].sort((a, b) => tipos[b].length - tipos[a].length)
+                const remainingCarousels = [...carousels]
+                const elements = []
+
+                sortedKeys.forEach((tipo, sIdx) => {
                   const items = tipos[tipo]
                   const rows = []
                   for (let i = 0; i < items.length; i += 10) {
                     rows.push(items.slice(i, i + 10))
                   }
+
+                  // Header de sección
                   elements.push(
                     <div key={tipo} className="mb-4">
                       <div className="flex items-center gap-2 mb-3">
@@ -668,18 +699,31 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                         <span className="text-[9px] text-slate-400">({items.length})</span>
                         <div className="flex-1 h-px bg-slate-200"></div>
                       </div>
-                      {rows.map((row, idx) => (
-                        <div key={idx}>
-                          <StoreCarousel title="" items={row} onOpenStore={onOpenStore} />
-                        </div>
-                      ))}
+                      {/* Si la sección tiene +1 fila, meter carruseles dentro */}
+                      {rows.length > 1 && remainingCarousels.length > 0
+                        ? renderSectionRows(rows, remainingCarousels)
+                        : rows.map((row, idx) => (
+                            <div key={idx}>
+                              <StoreCarousel title="" items={row} onOpenStore={onOpenStore} />
+                            </div>
+                          ))
+                      }
                     </div>
                   )
-                  // Carrusel entre secciones (no después de la última)
-                  if (sIdx < tipoKeys.length - 1 && hasCarousel1) {
-                    elements.push(<div key={`carousel-${sIdx}`}>{renderCarousel()}</div>)
+
+                  // Carrusel como separador entre secciones
+                  if (sIdx < sortedKeys.length - 1 && remainingCarousels.length > 0) {
+                    elements.push(<div key={`sep-${sIdx}`}>{renderMarquee(remainingCarousels.shift())}</div>)
                   }
                 })
+
+                // Si sobran carruseles, ponerlos al final
+                if (remainingCarousels.length > 0) {
+                  remainingCarousels.forEach((c, i) => {
+                    elements.push(<div key={`trail-${i}`}>{renderMarquee(c)}</div>)
+                  })
+                }
+
                 return elements
               }
 
@@ -688,34 +732,36 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               for (let i = 0; i < filteredProducts.length; i += 10) {
                 allRows.push(filteredProducts.slice(i, i + 10))
               }
+              const singleTitle = activeSub || activeCat || TIPO_LABELS[tipoKeys[0]] || 'Todos los productos'
+              const remainingCarousels = [...carousels]
 
               if (allRows.length === 1) {
                 // 1 fila: carrusel al final
                 return (
                   <>
-                    <StoreCarousel
-                      title={activeSub || activeCat || TIPO_LABELS[tipoKeys[0]] || 'Todos los productos'}
-                      items={allRows[0]}
-                      onOpenStore={onOpenStore}
-                    />
-                    {renderCarousel()}
+                    <StoreCarousel title={singleTitle} items={allRows[0]} onOpenStore={onOpenStore} />
+                    {remainingCarousels.length > 0 && renderMarquee(remainingCarousels[0])}
                   </>
                 )
               }
 
-              // Múltiples filas: carrusel después de la primera fila
-              return allRows.map((row, idx) => (
-                <div key={idx}>
-                  <StoreCarousel
-                    title={idx === 0 ? (activeSub || activeCat || TIPO_LABELS[tipoKeys[0]] || 'Todos los productos') : ''}
-                    items={row}
-                    onOpenStore={onOpenStore}
-                  />
-                  {idx === 0 && renderCarousel()}
-                  {idx === 2 && carousel2.length > 0 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
-                  {idx === 4 && carousel3.length > 0 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
-                </div>
-              ))
+              // Múltiples filas: carruseles después de fila 1, fila 3, y al cierre
+              return (
+                <>
+                  {allRows.map((row, idx) => (
+                    <div key={idx}>
+                      <StoreCarousel
+                        title={idx === 0 ? singleTitle : ''}
+                        items={row}
+                        onOpenStore={onOpenStore}
+                      />
+                      {idx === 0 && remainingCarousels.length > 0 && renderMarquee(remainingCarousels.shift())}
+                      {idx === 2 && remainingCarousels.length > 0 && renderMarquee(remainingCarousels.shift())}
+                    </div>
+                  ))}
+                  {remainingCarousels.length > 0 && renderMarquee(remainingCarousels.shift())}
+                </>
+              )
             })()
           ) : (
             <div className="text-center py-12 text-slate-400 text-sm">
