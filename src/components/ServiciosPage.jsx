@@ -63,7 +63,7 @@ function GalleryPopup({ empresa, onClose }) {
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       <div
-        className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -83,11 +83,11 @@ function GalleryPopup({ empresa, onClose }) {
 
         {/* Galería */}
         {images.length > 0 && (
-          <div className="relative bg-slate-100 shrink-0">
+          <div className="relative bg-slate-100 shrink-0 mx-4 mt-3 rounded-xl overflow-hidden">
             <img
               src={images[current]}
               alt={`Imagen ${current + 1}`}
-              className="w-full h-48 sm:h-64 md:h-72 object-cover"
+              className="w-full h-40 sm:h-48 object-cover"
             />
             {images.length > 1 && (
               <>
