@@ -616,27 +616,64 @@ export default function StorePage({ store, onBack, onOpenStore }) {
           )}
           {filteredProducts.length > 0 ? (
             (() => {
-              const rows = []
-              for (let i = 0; i < filteredProducts.length; i += 10) {
-                rows.push(filteredProducts.slice(i, i + 10))
-              }
+              // Agrupar por tipo si hay más de un tipo
+              const tipos = {}
+              filteredProducts.forEach(p => {
+                const t = p.tipo || 'producto'
+                if (!tipos[t]) tipos[t] = []
+                tipos[t].push(p)
+              })
+              const tipoKeys = Object.keys(tipos)
+              const hasMixedTypes = tipoKeys.length > 1
+
               // Separar carouseles por posición
               const carousel1 = carouselItems.filter(c => c.carousel_posicion === 1)
               const carousel2 = carouselItems.filter(c => c.carousel_posicion === 2)
               const carousel3 = carouselItems.filter(c => c.carousel_posicion === 3)
 
-              return rows.map((row, idx) => (
+              const TIPO_LABELS = { producto: 'Productos', servicio: 'Servicios', arriendo: 'Arriendos' }
+              const TIPO_ICONS = { producto: 'inventory_2', servicio: 'work', arriendo: 'home' }
+
+              if (hasMixedTypes && !activeCat && !activeSub) {
+                // Mostrar secciones separadas por tipo
+                return tipoKeys.map(tipo => {
+                  const items = tipos[tipo]
+                  const rows = []
+                  for (let i = 0; i < items.length; i += 10) {
+                    rows.push(items.slice(i, i + 10))
+                  }
+                  return (
+                    <div key={tipo} className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="material-symbols-outlined text-primary text-base">{TIPO_ICONS[tipo] || 'category'}</span>
+                        <h3 className="text-xs sm:text-sm font-black text-primary uppercase tracking-wide">{TIPO_LABELS[tipo] || tipo}</h3>
+                        <span className="text-[9px] text-slate-400">({items.length})</span>
+                        <div className="flex-1 h-px bg-slate-200"></div>
+                      </div>
+                      {rows.map((row, idx) => (
+                        <div key={idx}>
+                          <StoreCarousel title="" items={row} onOpenStore={onOpenStore} />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })
+              }
+
+              // Vista normal (un solo tipo o con filtro activo)
+              const allRows = []
+              for (let i = 0; i < filteredProducts.length; i += 10) {
+                allRows.push(filteredProducts.slice(i, i + 10))
+              }
+              return allRows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
                     title={idx === 0 ? (activeSub || activeCat || 'Todos los productos') : ''}
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {/* Carrusel 1: visible con 12+ productos y plan >= 2 */}
                   {idx === 1 && carousel1.length > 0 && storeProducts.length >= 12 && store.plan_id >= 2 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
-                  {/* Carrusel 2: visible con 32+ productos y plan >= 3 */}
                   {idx === 3 && carousel2.length > 0 && storeProducts.length >= 32 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
-                  {/* Carrusel 3: visible con 52+ productos y plan >= 3 */}
                   {idx === 5 && carousel3.length > 0 && storeProducts.length >= 52 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
                 </div>
               ))

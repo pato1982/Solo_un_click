@@ -625,6 +625,7 @@ export default function App() {
             <ServiciosPage
               activeFilter={activeFilter}
               onClearFilter={() => setActiveFilter(null)}
+              onOpenStore={handleOpenStore}
             />
           ) : currentPage === 'arriendos' ? (
             <ArriendosPage

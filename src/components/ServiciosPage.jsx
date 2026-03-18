@@ -242,7 +242,7 @@ const DEMO_SERVICIOS = [
   { user_id: 'd4', name: 'Peluquería Estilo', description: 'Cortes, tinturas, tratamientos capilares y más. Atención personalizada con productos de primera calidad.', images: [], categorias: ['Belleza y Salud'], direccion: 'Anfión Muñoz 321', whatsapp: '56987654321' },
 ]
 
-export default function ServiciosPage({ activeFilter, onClearFilter }) {
+export default function ServiciosPage({ activeFilter, onClearFilter, onOpenStore }) {
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedEmpresa, setSelectedEmpresa] = useState(null)
@@ -339,7 +339,16 @@ export default function ServiciosPage({ activeFilter, onClearFilter }) {
                 {empresa.description || 'Sin descripción'}
               </p>
               <div className="mt-auto flex items-center gap-2 sm:gap-3">
-                {empresa.images.length > 0 && (
+                {empresa.planId >= 2 && onOpenStore && (
+                  <button
+                    onClick={() => onOpenStore({ id: `user-${empresa.user_id}`, userId: empresa.user_id, name: empresa.name, phone: empresa.whatsapp || empresa.telefono || '' })}
+                    className="bg-primary hover:bg-primary-light text-white px-5 sm:px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <span className="material-symbols-outlined text-sm">visibility</span>
+                    Ver más
+                  </button>
+                )}
+                {empresa.images.length > 0 && empresa.planId < 2 && (
                   <button
                     onClick={() => setSelectedEmpresa(empresa)}
                     className="bg-primary hover:bg-primary-light text-white px-5 sm:px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5 whitespace-nowrap"
