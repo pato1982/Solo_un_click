@@ -86,6 +86,14 @@ router.get('/stats', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
+    // Total clicks en productos del mes actual
+    const [monthClicks] = await pool.query(
+      `SELECT COUNT(*) as total
+       FROM analytics
+       WHERE user_id = ? AND event_type = 'product_click' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
+      [req.userId]
+    )
+
     // Visitas por tipo de página
     const [visitsByPage] = await pool.query(
       `SELECT pagina, COUNT(*) as total
@@ -139,6 +147,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       resumen: {
         visitas_mes: monthVisits[0]?.total || 0,
         visitantes_unicos: uniqueVisitors[0]?.total || 0,
+        clicks_mes: monthClicks[0]?.total || 0,
         por_pagina: paginasMap,
       },
     })

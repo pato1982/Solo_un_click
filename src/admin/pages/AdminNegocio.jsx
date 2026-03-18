@@ -139,8 +139,8 @@ export default function AdminNegocio() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-2 gap-6">
+      <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* COLUMNA IZQUIERDA: Datos del negocio */}
           <div className="space-y-4">
             <div className={`grid gap-3 ${tieneSlogan ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -184,7 +184,7 @@ export default function AdminNegocio() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">WhatsApp</label>
                 <div className="relative">
@@ -213,7 +213,7 @@ export default function AdminNegocio() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Correo electrónico</label>
                 <div className="relative">
@@ -243,7 +243,7 @@ export default function AdminNegocio() {
             </div>
 
             <div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Facebook</label>
                   <div className="relative">

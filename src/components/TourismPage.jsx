@@ -595,12 +595,60 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
 
   // Auto-seleccionar empresa si viene initialUserId
   useEffect(() => {
-    if (initialUserId && empresas.length > 0) {
-      const match = empresas.find(e => e.userId === initialUserId)
-      if (match) setSelectedCompany(match)
+    if (!initialUserId || loading) return
+    const match = empresas.find(e => e.userId === initialUserId)
+    if (match) {
+      setSelectedCompany(match)
       if (onInitialUserConsumed) onInitialUserConsumed()
+    } else {
+      // Si no está en el listado público, cargar directamente desde la API
+      Promise.all([
+        fetch(`${API}/api/portada/public`).then(r => r.json()),
+        fetch(`${API}/api/business/public/${initialUserId}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]).then(([portadasData, bizData]) => {
+        const portada = (portadasData.portadas || []).find(p => p.user_id === initialUserId)
+        if (portada) {
+          setSelectedCompany({
+            id: portada.id,
+            userId: portada.user_id,
+            name: portada.nombre_negocio || 'Sin nombre',
+            description: portada.descripcion || '',
+            images: (portada.imagenes || []).map(img => `${API}${img}`),
+            imagesCrop: portada.imagenes_crop || [],
+            subcategories: portada.categorias || [],
+            direccion: portada.direccion || '',
+            horarios: portada.horarios || [],
+            telefono: portada.telefono || '',
+            whatsapp: portada.whatsapp || '',
+            correo: portada.correo || '',
+            facebook: portada.facebook || '',
+            instagram: portada.instagram || '',
+            planId: portada.plan_id || 1,
+          })
+        } else {
+          const b = bizData?.business || {}
+          setSelectedCompany({
+            id: `direct-${initialUserId}`,
+            userId: initialUserId,
+            name: b.nombre_negocio || 'Mi Negocio',
+            description: b.descripcion || '',
+            images: [],
+            imagesCrop: [],
+            subcategories: [],
+            direccion: b.direccion || '',
+            horarios: b.horarios || [],
+            telefono: b.telefono || '',
+            whatsapp: b.whatsapp || '',
+            correo: b.correo || '',
+            facebook: b.facebook || '',
+            instagram: b.instagram || '',
+            planId: 3,
+          })
+        }
+        if (onInitialUserConsumed) onInitialUserConsumed()
+      })
     }
-  }, [initialUserId, empresas])
+  }, [initialUserId, empresas, loading])
 
   // Solo cerrar empresa si se filtra y NO hay empresa seleccionada (listado general)
   // Si hay empresa seleccionada, el filtro resalta tours, no cierra la página
@@ -630,7 +678,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     ? empresas.filter((c) => c.subcategories.includes(activeFilter))
     : empresas
 
-  if (loading) {
+  if (loading || (initialUserId && !selectedCompany)) {
     return (
       <div className="flex items-center justify-center py-20">
         <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>

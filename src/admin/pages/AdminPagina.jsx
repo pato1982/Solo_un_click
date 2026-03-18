@@ -248,10 +248,10 @@ export default function AdminPagina() {
       )}
 
       {/* Contenido de la pestaña activa */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-6">
           {/* Columna izquierda — Imagen */}
-          <div className="w-52 shrink-0">
+          <div className="w-full sm:w-52 shrink-0">
             <label className="block text-[11px] font-semibold text-gray-600 mb-2">
               Imagen {activeTab === 'superior' ? 'superior' : 'inferior'}
             </label>
@@ -281,7 +281,7 @@ export default function AdminPagina() {
               <button
                 type="button"
                 onClick={() => current.ref.current?.click()}
-                className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+                className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                 <span className="text-xs text-gray-500">Buscar imagen</span>

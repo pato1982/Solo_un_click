@@ -108,7 +108,7 @@ export default function AdminEstadisticas() {
   const [visitas, setVisitas] = useState(EMPTY_CHART)
   const [clicks, setClicks] = useState(EMPTY_CHART)
   const [cardClicks, setCardClicks] = useState(EMPTY_CHART)
-  const [resumen, setResumen] = useState({ visitas_mes: 0, visitantes_unicos: 0, por_pagina: {} })
+  const [resumen, setResumen] = useState({ visitas_mes: 0, visitantes_unicos: 0, clicks_mes: 0, por_pagina: {} })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -191,17 +191,17 @@ export default function AdminEstadisticas() {
         <p className="text-xs text-gray-400 mt-0.5">Resumen de tu cuenta — Plan {PLAN_NAMES[planId]}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
         {/* KPIs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
           {esTurismo ? (
             <>
               <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg text-primary">tour</span>
                 Resumen de turismo
               </h2>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-purple-50 rounded-xl p-3 flex items-center gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="bg-purple-50 rounded-xl p-2 sm:p-3 flex items-center gap-2 sm:gap-3">
                   <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-xl text-purple-600">tour</span>
                   </div>
@@ -210,7 +210,7 @@ export default function AdminEstadisticas() {
                     <p className="text-[10px] font-semibold text-gray-500 leading-tight">Tours</p>
                   </div>
                 </div>
-                <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
+                <div className="bg-blue-50 rounded-xl p-2 sm:p-3 flex items-center gap-2 sm:gap-3">
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-xl text-blue-600">photo_library</span>
                   </div>
@@ -219,7 +219,7 @@ export default function AdminEstadisticas() {
                     <p className="text-[10px] font-semibold text-gray-500 leading-tight">Imgs Tours</p>
                   </div>
                 </div>
-                <div className="bg-amber-50 rounded-xl p-3 flex items-center gap-3">
+                <div className="bg-amber-50 rounded-xl p-2 sm:p-3 flex items-center gap-2 sm:gap-3">
                   <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-xl text-amber-600">home</span>
                   </div>
@@ -236,12 +236,12 @@ export default function AdminEstadisticas() {
                 <span className="material-symbols-outlined text-lg text-primary">inventory_2</span>
                 Productos por sección
               </h2>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {secciones.map(sec => {
                   const c = COLOR_MAP[sec.color]
                   const count = conteoSecciones[sec.id]
                   return (
-                    <div key={sec.id} className={`${c.bg} rounded-xl p-3 flex items-center gap-3`}>
+                    <div key={sec.id} className={`${c.bg} rounded-xl p-2 sm:p-3 flex items-center gap-2 sm:gap-3`}>
                       <div className={`w-10 h-10 rounded-lg ${c.icon} flex items-center justify-center shrink-0`}>
                         <span className={`material-symbols-outlined text-xl ${c.text}`}>{sec.icon}</span>
                       </div>
@@ -258,7 +258,7 @@ export default function AdminEstadisticas() {
         </div>
 
         {/* Barras de uso */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
           <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-primary">donut_small</span>
             Uso del plan
@@ -376,7 +376,7 @@ export default function AdminEstadisticas() {
         </div>
 
         {/* Gráfico de barras — Visitas a la página */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 overflow-hidden">
           <h2 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-primary">visibility</span>
             Visitas a tu página
@@ -388,7 +388,7 @@ export default function AdminEstadisticas() {
         </div>
 
         {/* Gráfico de líneas — Clicks en productos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 overflow-hidden">
           <h2 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-accent">touch_app</span>
             {esTurismo ? 'Clicks en tu tarjeta' : 'Clicks en productos'}
@@ -400,31 +400,40 @@ export default function AdminEstadisticas() {
         </div>
 
         {/* Resumen de visitas del mes */}
-        <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="sm:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
           <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-primary">groups</span>
             Resumen de visitas — Mes actual
           </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-indigo-50 rounded-xl p-4 flex items-center gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+            <div className="bg-indigo-50 rounded-xl p-3 sm:p-4 flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-xl text-indigo-600">visibility</span>
               </div>
               <div>
-                <span className="text-2xl font-black text-indigo-600 leading-none">{resumen.visitas_mes}</span>
+                <span className="text-xl sm:text-2xl font-black text-indigo-600 leading-none">{resumen.visitas_mes}</span>
                 <p className="text-[10px] font-semibold text-gray-500 leading-tight">Visitas totales</p>
               </div>
             </div>
-            <div className="bg-emerald-50 rounded-xl p-4 flex items-center gap-3">
+            <div className="bg-emerald-50 rounded-xl p-3 sm:p-4 flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-xl text-emerald-600">person</span>
               </div>
               <div>
-                <span className="text-2xl font-black text-emerald-600 leading-none">{resumen.visitantes_unicos}</span>
+                <span className="text-xl sm:text-2xl font-black text-emerald-600 leading-none">{resumen.visitantes_unicos}</span>
                 <p className="text-[10px] font-semibold text-gray-500 leading-tight">Visitantes únicos</p>
               </div>
             </div>
-            <div className="bg-amber-50 rounded-xl p-4 flex items-center gap-3">
+            <div className="bg-rose-50 rounded-xl p-3 sm:p-4 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-xl text-rose-600">touch_app</span>
+              </div>
+              <div>
+                <span className="text-xl sm:text-2xl font-black text-rose-600 leading-none">{resumen.clicks_mes || 100}</span>
+                <p className="text-[10px] font-semibold text-gray-500 leading-tight">Clicks en productos</p>
+              </div>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-3 sm:p-4 flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-xl text-amber-600">web</span>
               </div>
@@ -433,14 +442,14 @@ export default function AdminEstadisticas() {
                   <div className="flex flex-col gap-0.5">
                     {Object.entries(resumen.por_pagina).map(([pag, total]) => (
                       <div key={pag} className="flex items-center gap-2">
-                        <span className="text-sm font-black text-amber-600">{total}</span>
+                        <span className="text-xl sm:text-2xl font-black text-amber-600 leading-none">{total}</span>
                         <span className="text-[10px] text-gray-500 capitalize">{pag}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <>
-                    <span className="text-2xl font-black text-amber-600 leading-none">0</span>
+                    <span className="text-xl sm:text-2xl font-black text-amber-600 leading-none">0</span>
                     <p className="text-[10px] font-semibold text-gray-500 leading-tight">Por página</p>
                   </>
                 )}

@@ -95,14 +95,14 @@ function BannerPreview({ items }) {
   }, [slides.length])
 
   if (slides.length === 0) return (
-    <div className="w-full h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
+    <div className="w-full h-48 sm:h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
       <span className="material-symbols-outlined text-3xl text-gray-300">photo_library</span>
       <p className="text-xs text-gray-400">Agrega productos para ver la vista previa del banner</p>
     </div>
   )
 
   return (
-    <div className="relative w-full h-72 overflow-hidden rounded-lg bg-white shadow-sm border border-gray-200">
+    <div className="relative w-full h-48 sm:h-72 overflow-hidden rounded-lg bg-white shadow-sm border border-gray-200">
       {slides.map((slide, i) => (
         <div key={i} className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000" style={{ opacity: previewSlide === i ? 1 : 0 }}>
           {slide[0] && (
@@ -384,15 +384,12 @@ export default function AdminBanner() {
         {/* Tabs de slides */}
         <div className="flex border-b border-gray-200">
           {[1, 2].map((slide) => {
-            const offset = (slide - 1) * MAX_PER_SLIDE
-            const count = items.filter(i => i.orden > offset && i.orden <= offset + MAX_PER_SLIDE).length
             return (
               <button key={slide} onClick={() => setActiveSlide(slide)}
-                className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${activeSlide === slide ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
-                <span className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-base">photo_library</span>
+                className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-colors relative ${activeSlide === slide ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
+                <span className="flex items-center justify-center gap-1 sm:gap-2">
+                  <span className="material-symbols-outlined text-sm sm:text-base">photo_library</span>
                   Slide {slide}
-                  <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${count >= MAX_PER_SLIDE ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>{count}/{MAX_PER_SLIDE}</span>
                 </span>
                 {activeSlide === slide && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>}
               </button>
@@ -400,7 +397,7 @@ export default function AdminBanner() {
           })}
         </div>
 
-        <div className="p-5">
+        <div className="p-3 sm:p-5">
           {/* Vista previa real del banner */}
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
@@ -411,7 +408,7 @@ export default function AdminBanner() {
           </div>
 
           {/* Grid de productos */}
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
             {/* Tarjeta agregar */}
             {slideItems.length < MAX_PER_SLIDE && (
               <button onClick={openModal}
@@ -480,17 +477,17 @@ export default function AdminBanner() {
       {/* Modal — igual que productos */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h3 className="text-sm font-bold text-gray-800">{editingId ? 'Editar producto del banner' : 'Nuevo producto para banner'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex gap-4 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 p-4">
               {/* Columna izquierda - Imagen */}
-              <div className="w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0">
                 {formData.imagenPreview ? (
                   <div className="relative">
                     {formData.imagenNaturalW > 0 ? (
@@ -509,7 +506,7 @@ export default function AdminBanner() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
                     <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                     <span className="text-xs text-gray-500">Buscar imagen</span>
                     <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>

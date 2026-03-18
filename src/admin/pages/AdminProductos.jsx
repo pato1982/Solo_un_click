@@ -558,7 +558,7 @@ export default function AdminProductos() {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                <div className="grid grid-cols-2 gap-2 mt-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Precio *</label>
                     <div className="relative">
@@ -588,7 +588,7 @@ export default function AdminProductos() {
                   <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
                     <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
@@ -603,7 +603,7 @@ export default function AdminProductos() {
                     <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
                     <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
@@ -625,7 +625,7 @@ export default function AdminProductos() {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
                       <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-xs py-1 focus:ring-primary focus:border-primary">

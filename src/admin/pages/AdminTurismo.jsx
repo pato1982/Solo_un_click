@@ -159,8 +159,8 @@ export default function AdminTurismo() {
 
       {/* Lista de negocios */}
       {negocios.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Nombre</th>
@@ -221,7 +221,7 @@ export default function AdminTurismo() {
 
       {/* Formulario */}
       {showForm && (
-        <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-lg">landscape</span>
@@ -236,10 +236,10 @@ export default function AdminTurismo() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* COLUMNA IZQUIERDA: Datos del negocio */}
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Nombre del negocio</label>
                   <input
@@ -276,7 +276,7 @@ export default function AdminTurismo() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">WhatsApp</label>
                   <div className="relative">
@@ -305,7 +305,7 @@ export default function AdminTurismo() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Correo electrónico</label>
                   <div className="relative">
@@ -334,7 +334,7 @@ export default function AdminTurismo() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Facebook</label>
                   <div className="relative">

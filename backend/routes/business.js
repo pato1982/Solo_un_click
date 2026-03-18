@@ -11,6 +11,22 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// GET /api/business/public/:userId — datos públicos de un negocio por user_id
+router.get('/public/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ?', [req.params.userId])
+    if (rows.length === 0) return res.json({ business: null })
+    const business = rows[0]
+    if (business.horarios && typeof business.horarios === 'string') {
+      try { business.horarios = JSON.parse(business.horarios) } catch { business.horarios = [] }
+    }
+    res.json({ business })
+  } catch (err) {
+    console.error('Error al obtener negocio público:', err)
+    res.status(500).json({ error: 'Error al obtener negocio' })
+  }
+})
+
 // GET /api/business — obtener datos del negocio del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {

@@ -324,18 +324,18 @@ export default function AdminTour() {
       {/* Modal crear/editar */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h3 className="text-sm font-bold text-gray-800">{editingId ? 'Editar tour' : 'Nuevo tour'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="flex gap-4 p-4">
+            <form onSubmit={handleSave} className="flex flex-col sm:flex-row gap-4 p-4">
               {/* Columna izquierda — Imagen con pestañas */}
-              <div className="w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0">
                 {/* Pestañas 1 / 2 / 3 */}
                 <div className="flex mb-2 rounded-lg overflow-hidden border border-gray-200">
                   {[0, 1, 2].map((i) => (
@@ -385,7 +385,7 @@ export default function AdminTour() {
                   <button
                     type="button"
                     onClick={() => fileRefs[activeTab].current?.click()}
-                    className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+                    className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                     <span className="text-xs text-gray-500">Buscar imagen</span>

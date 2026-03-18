@@ -27,8 +27,6 @@ export default function AdminPortada() {
   const [nombreNegocio, setNombreNegocio] = useState('')
   const [categoriasDB, setCategoriasDB] = useState([])
   const [categorias, setCategorias] = useState([])
-  const [savingCats, setSavingCats] = useState(false)
-  const [savedCats, setSavedCats] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
   const fileRefs = [useRef(null), useRef(null), useRef(null)]
@@ -115,46 +113,7 @@ export default function AdminPortada() {
     setCategorias(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     )
-    setSavedCats(false)
-  }
-
-  const handleSaveCategorias = async () => {
-    setSavingCats(true)
-    try {
-      const body = {
-        nombre: nombreNegocio || 'Mi emprendimiento',
-        descripcion: form.descripcion,
-        imagenes: [],
-        categorias,
-      }
-
-      // Si ya hay portada, usar PUT; si no, POST
-      if (portadaId) {
-        // Solo actualizar categorias via PUT
-        const currentImgs = form.imagenes.filter(img => typeof img === 'string')
-        body.imagenes = currentImgs
-        await fetch(`${API}/api/portada/${portadaId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(body)
-        })
-      } else {
-        const res = await fetch(`${API}/api/portada`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(body)
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.id) setPortadaId(data.id)
-        }
-      }
-      setSavedCats(true)
-      setTimeout(() => setSavedCats(false), 3000)
-    } catch (err) {
-      console.error('Error guardando categorías:', err)
-    }
-    setSavingCats(false)
+    setSaved(false)
   }
 
   const removeImage = (index) => {
@@ -256,10 +215,10 @@ export default function AdminPortada() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-6">
+      <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-6">
           {/* Columna izquierda — Imágenes con pestañas */}
-          <div className="w-52 shrink-0">
+          <div className="w-full sm:w-52 shrink-0">
             <label className="block text-[11px] font-semibold text-gray-600 mb-2">Imágenes de portada</label>
 
             {/* Pestañas */}
@@ -311,7 +270,7 @@ export default function AdminPortada() {
               <button
                 type="button"
                 onClick={() => fileRefs[activeTab].current?.click()}
-                className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+                className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                 <span className="text-xs text-gray-500">Buscar imagen</span>
@@ -448,21 +407,6 @@ export default function AdminPortada() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mt-3">
-                <button
-                  type="button"
-                  onClick={handleSaveCategorias}
-                  disabled={savingCats || savedCats}
-                  className={`font-bold px-5 py-2 rounded-lg transition-all text-xs flex items-center gap-1.5 disabled:opacity-90 ${
-                    savedCats
-                      ? 'bg-green-500 text-white'
-                      : 'bg-primary text-white hover:bg-primary/90'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-sm">{savedCats ? 'check_circle' : 'save'}</span>
-                  {savingCats ? 'Guardando...' : savedCats ? 'Guardado' : 'Guardar categorías'}
-                </button>
-              </div>
             </div>
 
             {/* Descripción */}
@@ -503,7 +447,7 @@ export default function AdminPortada() {
             <span className="material-symbols-outlined text-xs">visibility</span>
             Vista previa — así se verá tu tarjeta en la página de turismo
           </p>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 max-w-2xl">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 max-w-2xl">
             <div className="flex-1">
               <h3 className="text-lg font-black text-primary mb-1">{nombreNegocio || 'Nombre de Mi Negocio'}</h3>
               {categorias.length > 0 && (

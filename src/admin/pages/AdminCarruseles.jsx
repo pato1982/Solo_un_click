@@ -324,35 +324,31 @@ export default function AdminCarruseles() {
 
       {/* Popup informativo de requisitos de visualización */}
       {showInfoPopup && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={() => setShowInfoPopup(false)}>
+        <div className="fixed inset-0 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 10000 }} onClick={() => setShowInfoPopup(false)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-3xl text-primary">info</span>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-[280px] sm:max-w-sm w-full p-3 sm:p-6 flex flex-col items-center gap-2 sm:gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl sm:text-3xl text-primary">info</span>
             </div>
-            <h3 className="text-sm font-bold text-gray-800">¿Cuándo se visualizan los carruseles?</h3>
-            <div className="text-xs text-gray-500 text-center leading-relaxed space-y-2">
-              <p>Los carruseles aparecen en tu página cuando tienes suficientes productos cargados en la sección <strong className="text-primary">Productos</strong>:</p>
+            <h3 className="text-xs sm:text-sm font-bold text-gray-800">¿Dónde aparecen los carruseles?</h3>
+            <div className="text-[11px] sm:text-xs text-gray-500 text-center leading-relaxed space-y-2">
+              <p>Los carruseles se muestran <strong className="text-primary">automáticamente</strong> en tu página de tienda, destacados entre tus productos.</p>
               {esPremium ? (
-                <div className="bg-gray-50 rounded-lg p-3 text-left space-y-1.5">
+                <div className="bg-gray-50 rounded-lg p-2.5 sm:p-3 text-left space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
-                    <span><strong>Carrusel 1:</strong> a partir de <strong className="text-primary">12 productos</strong></span>
+                    <span className="material-symbols-outlined text-primary text-sm shrink-0">view_carousel</span>
+                    <span>Tus <strong className="text-primary">3 carruseles</strong> se distribuyen a lo largo de tu página para mayor visibilidad</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
-                    <span><strong>Carrusel 2:</strong> a partir de <strong className="text-primary">32 productos</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
-                    <span><strong>Carrusel 3:</strong> a partir de <strong className="text-primary">52 productos</strong></span>
+                    <span className="material-symbols-outlined text-primary text-sm shrink-0">photo_library</span>
+                    <span>Tu <strong className="text-primary">banner publicitario</strong> aparece destacado al inicio de tu página</span>
                   </div>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-gray-50 rounded-lg p-2.5 sm:p-3">
                   <div className="flex items-center gap-2 justify-center">
-                    <span className="material-symbols-outlined text-primary text-sm">view_carousel</span>
-                    <span><strong>Carrusel 1:</strong> a partir de <strong className="text-primary">12 productos</strong></span>
+                    <span className="material-symbols-outlined text-primary text-sm shrink-0">view_carousel</span>
+                    <span>Tu carrusel aparece <strong className="text-primary">destacado entre tus productos</strong></span>
                   </div>
                 </div>
               )}
@@ -367,19 +363,17 @@ export default function AdminCarruseles() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 overflow-x-auto">
           {visibleTabs.map((pos) => {
             const count = items.filter(i => i.carousel === pos).length
             const unlocked = isCarouselUnlocked(pos)
             return (
               <button key={pos} onClick={() => handleTabClick(pos)}
-                className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${!unlocked ? 'text-gray-300 cursor-not-allowed' : activeTab === pos ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
-                <span className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-base">{unlocked ? 'view_carousel' : 'lock'}</span>
+                className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-colors relative whitespace-nowrap ${!unlocked ? 'text-gray-300 cursor-not-allowed' : activeTab === pos ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}`}>
+                <span className="flex items-center justify-center gap-1 sm:gap-2">
+                  <span className="material-symbols-outlined text-sm sm:text-base">{unlocked ? 'view_carousel' : 'lock'}</span>
                   {carouselNames[pos - 1]}
-                  {unlocked ? (
-                    <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${count >= MAX_ITEMS ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>{count}/{MAX_ITEMS}</span>
-                  ) : (
+                  {!unlocked && (
                     <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">Premium</span>
                   )}
                 </span>
@@ -389,17 +383,17 @@ export default function AdminCarruseles() {
           })}
         </div>
 
-        <div className="p-5">
+        <div className="p-3 sm:p-5">
           {/* Nombre del carrusel */}
-          <div className="flex items-center gap-3 mb-4">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4">
+            <div className="flex-1 sm:flex-none">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Nombre del carrusel</label>
               <input type="text" value={carouselNames[activeTab - 1]}
                 onChange={(e) => { const n = [...carouselNames]; n[activeTab - 1] = e.target.value; setCarouselNames(n); setSaved(false) }}
-                className="w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                className="w-full sm:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
                 placeholder={`Carrusel ${activeTab}`} />
             </div>
-            <div className="flex items-end gap-2 pb-0.5">
+            <div className="flex items-center gap-2 sm:pb-0.5 sm:items-end">
               <button onClick={handleSaveName} disabled={saving} className="bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50">
                 {saving ? 'Guardando...' : 'Guardar nombre'}
               </button>
@@ -408,7 +402,7 @@ export default function AdminCarruseles() {
           </div>
 
           {/* Grid de productos */}
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
             {/* Tarjeta agregar */}
             {tabItems.length < MAX_ITEMS && (
               <button onClick={openModal}
@@ -463,17 +457,17 @@ export default function AdminCarruseles() {
       {/* Modal — igual que productos */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h3 className="text-sm font-bold text-gray-800">{editingId ? 'Editar producto del carrusel' : 'Nuevo producto para carrusel'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex gap-4 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 p-4">
               {/* Columna izquierda - Imagen */}
-              <div className="w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0">
                 {formData.imagenPreview ? (
                   <div className="relative">
                     {formData.imagenNaturalW > 0 ? (
@@ -492,7 +486,7 @@ export default function AdminCarruseles() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
                     <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                     <span className="text-xs text-gray-500">Buscar imagen</span>
                     <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>
