@@ -642,19 +642,25 @@ export default function StorePage({ store, onBack, onOpenStore }) {
               const carousel1 = carouselItems.filter(c => c.carousel_posicion === 1)
               const carousel2 = carouselItems.filter(c => c.carousel_posicion === 2)
               const carousel3 = carouselItems.filter(c => c.carousel_posicion === 3)
+              const hasCarousel1 = carousel1.length > 0 && store.plan_id >= 2
 
               const TIPO_LABELS = { producto: 'Productos', servicio: 'Servicios', arriendo: 'Arriendos' }
               const TIPO_ICONS = { producto: 'inventory_2', servicio: 'work', arriendo: 'home' }
 
+              const renderCarousel = () => (
+                hasCarousel1 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />
+              )
+
               if (hasMixedTypes && !activeCat && !activeSub) {
-                // Mostrar secciones separadas por tipo
-                return tipoKeys.map(tipo => {
+                // Múltiples tipos: carrusel entre cada sección
+                const elements = []
+                tipoKeys.forEach((tipo, sIdx) => {
                   const items = tipos[tipo]
                   const rows = []
                   for (let i = 0; i < items.length; i += 10) {
                     rows.push(items.slice(i, i + 10))
                   }
-                  return (
+                  elements.push(
                     <div key={tipo} className="mb-4">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="material-symbols-outlined text-primary text-base">{TIPO_ICONS[tipo] || 'category'}</span>
@@ -669,24 +675,45 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                       ))}
                     </div>
                   )
+                  // Carrusel entre secciones (no después de la última)
+                  if (sIdx < tipoKeys.length - 1 && hasCarousel1) {
+                    elements.push(<div key={`carousel-${sIdx}`}>{renderCarousel()}</div>)
+                  }
                 })
+                return elements
               }
 
-              // Vista normal (un solo tipo o con filtro activo)
+              // Un solo tipo o con filtro activo
               const allRows = []
               for (let i = 0; i < filteredProducts.length; i += 10) {
                 allRows.push(filteredProducts.slice(i, i + 10))
               }
+
+              if (allRows.length === 1) {
+                // 1 fila: carrusel al final
+                return (
+                  <>
+                    <StoreCarousel
+                      title={activeSub || activeCat || TIPO_LABELS[tipoKeys[0]] || 'Todos los productos'}
+                      items={allRows[0]}
+                      onOpenStore={onOpenStore}
+                    />
+                    {renderCarousel()}
+                  </>
+                )
+              }
+
+              // Múltiples filas: carrusel después de la primera fila
               return allRows.map((row, idx) => (
                 <div key={idx}>
                   <StoreCarousel
-                    title={idx === 0 ? (activeSub || activeCat || 'Todos los productos') : ''}
+                    title={idx === 0 ? (activeSub || activeCat || TIPO_LABELS[tipoKeys[0]] || 'Todos los productos') : ''}
                     items={row}
                     onOpenStore={onOpenStore}
                   />
-                  {idx === 1 && carousel1.length > 0 && storeProducts.length >= 12 && store.plan_id >= 2 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel1} storeUserId={store.userId} />}
-                  {idx === 3 && carousel2.length > 0 && storeProducts.length >= 32 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
-                  {idx === 5 && carousel3.length > 0 && storeProducts.length >= 52 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
+                  {idx === 0 && renderCarousel()}
+                  {idx === 2 && carousel2.length > 0 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel2} storeUserId={store.userId} />}
+                  {idx === 4 && carousel3.length > 0 && store.plan_id >= 3 && <ImageMarquee products={storeProducts} phone={storePhone} carouselItems={carousel3} storeUserId={store.userId} />}
                 </div>
               ))
             })()
