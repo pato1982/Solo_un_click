@@ -149,13 +149,10 @@ function ArriendoModal({ item, onClose }) {
   )
 }
 
-function ArriendoCard({ item, onClick }) {
+function ArriendoCard({ item, onView, onOpenStore }) {
   return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100 cursor-pointer"
-    >
-      <div className="relative h-32 sm:h-32 md:h-40 bg-slate-100 overflow-hidden">
+    <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group border border-slate-100">
+      <div className="relative h-32 sm:h-32 md:h-40 bg-slate-50 overflow-hidden">
         <img
           src={item.image}
           alt={item.name}
@@ -183,7 +180,7 @@ function ArriendoCard({ item, onClick }) {
             <p className="text-[9px] sm:text-[10px] text-slate-400 line-clamp-1">{item.nombre_negocio}</p>
           </div>
         )}
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-1 flex items-end justify-between">
           <p className="text-[10px] sm:text-xs font-black text-primary">
             ${(item.price || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
             {item.originalPrice && (
@@ -192,6 +189,23 @@ function ArriendoCard({ item, onClick }) {
               </span>
             )}
           </p>
+          <div className="flex items-center gap-0.5 sm:gap-1">
+            <button
+              onClick={() => onView(item)}
+              className="bg-primary/10 hover:bg-primary hover:text-white text-primary h-6 w-6 sm:h-7 sm:w-7 rounded-md sm:rounded-lg flex items-center justify-center transition-all hover:scale-110"
+            >
+              <span className="material-symbols-outlined text-xs sm:text-sm font-bold">visibility</span>
+            </button>
+            {item.owner_plan_id && item.owner_plan_id >= 2 && onOpenStore && (
+              <button
+                onClick={() => onOpenStore({ id: `user-${item.user_id}`, userId: item.user_id, name: item.nombre_negocio || item.name, phone: item.negocio_whatsapp || item.negocio_telefono || '' })}
+                className="bg-accent/20 hover:bg-accent hover:text-primary text-accent h-6 w-6 sm:h-7 sm:w-7 rounded-md sm:rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                title={item.nombre_negocio}
+              >
+                <span className="material-symbols-outlined text-xs sm:text-sm font-bold">storefront</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -304,7 +318,8 @@ export default function ArriendosPage({ sidebarOpen, onBack, activeFilter, onOpe
               <ArriendoCard
                 key={`${item.id}-${idx}`}
                 item={item}
-                onClick={() => setSelectedItem(item)}
+                onView={(it) => setSelectedItem(it)}
+                onOpenStore={onOpenStore}
               />
             ))}
           </div>
