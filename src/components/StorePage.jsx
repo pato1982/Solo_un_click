@@ -500,10 +500,14 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   const storePhone = storeInfo?.whatsapp || storeInfo?.telefono || store.phone
   const storeSlogan = storeInfo?.slogan || store.slogan
 
-  // Productos: API o estáticos
+  // Límite de listings según plan: Normal=25, Premium=100
+  const PLAN_LIMITS = { 1: 0, 2: 25, 3: 100 }
+  const maxListings = PLAN_LIMITS[store.plan_id] || 25
+
+  // Productos: API o estáticos, limitados por plan
   let storeProducts
   if (apiProducts) {
-    storeProducts = apiProducts
+    storeProducts = apiProducts.slice(0, maxListings)
   } else {
     storeProducts = []
     sections.forEach((section) => {
