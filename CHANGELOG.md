@@ -1,5 +1,88 @@
 # Registro de Cambios - Solo a un Click
 
+## 18 de Marzo 2026 (sesión 10) - Páginas dedicadas Servicios y Arriendos, menú hamburguesa mobile, StorePage multi-tipo
+
+### Header mobile - Menú hamburguesa
+- Segunda fila del nav mobile: icono hamburguesa + buscador + iconos sesión + botón Planes
+- Hamburguesa abre el sidebar de categorías de la sección activa (turismo, productos, etc.)
+- Nav items mobile navegan a la página pero NO abren el sidebar automáticamente
+- Sidebar mobile solo se abre al apretar hamburguesa, no al cambiar de sección
+- Sidebar: ResizeObserver para medir header dinámicamente + visualViewport para mobile
+
+### Página de Arriendos (nueva)
+- `ArriendosPage.jsx` — página dedicada al apretar li "Arriendos"
+- Grid de tarjetas (2-6 columnas según pantalla/sidebar) con paginación
+- Tarjetas con: imagen (object-cover uniforme), badge categoría, nombre, ubicación, negocio, precio
+- Icono ojo: abre popup/modal con imagen, descripción completa, precio y contacto (WhatsApp, teléfono, correo, redes)
+- Icono tienda: visible solo para plan Normal/Premium (2+), navega a la StorePage del negocio
+- Filtrado por categoría/subcategoría desde sidebar
+- Datos demo como fallback + datos reales desde `/api/listings` filtrados por `tipo='arriendo'`
+
+### Página de Servicios (nueva)
+- `ServiciosPage.jsx` — página dedicada al apretar li "Servicios"
+- Layout idéntico a TourismPage: grid 1-2 columnas, tarjetas horizontales
+- Tarjetas con: iconos ubicación/horario clickeables, nombre grande, descripción (3 líneas), CardFan de 4 imágenes, categorías
+- Botón "Ver más" (plan 2+): navega a la StorePage del negocio
+- Botón "Ver fotos": popup con galería carousel de todas las imágenes + descripción completa
+- Botón "Contactar": WhatsApp o teléfono
+- CardFan4: abanico de 4 tarjetas con tamaño fijo uniforme (130/210/260px según breakpoint)
+- Popup galería compacto: max-w-md, imagen con márgenes y bordes redondeados
+- FloatingButton "Quitar filtro" cuando hay filtro activo
+- Datos demo con imágenes Unsplash + datos reales desde `/api/servicios/public`
+
+### Backend - Endpoint servicios públicos
+- `GET /api/servicios/public` — negocios con listings tipo servicio
+- Agrupa por negocio: info de business + primeras 5 imágenes de listing_images
+- Categorías dinámicas desde listings (GROUP_CONCAT DISTINCT)
+- Solo incluye negocios con al menos una imagen
+
+### Panel Admin - Descripción del negocio
+- Campo `descripcion` (TEXT) agregado a tabla `businesses`
+- `AdminNegocio.jsx`: textarea "Descripción del negocio" en el formulario
+- Backend `business.js`: POST incluye descripción en INSERT y UPDATE
+- Botón guardar con margen superior (mt-6)
+
+### StorePage - Agrupación por tipo y límites por plan
+- Cuando el negocio tiene múltiples tipos de listings, se agrupan en secciones: PRODUCTOS, SERVICIOS, ARRIENDOS
+- Cada sección con icono, título, cantidad y filas de carrusel de 10 tarjetas
+- Límites de listings por plan: Gratis=5, Normal=25, Premium=100 (total, no por tipo)
+- Carruseles y banners NO cuentan en el límite
+- Backend valida el límite al crear listings (bloquea si se supera)
+- `mapListing` incluye datos de negocio completos (contacto, redes sociales)
+- Fix crash ProductModal cuando precio es 0 (servicios) — nullish coalescing
+
+### ProductCard - Mejoras
+- Imágenes con `object-cover` para tamaño uniforme en todas las tarjetas
+- Fondo `bg-slate-50` en contenedor de imagen
+
+### Base de datos
+- `ALTER TABLE businesses ADD COLUMN descripcion TEXT`
+- `UPDATE plans SET tiene_pagina = 1 WHERE id = 2` (Normal tiene página)
+- Usuario test: `servicio@test.com` / `test123` (plan Normal, 14 listings demo)
+
+### Routing App.jsx
+- `toggleNav` con `openSidebar` param: mobile nav items pasan `false`
+- Páginas dedicadas: arriendos, servicios (como turismo/locales/eventos)
+- `handleSearchSelect` redirige a página dedicada según tipo
+- `showInicio` y `onClose` sidebar incluyen arriendos y servicios
+
+### Archivos nuevos
+- `src/components/ArriendosPage.jsx`
+- `src/components/ServiciosPage.jsx`
+- `backend/routes/servicios.js`
+
+### Archivos modificados
+- `src/components/Header.jsx` — hamburguesa mobile
+- `src/components/Sidebar.jsx` — ResizeObserver, mobileClosed por activeNav/openKey
+- `src/components/StorePage.jsx` — agrupación por tipo, límites plan, mapListing completo
+- `src/components/ProductCard.jsx` — object-cover, fix precio 0
+- `src/admin/pages/AdminNegocio.jsx` — textarea descripción
+- `backend/routes/business.js` — campo descripcion
+- `backend/server.js` — ruta servicios
+- `src/App.jsx` — routing arriendos/servicios, toggleNav openSidebar
+
+---
+
 ## 17 de Marzo 2026 (sesión 9) - Mejoras mobile/tablet, datos demo, sidebar panel fixed
 
 ### Sidebar mobile/tablet - Panel fixed con límites dinámicos
