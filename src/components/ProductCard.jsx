@@ -165,14 +165,14 @@ function ProductModal({ product, hidePrice, onClose }) {
 
             {/* 4. Penúltima línea: Precio actual (izq) - Precio anterior (der) */}
             <div className="pt-1.5 border-t border-slate-100 mt-1.5 flex items-center justify-between shrink-0">
-              {!hidePrice ? (
+              {!hidePrice && (product.price > 0 || product.precio > 0) ? (
                 <>
                   <p className="text-sm font-black text-primary">
-                    ${(product.price || product.precio).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+                    ${(product.price ?? product.precio ?? 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                   </p>
                   {(product.originalPrice || product.precioOriginal) ? (
                     <p className="text-[10px] font-bold text-slate-400 line-through">
-                      ${(product.originalPrice || product.precioOriginal).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+                      ${(product.originalPrice ?? product.precioOriginal ?? 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                     </p>
                   ) : <span />}
                 </>
