@@ -32,9 +32,10 @@ router.get('/public', async (req, res) => {
     // Para cada negocio, obtener sus primeras 5 imágenes de listings tipo servicio
     const servicios = await Promise.all(rows.map(async (row) => {
       const [imgs] = await pool.query(`
-        SELECT imagen FROM listings
-        WHERE user_id = ? AND tipo = 'servicio' AND imagen IS NOT NULL AND imagen != ''
-        ORDER BY id DESC LIMIT 5
+        SELECT li.url as imagen FROM listing_images li
+        JOIN listings l ON l.id = li.listing_id
+        WHERE l.user_id = ? AND l.tipo = 'servicio'
+        ORDER BY l.id DESC LIMIT 5
       `, [row.user_id])
 
       let horarios = row.horarios
@@ -55,7 +56,7 @@ router.get('/public', async (req, res) => {
         horarios: horarios || [],
         plan_id: row.plan_id,
         categorias: row.categorias ? row.categorias.split('||') : [],
-        imagenes: imgs.map(i => i.imagen),
+        imagenes: imgs.map(i => i.imagen || i.url),
       }
     }))
 
