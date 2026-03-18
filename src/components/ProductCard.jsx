@@ -245,10 +245,10 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
   return (
     <>
       <div className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group ${isFirst ? 'border-2 border-amber-400 outline outline-2 outline-amber-400 outline-offset-2' : 'border border-slate-100'}`}>
-        <div className="relative h-32 sm:h-32 md:h-40 pt-1 sm:pt-2 bg-white overflow-hidden flex items-center justify-center">
+        <div className="relative h-32 sm:h-32 md:h-40 bg-slate-50 overflow-hidden">
           <img
             alt={product.alt}
-            className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             src={product.image}
           />
           {isFirst && (
