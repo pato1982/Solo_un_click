@@ -203,6 +203,38 @@ function HorarioPopup({ horarios, onClose }) {
   )
 }
 
+function FloatingButton({ label, icon, onClick }) {
+  const [bottom, setBottom] = useState(24)
+  useEffect(() => {
+    let rafId
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const footer = document.querySelector('footer')
+        if (!footer) return
+        const footerTop = footer.getBoundingClientRect().top
+        const windowHeight = window.innerHeight
+        const visibleFooter = windowHeight - footerTop
+        setBottom(visibleFooter > 0 ? visibleFooter + 16 : 24)
+      })
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => { window.removeEventListener('scroll', handleScroll); cancelAnimationFrame(rafId) }
+  }, [])
+  return (
+    <div className="fixed left-1/2 -translate-x-1/2 z-50" style={{ bottom: `${bottom}px` }}>
+      <button
+        onClick={onClick}
+        className="bg-primary hover:bg-primary-light text-white px-5 py-2 rounded-full shadow-xl text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-2"
+      >
+        <span className="material-symbols-outlined text-base">{icon}</span>
+        {label}
+      </button>
+    </div>
+  )
+}
+
 const DEMO_SERVICIOS = [
   { user_id: 'd1', name: 'Electricidad Villarrica', description: 'Servicios eléctricos profesionales para hogares y empresas. Instalaciones, reparaciones y mantenciones con más de 10 años de experiencia.', images: [], categorias: ['Construcción'], direccion: 'Av. Pedro de Valdivia 456', whatsapp: '56912345678' },
   { user_id: 'd2', name: 'Gasfiter Express', description: 'Soluciones rápidas en gasfitería. Destapes, instalaciones sanitarias, calefones y termos. Atención de emergencia 24/7.', images: [], categorias: ['Construcción'], direccion: 'General Korner 234', telefono: '56945123456' },
@@ -262,117 +294,92 @@ export default function ServiciosPage({ activeFilter, onClearFilter }) {
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
-        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">
-          {activeFilter || 'Servicios en Villarrica'}
+    <div className="flex flex-col gap-6">
+      {/* Header — igual que TourismPage */}
+      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+        <div className="w-1 h-5 sm:h-6 bg-accent rounded-full"></div>
+        <h2 className="text-sm sm:text-base md:text-lg font-bold text-slate-700 tracking-wide">
+          {activeFilter ? `Servicios — ${activeFilter}` : 'Servicios en Villarrica'}
         </h2>
-        <span className="text-[9px] sm:text-[10px] text-slate-400">
-          {filtered.length} {filtered.length === 1 ? 'empresa' : 'empresas'}
-        </span>
+        {activeFilter && (
+          <span className="text-[10px] text-slate-400">{filtered.length} {filtered.length === 1 ? 'empresa' : 'empresas'}</span>
+        )}
+        <div className="flex-1 h-px bg-slate-200"></div>
       </div>
 
-      {activeFilter && (
-        <button
-          onClick={onClearFilter}
-          className="mb-4 flex items-center gap-1 text-[10px] text-primary hover:text-accent font-bold transition-colors"
-        >
-          <span className="material-symbols-outlined text-sm">close</span>
-          Limpiar filtro
-        </button>
+      {filtered.length === 0 && (
+        <p className="text-center text-slate-400 text-xs mt-8">No hay empresas con esta actividad.</p>
       )}
 
-      {/* Lista de empresas */}
-      <div className="flex flex-col gap-4 sm:gap-5">
+      {/* Grid 1-2 cols como TourismPage */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
         {filtered.map((empresa) => (
-          <div key={empresa.user_id} className="bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 sm:p-4">
-            <div className="flex gap-3 sm:gap-4">
-              {/* Info izquierda */}
-              <div className="flex-1 min-w-0 flex flex-col">
-                <h3 className="text-xs sm:text-sm font-black text-primary mb-0.5 sm:mb-1 line-clamp-1">{empresa.name}</h3>
-
-                {/* Categorías */}
-                {empresa.categorias.length > 0 && (
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 mb-1 sm:mb-2">
-                    {empresa.categorias.join(' · ')}
-                  </p>
+          <div
+            key={empresa.user_id}
+            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-stretch min-h-[195px] sm:min-h-0"
+          >
+            {/* Info izquierda */}
+            <div className="flex-1 flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 mb-1">
+                {empresa.direccion && (
+                  <span
+                    className="material-symbols-outlined text-slate-400 text-sm sm:text-base cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setDireccionPopup(empresa.direccion)}
+                  >location_on</span>
                 )}
-
-                {/* Descripción resumida - 3 líneas */}
-                <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed line-clamp-3 mb-2 sm:mb-3 flex-1">
-                  {empresa.description || 'Sin descripción'}
-                </p>
-
-                {/* Botones */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {empresa.images.length > 0 && (
-                    <button
-                      onClick={() => setSelectedEmpresa(empresa)}
-                      className="flex items-center gap-1 bg-primary/10 hover:bg-primary hover:text-white text-primary px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold transition-all"
-                    >
-                      <span className="material-symbols-outlined text-xs sm:text-sm">photo_library</span>
-                      Ver fotos ({empresa.images.length})
-                    </button>
-                  )}
-
-                  {empresa.direccion && (
-                    <button
-                      onClick={() => setDireccionPopup(empresa.direccion)}
-                      className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-slate-400 hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-xs">location_on</span>
-                      <span className="hidden sm:inline">{empresa.direccion}</span>
-                      <span className="sm:hidden">Ubicación</span>
-                    </button>
-                  )}
-
-                  {empresa.horarios && empresa.horarios.length > 0 && (
-                    <button
-                      onClick={() => setHorarioPopup(empresa.horarios)}
-                      className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-slate-400 hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-xs">schedule</span>
-                      Horarios
-                    </button>
-                  )}
-                </div>
+                {empresa.horarios && empresa.horarios.length > 0 && (
+                  <span
+                    className="material-symbols-outlined text-slate-400 text-sm sm:text-base cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setHorarioPopup(empresa.horarios)}
+                  >schedule</span>
+                )}
               </div>
-
-              {/* CardFan derecha + contacto */}
-              <div className="shrink-0 flex flex-col items-center gap-2">
-                <CardFan4 images={empresa.images} />
-
-                {/* Botón contacto */}
-                {empresa.whatsapp ? (
+              <h3 className="text-sm sm:text-base md:text-lg font-black text-primary mb-1">{empresa.name}</h3>
+              <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed mb-2 sm:mb-3 line-clamp-5 sm:line-clamp-3">
+                {empresa.description || 'Sin descripción'}
+              </p>
+              <div className="mt-auto flex items-center gap-2 sm:gap-3">
+                {empresa.images.length > 0 && (
+                  <button
+                    onClick={() => setSelectedEmpresa(empresa)}
+                    className="bg-primary hover:bg-primary-light text-white px-5 sm:px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all hover:scale-105 flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <span className="material-symbols-outlined text-sm">photo_library</span>
+                    Ver fotos
+                  </button>
+                )}
+                {(empresa.telefono || empresa.whatsapp) && (
                   <a
-                    href={`https://wa.me/${empresa.whatsapp.replace(/[\s+]/g, '')}?text=${encodeURIComponent(`Hola, me interesa su servicio: ${empresa.name}`)}`}
+                    href={empresa.whatsapp
+                      ? `https://wa.me/${empresa.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, me interesa su servicio: ${empresa.name}`)}`
+                      : `tel:${empresa.telefono}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold transition-all"
+                    className="border border-primary/20 text-primary px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-primary/5 transition-all flex items-center gap-1.5"
                   >
-                    <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    <span className="material-symbols-outlined text-sm">{empresa.whatsapp ? 'chat' : 'call'}</span>
                     Contactar
                   </a>
-                ) : empresa.telefono ? (
-                  <a
-                    href={`tel:${empresa.telefono}`}
-                    className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold transition-all"
-                  >
-                    <span className="material-symbols-outlined text-xs">call</span>
-                    Llamar
-                  </a>
-                ) : null}
+                )}
+              </div>
+            </div>
+
+            {/* CardFan derecha + categorías */}
+            <div className="shrink-0 flex flex-col items-center">
+              <CardFan4 images={empresa.images} />
+              <div className="min-h-[28px] sm:min-h-0 flex flex-wrap justify-center items-start content-start gap-x-1 gap-y-0.5 -mt-1 sm:-mt-2 max-w-[120px] sm:max-w-[200px] md:max-w-[250px]">
+                {empresa.categorias.length > 0 && empresa.categorias.map((cat, i) => (
+                  <span key={cat} className="flex items-center gap-0.5 sm:gap-1">
+                    {i > 0 && <span className="text-[5px] sm:text-[6px] text-slate-300">●</span>}
+                    <span className="text-[10px] sm:text-[9px] text-slate-400 font-medium">{cat}</span>
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      {filtered.length === 0 && (
-        <p className="text-center text-slate-400 text-xs mt-8">No hay servicios para mostrar.</p>
-      )}
 
       {/* Popup galería */}
       {selectedEmpresa && (
@@ -401,6 +408,10 @@ export default function ServiciosPage({ activeFilter, onClearFilter }) {
             </div>
           </div>
         </div>
+      )}
+
+      {activeFilter && onClearFilter && (
+        <FloatingButton label="Quitar filtro" icon="close" onClick={onClearFilter} />
       )}
     </div>
   )

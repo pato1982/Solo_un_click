@@ -324,7 +324,7 @@ export default function AdminNegocio() {
         </div>
 
         {/* Botón guardar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-6">
           <button
             type="submit"
             disabled={saving}
