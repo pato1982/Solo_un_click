@@ -17,18 +17,11 @@ const fanAngles4Mobile = [
 ]
 
 function CardFan4({ images }) {
-  if (!images || images.length === 0) {
-    return (
-      <div className="relative shrink-0 flex items-center justify-center w-[120px] h-[100px] sm:w-[200px] sm:h-[150px] md:w-[260px] md:h-[180px]">
-        <span className="material-symbols-outlined text-5xl text-slate-200">image</span>
-      </div>
-    )
-  }
-  const imgs = images.slice(0, 4)
+  const imgs = (images || []).slice(0, 4)
 
   const renderFan = (angles, containerClass, cardClass) => (
     <div className={`relative shrink-0 ${containerClass}`}>
-      {imgs.map((img, i) => (
+      {imgs.length > 0 ? imgs.map((img, i) => (
         <div
           key={i}
           className={`absolute ${cardClass} rounded-lg sm:rounded-xl overflow-hidden shadow-xl sm:shadow-2xl border-2 sm:border-[3px] border-white transition-transform duration-300 hover:scale-110 hover:z-20`}
@@ -42,7 +35,11 @@ function CardFan4({ images }) {
         >
           <img src={img} alt="Servicio" className="w-full h-full object-cover" />
         </div>
-      ))}
+      )) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="material-symbols-outlined text-4xl sm:text-5xl text-slate-200">image</span>
+        </div>
+      )}
     </div>
   )
 
@@ -395,8 +392,8 @@ export default function ServiciosPage({ activeFilter, onClearFilter, onOpenStore
               </div>
             </div>
 
-            {/* CardFan derecha + categorías */}
-            <div className="shrink-0 flex flex-col items-center">
+            {/* CardFan derecha + categorías — tamaño fijo */}
+            <div className="shrink-0 flex flex-col items-center w-[130px] sm:w-[210px] md:w-[260px]">
               <CardFan4 images={empresa.images} />
               <div className="min-h-[28px] sm:min-h-0 flex flex-wrap justify-center items-start content-start gap-x-1 gap-y-0.5 -mt-1 sm:-mt-2 max-w-[120px] sm:max-w-[200px] md:max-w-[250px]">
                 {empresa.categorias.length > 0 && empresa.categorias.map((cat, i) => (
