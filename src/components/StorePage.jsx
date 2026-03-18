@@ -414,7 +414,7 @@ function mapListing(l) {
     user_id: l.user_id,
     name: l.nombre,
     description: l.descripcion,
-    image: l.imagen ? `${API}${l.imagen}` : null,
+    image: l.imagen ? (l.imagen.startsWith('http') ? l.imagen : `${API}${l.imagen}`) : null,
     alt: l.nombre,
     price: l.precio,
     originalPrice: l.precio_original,
@@ -427,6 +427,14 @@ function mapListing(l) {
     subcategory: l.subcategoria,
     seccion: l.seccion,
     carousel_posicion: l.carousel_posicion,
+    negocio_whatsapp: l.negocio_whatsapp,
+    negocio_telefono: l.negocio_telefono,
+    negocio_direccion: l.negocio_direccion,
+    negocio_correo: l.negocio_correo,
+    negocio_facebook: l.negocio_facebook,
+    negocio_instagram: l.negocio_instagram,
+    nombre_negocio: l.nombre_negocio,
+    owner_plan_id: l.owner_plan_id,
   }
 }
 
