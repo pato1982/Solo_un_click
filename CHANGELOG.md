@@ -54,16 +54,66 @@
 - Conservadas: categorias (52), subcategorias (578), categorias_barrio (39), categorias_evento (31), plans
 - Eliminadas 6 imágenes del servidor (`/var/www/soloaunclick/uploads/`)
 
+### Etiqueta (badge) visible en páginas públicas
+- `ProductCard.jsx`: badge visible en tarjeta (esquina imagen) y popup/modal
+- `ArriendosPage.jsx`: badge en tarjeta y modal (prioridad sobre categoría)
+- Si tiene badge muestra badge, si no muestra categoría
+
+### ServiciosPage reescrita
+- Ya no agrupa por empresa con CardFan — ahora muestra tarjetas individuales usando `ProductCard`
+- Misma estructura que ArriendosPage: fetch `/api/listings` filtrado por `tipo='servicio'`
+- Grid con filtrado por categoría/subcategoría, paginación, badge visible
+
+### Validación tipo/sección en AdminProductos y AdminCarruseles
+- Popup de advertencia si el tipo no coincide con la pestaña activa (servicio fuera de Servicios, arriendo fuera de Arriendos, producto en Servicios/Arriendos)
+- Botón "Sí, mover" guarda en la sección correcta y cambia la pestaña
+- Tallas, medidas y género ocultos cuando tipo es servicio o arriendo (en AdminProductos y AdminCarruseles)
+
+### Header público — Plan oculto
+- Quitado texto "Plan Gratis/Normal/Premium" del saludo en el header público (solo muestra "Hola, Nombre")
+
+### AdminNegocio — WhatsApp y Teléfono en misma fila mobile
+- Campos siempre en `grid-cols-2`, textos e iconos más compactos en mobile
+
+### AdminProductos — Responsive mobile completo
+- Tabs reemplazadas por `<select>` dropdown en mobile
+- Grid 2 columnas con tarjetas iguales a la página principal (imagen, nombre, precio, botones editar/eliminar)
+- Tablet/desktop mantiene grid original sin cambios
+
+### AdminHeader mobile — Barra "Ver sitio | Ver mi página"
+- Nueva barra fina bajo el header con acceso directo a "Ver sitio" y "Ver mi página"
+- "Ver sitio público" oculto del sidebar en mobile (solo visible en tablet/desktop)
+
+### StorePage — Tarjetas iguales a página principal
+- `StoreCarousel` reescrito con misma estructura que `ProductCarousel`
+- Mobile: carrusel horizontal, tarjetas `w-[calc(50%-4px)]` (2 visibles)
+- Tablet/Desktop: tarjeta destacada fija + carrusel con mismos anchos
+
+### Páginas de filtro — Tarjetas consistentes
+- `SectionPage`, `ArriendosPage`, `ServiciosPage`: grid con más columnas para que las tarjetas tengan el mismo tamaño que en la página principal
+- Mobile: 2 cols, Tablet: 4 cols, Desktop: 6-7 cols
+
 ### Archivos modificados
 - `backend/routes/listings.js` — nuevo parámetro `banner=1`
+- `src/App.jsx` — eliminados demos, filtro case-insensitive, props ServiciosPage
+- `src/admin/components/AdminHeader.jsx` — barra mobile Ver sitio + Ver mi página
+- `src/admin/components/AdminSidebar.jsx` — Ver sitio público oculto en mobile
+- `src/admin/pages/AdminCarruseles.jsx` — tallas/medidas ocultos para servicio/arriendo
 - `src/admin/pages/AdminEstadisticas.jsx` — quitar fallback 100 del KPI clicks
-- `src/components/EventsSection.jsx` — fix imagen tablet + isGratis
-- `src/components/EventsPage.jsx` — fix isGratis + filtro case-insensitive
-- `src/components/StoresPage.jsx` — filtro case-insensitive
-- `src/components/ServiciosPage.jsx` — filtro case-insensitive
-- `src/components/ArriendosPage.jsx` — filtro case-insensitive
-- `src/components/StorePage.jsx` — filtro case-insensitive + dropdown mobile categorías
-- `src/App.jsx` — filtro case-insensitive en SectionPage
+- `src/admin/pages/AdminNegocio.jsx` — WhatsApp/Teléfono misma fila responsive
+- `src/admin/pages/AdminProductos.jsx` — validación sección, responsive mobile completo
+- `src/components/ArriendosPage.jsx` — reescrita con ProductCard, badge
+- `src/components/EventsPage.jsx` — fix isGratis, filtro case-insensitive
+- `src/components/EventsSection.jsx` — fix imagen tablet, isGratis
+- `src/components/Header.jsx` — quitado texto plan del saludo
+- `src/components/ProductCard.jsx` — badge en tarjeta y modal
+- `src/components/SectionPage.jsx` — grid más columnas
+- `src/components/ServiciosPage.jsx` — reescrita completa con ProductCard
+- `src/components/Sidebar.jsx` — eliminados demos categorías
+- `src/components/StorePage.jsx` — StoreCarousel reescrito, dropdown mobile, banner fix
+- `src/components/StoresCarousel.jsx` — eliminados demos
+- `src/components/StoresPage.jsx` — eliminados demos, filtro case-insensitive
+- `src/components/TourismPage.jsx` — eliminados demos
 
 ### Pendientes
 - **SMTP Gmail para emails de recuperación de contraseña**
