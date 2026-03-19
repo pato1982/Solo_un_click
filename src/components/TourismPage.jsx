@@ -281,35 +281,10 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
     }).catch(() => {})
   }, [company.userId])
 
-  const DEMO_TOUR_IMGS = [
-    'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=600&q=80',
-    'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80',
-    'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=600&q=80',
-  ]
-  const DEMO_TOURS = [
-    { id: 'dt1', nombre: 'Ascenso al Volcán Villarrica', categoria: 'Aventura', ubicacion: 'Base Volcán Villarrica', detalle: 'Vive la experiencia única de ascender al volcán más activo de Chile. Incluye equipamiento completo, guía certificado y transporte. Apto para personas con buena condición física. Salida a las 6:00 AM, retorno aproximado 15:00.', precio: 85000, precio_antes: 95000, imagenes: JSON.stringify(DEMO_TOUR_IMGS), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-    { id: 'dt2', nombre: 'Rafting Río Trancura Alto', categoria: 'Rafting', ubicacion: 'Río Trancura, Pucón', detalle: 'Descenso de clase III-IV por los rápidos del Trancura. Incluye traje neopreno, casco, chaleco y guía profesional. Duración aproximada 2 horas. No se requiere experiencia previa.', precio: 35000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[0]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-    { id: 'dt3', nombre: 'Kayak Atardecer Lago Villarrica', categoria: 'Acuático', ubicacion: 'Costanera Villarrica', detalle: 'Travesía guiada en kayak al atardecer con vista al volcán. Incluye equipo, instrucción básica y fotografías. Ideal para parejas y familias. Duración 1.5 horas.', precio: 25000, precio_antes: 30000, imagenes: JSON.stringify([DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[1]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-    { id: 'dt4', nombre: 'Trekking Parque Nacional Huerquehue', categoria: 'Trekking', ubicacion: 'Parque Nacional Huerquehue', detalle: 'Recorrido por senderos entre araucarias milenarias y lagunas de montaña. Sendero Los Lagos de dificultad media. Incluye transporte, guía y snack. Duración 6 horas.', precio: 45000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[1], DEMO_TOUR_IMGS[0], DEMO_TOUR_IMGS[2]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-    { id: 'dt5', nombre: 'Termas Geométricas', categoria: 'Termas', ubicacion: 'Camino Coñaripe Km 16', detalle: 'Visita guiada a las famosas Termas Geométricas. Circuito de 17 piscinas de aguas termales entre la naturaleza. Incluye transporte ida y vuelta y entrada. Día completo.', precio: 55000, precio_antes: 65000, imagenes: JSON.stringify([DEMO_TOUR_IMGS[1], DEMO_TOUR_IMGS[2]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-    { id: 'dt6', nombre: 'Cabalgata Senderos Mapuche', categoria: 'Cabalgatas', ubicacion: 'Comunidad Huilio', detalle: 'Paseo a caballo por senderos ancestrales con guía de la comunidad mapuche. Incluye almuerzo típico y relato cultural. Apto para principiantes. Medio día.', precio: 40000, precio_antes: null, imagenes: JSON.stringify([DEMO_TOUR_IMGS[0], DEMO_TOUR_IMGS[2], DEMO_TOUR_IMGS[1]]), imagenes_crop: '[]', imagen_principal: 0, activo: 1 },
-  ]
-  const DEMO_PAGINA = {
-    titulo_superior: 'Sobre Nosotros',
-    texto_superior: 'Somos una empresa de turismo aventura con más de 10 años de experiencia en la Araucanía. Nuestro equipo de guías certificados te acompañará en cada experiencia, garantizando seguridad y diversión. Trabajamos con los mejores equipos y mantenemos los más altos estándares de calidad para que tu aventura sea inolvidable.',
-    imagen_superior: null,
-    crop_superior: null,
-    titulo_inferior: 'Datos de la Empresa',
-    texto_inferior: 'Contamos con oficina en el centro de Villarrica donde podrás visitarnos, resolver dudas y coordinar tu próxima aventura. Aceptamos todos los medios de pago.',
-    imagen_inferior: null,
-    crop_inferior: null,
-  }
-
   useEffect(() => {
     if (!company.userId) {
-      // Datos demo
-      setTours(DEMO_TOURS)
-      setPagina(DEMO_PAGINA)
+      setTours([])
+      setPagina(null)
       setLoadingTours(false)
       return
     }
@@ -546,16 +521,6 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
   const [popup, setPopup] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const DEMO_TOUR_IMG = 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=600&q=80'
-  const DEMO_TOUR_IMG2 = 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80'
-  const DEMO_TOUR_IMG3 = 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=600&q=80'
-  const DEMO_EMPRESAS = [
-    { id: 'demo-t1', userId: null, name: 'Aventura Villarrica', description: 'Vive la adrenalina con nuestros tours al volcán, rafting en el río Trancura y excursiones en kayak por el lago. Guías certificados y equipamiento de primera.', images: [DEMO_TOUR_IMG, DEMO_TOUR_IMG2, DEMO_TOUR_IMG3], imagesCrop: [], subcategories: ['Aventura', 'Volcanes', 'Rafting'], direccion: 'Av. Pedro de Valdivia 500', horarios: [{ dia: 'Lunes a Domingo', hora: '08:00 - 20:00' }], telefono: '+56 9 8765 4321', whatsapp: '+56 9 8765 4321', correo: 'info@aventuravillarrica.cl', facebook: '', instagram: '', planId: 3 },
-    { id: 'demo-t2', userId: null, name: 'Termas del Sur', description: 'Relájate en nuestras piscinas termales con vista al volcán. Circuito de aguas calientes, frías y temperadas. Masajes y spa disponibles todo el año.', images: [DEMO_TOUR_IMG2, DEMO_TOUR_IMG3, DEMO_TOUR_IMG], imagesCrop: [], subcategories: ['Termas', 'Spa', 'Relax'], direccion: 'Camino Villarrica-Pucón Km 15', horarios: [{ dia: 'Lunes a Domingo', hora: '09:00 - 21:00' }], telefono: '+56 9 1234 5678', whatsapp: '+56 9 1234 5678', correo: 'reservas@termasdelsur.cl', facebook: '', instagram: '', planId: 3 },
-    { id: 'demo-t3', userId: null, name: 'Cabalgatas Mapuche', description: 'Recorre los senderos ancestrales a caballo con guías de la comunidad mapuche. Paseos de medio día y día completo por bosques nativos y miradores.', images: [DEMO_TOUR_IMG3, DEMO_TOUR_IMG, DEMO_TOUR_IMG2], imagesCrop: [], subcategories: ['Cabalgatas', 'Naturaleza', 'Cultural'], direccion: 'Comunidad Huilio, Villarrica', horarios: [{ dia: 'Martes a Domingo', hora: '09:00 - 18:00' }], telefono: '+56 9 5555 1234', whatsapp: '+56 9 5555 1234', correo: '', facebook: '', instagram: '', planId: 1 },
-    { id: 'demo-t4', userId: null, name: 'Kayak Villarrica', description: 'Explora el lago Villarrica en kayak. Travesías guiadas al atardecer, clases para principiantes y arriendo de equipos. La mejor vista desde el agua.', images: [DEMO_TOUR_IMG, DEMO_TOUR_IMG3, DEMO_TOUR_IMG2], imagesCrop: [], subcategories: ['Acuático', 'Aventura', 'Familiar'], direccion: 'Costanera s/n, Villarrica', horarios: [{ dia: 'Lunes a Sábado', hora: '10:00 - 19:00' }], telefono: '+56 9 7777 8888', whatsapp: '+56 9 7777 8888', correo: 'hola@kayakvillarrica.cl', facebook: '', instagram: '', planId: 3 },
-    { id: 'demo-t5', userId: null, name: 'Trekking Araucanía', description: 'Rutas de trekking por parques nacionales y reservas. Senderos para todos los niveles con vistas impresionantes al volcán y los lagos de la región.', images: [DEMO_TOUR_IMG2, DEMO_TOUR_IMG, DEMO_TOUR_IMG3], imagesCrop: [], subcategories: ['Trekking', 'Naturaleza', 'Fotografía'], direccion: 'General Korner 234, Villarrica', horarios: [{ dia: 'Lunes a Domingo', hora: '07:00 - 17:00' }], telefono: '+56 9 3333 4444', whatsapp: '+56 9 3333 4444', correo: 'contacto@trekkingaraucania.cl', facebook: '', instagram: '', planId: 1 },
-  ]
 
   useEffect(() => {
     fetch(`${API}/api/portada/public`)
@@ -581,10 +546,10 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
           }))
           setEmpresas(mapped)
         } else {
-          setEmpresas(DEMO_EMPRESAS)
+          setEmpresas([])
         }
       })
-      .catch(() => setEmpresas(DEMO_EMPRESAS))
+      .catch(() => setEmpresas([]))
       .finally(() => setLoading(false))
   }, [])
 

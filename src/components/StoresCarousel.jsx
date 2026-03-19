@@ -28,17 +28,6 @@ function StoreModal({ store, onClose }) {
   )
 }
 
-const DEMO_STORE_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80'
-const DEMO_STORES = [
-  { id: 'demo-s1', name: 'Panadería Don Luis', address: 'Av. Pedro de Valdivia 234' },
-  { id: 'demo-s2', name: 'Ferretería El Clavo', address: 'Camilo Henríquez 567' },
-  { id: 'demo-s3', name: 'Minimarket La Esquina', address: 'Anfión Muñoz 123' },
-  { id: 'demo-s4', name: 'Peluquería Estilo', address: 'General Korner 890' },
-  { id: 'demo-s5', name: 'Librería Austral', address: 'Valentín Letelier 456' },
-  { id: 'demo-s6', name: 'Café del Lago', address: 'Costanera 789' },
-  { id: 'demo-s7', name: 'Veterinaria Patitas', address: 'Gerónimo de Alderete 321' },
-  { id: 'demo-s8', name: 'Bazar Todo Hogar', address: 'Vicente Reyes 654' },
-]
 
 export default function StoresCarousel({ onViewAll }) {
   const [stores, setStores] = useState([])
@@ -58,9 +47,9 @@ export default function StoresCarousel({ onViewAll }) {
           image: l.imagen ? `${API}${l.imagen}` : '',
           address: l.direccion || '',
         }))
-        setStores(mapped.length > 0 ? mapped : DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG })))
+        setStores(mapped)
       })
-      .catch(() => setStores(DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG }))))
+      .catch(() => setStores([]))
   }, [])
 
   // Duplicate stores for seamless loop

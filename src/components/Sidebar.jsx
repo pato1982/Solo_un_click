@@ -149,30 +149,6 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     const tipo = tipoMap[activeNav]
     const catsDelTipo = sidebarCategorias.filter(c => c.tipo === tipo)
 
-    // Demo categorías si no hay reales
-    const DEMO_CATS = {
-      productos: [
-        { icon: 'devices', label: 'Tecnología', subcategories: ['Celulares', 'Notebooks', 'Tablets', 'Accesorios'] },
-        { icon: 'checkroom', label: 'Vestuario', subcategories: ['Hombre', 'Mujer', 'Niños', 'Calzado'] },
-        { icon: 'weekend', label: 'Hogar', subcategories: ['Muebles', 'Decoración', 'Cocina', 'Baño'] },
-        { icon: 'sports_esports', label: 'Deportes', subcategories: ['Bicicletas', 'Camping', 'Fitness', 'Running'] },
-        { icon: 'toys', label: 'Juguetería', subcategories: ['Didácticos', 'Muñecas', 'Autos', 'Juegos de mesa'] },
-      ],
-      servicios: [
-        { icon: 'construction', label: 'Construcción', subcategories: ['Electricista', 'Gasfiter', 'Albañil', 'Pintor'] },
-        { icon: 'local_car_wash', label: 'Automotriz', subcategories: ['Mecánica', 'Lavado', 'Grúa', 'Neumáticos'] },
-        { icon: 'school', label: 'Educación', subcategories: ['Clases particulares', 'Idiomas', 'Música', 'Computación'] },
-        { icon: 'spa', label: 'Belleza y Salud', subcategories: ['Peluquería', 'Masajes', 'Manicure', 'Podología'] },
-        { icon: 'pets', label: 'Mascotas', subcategories: ['Veterinaria', 'Peluquería canina', 'Paseo', 'Pensión'] },
-      ],
-      arriendos: [
-        { icon: 'cottage', label: 'Cabañas', subcategories: ['Lago', 'Volcán', 'Bosque', 'Centro'] },
-        { icon: 'apartment', label: 'Departamentos', subcategories: ['1 dormitorio', '2 dormitorios', 'Studio', 'Amoblado'] },
-        { icon: 'house', label: 'Casas', subcategories: ['Familiar', 'Vacaciones', 'Temporada', 'Larga estadía'] },
-        { icon: 'night_shelter', label: 'Hospedajes', subcategories: ['Hostal', 'Habitación', 'Domo', 'Glamping'] },
-      ],
-    }
-
     if (catsDelTipo.length > 0) {
       panel = {
         title: SIDEBAR_TITLES[activeNav],
@@ -185,46 +161,22 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
     } else {
       panel = {
         title: SIDEBAR_TITLES[activeNav],
-        categories: DEMO_CATS[activeNav] || [],
+        categories: [],
       }
     }
   }
   // Locales: categorías desde API
   else if (activeNav === 'locales') {
-    const DEMO_LOCALE_CATS = [
-      { icon: 'bakery_dining', label: 'Panadería' },
-      { icon: 'hardware', label: 'Ferretería' },
-      { icon: 'local_grocery_store', label: 'Abarrotes' },
-      { icon: 'content_cut', label: 'Peluquería' },
-      { icon: 'menu_book', label: 'Librería' },
-      { icon: 'local_cafe', label: 'Cafetería' },
-      { icon: 'pets', label: 'Mascotas' },
-      { icon: 'storefront', label: 'Bazar' },
-    ]
     panel = {
       title: 'Negocios',
-      items: localeCategorias.length > 0
-        ? localeCategorias.map(c => ({ icon: c.icono || 'storefront', label: c.nombre }))
-        : DEMO_LOCALE_CATS,
+      items: localeCategorias.map(c => ({ icon: c.icono || 'storefront', label: c.nombre })),
     }
   }
   // Eventos: categorías desde API
   else if (activeNav === 'eventos') {
-    const DEMO_EVENT_CATS = [
-      { icon: 'music_note', label: 'Música' },
-      { icon: 'restaurant', label: 'Gastronomía' },
-      { icon: 'sports_soccer', label: 'Deporte' },
-      { icon: 'theater_comedy', label: 'Cultura' },
-      { icon: 'palette', label: 'Artesanía' },
-      { icon: 'family_restroom', label: 'Familiar' },
-      { icon: 'forest', label: 'Naturaleza' },
-      { icon: 'nightlife', label: 'Nocturno' },
-    ]
     panel = {
       title: 'Eventos',
-      items: eventoCategorias.length > 0
-        ? eventoCategorias.map(c => ({ icon: c.icono || 'event', label: c.nombre }))
-        : DEMO_EVENT_CATS,
+      items: eventoCategorias.map(c => ({ icon: c.icono || 'event', label: c.nombre })),
     }
   }
 

@@ -429,7 +429,7 @@ export default function AdminEstadisticas() {
                 <span className="material-symbols-outlined text-xl text-rose-600">touch_app</span>
               </div>
               <div>
-                <span className="text-xl sm:text-2xl font-black text-rose-600 leading-none">{resumen.clicks_mes || 100}</span>
+                <span className="text-xl sm:text-2xl font-black text-rose-600 leading-none">{resumen.clicks_mes}</span>
                 <p className="text-[10px] font-semibold text-gray-500 leading-tight">Clicks en productos</p>
               </div>
             </div>

@@ -161,6 +161,7 @@ export default function AdminProductos() {
   const [editingId, setEditingId] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
   const [toast, setToast] = useState(null)
+  const [seccionPopup, setSeccionPopup] = useState(null)
   const fileInputRef = useRef(null)
 
   const showToast = (msg, type = 'success') => {
@@ -244,8 +245,29 @@ export default function AdminProductos() {
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, overrideSeccion) => {
     e.preventDefault()
+
+    // Validar que el tipo coincida con la pestaña
+    const tipo = formData.tipo
+    const seccionDestino = overrideSeccion || activeTab
+    if (tipo && !overrideSeccion) {
+      const SECCION_CORRECTA = { servicio: 'servicios', arriendo: 'arriendos' }
+      const TIPO_LABEL = { servicio: 'Servicios', arriendo: 'Arriendos', producto: 'Productos' }
+      if (tipo === 'servicio' && seccionDestino !== 'servicios') {
+        setSeccionPopup({ tipo, seccionCorrecta: 'servicios', label: TIPO_LABEL[tipo] })
+        return
+      }
+      if (tipo === 'arriendo' && seccionDestino !== 'arriendos') {
+        setSeccionPopup({ tipo, seccionCorrecta: 'arriendos', label: TIPO_LABEL[tipo] })
+        return
+      }
+      if (tipo === 'producto' && (seccionDestino === 'servicios' || seccionDestino === 'arriendos')) {
+        setSeccionPopup({ tipo, seccionCorrecta: 'destacados', label: TIPO_LABEL[tipo] })
+        return
+      }
+    }
+
     setSaving(true)
 
     try {
@@ -281,7 +303,7 @@ export default function AdminProductos() {
 
       const body = {
         tipo,
-        seccion: editingId ? productos.find(p => p.id === editingId)?.seccion || activeTab : activeTab,
+        seccion: overrideSeccion || (editingId ? productos.find(p => p.id === editingId)?.seccion || activeTab : activeTab),
         nombre: formData.nombre,
         descripcion: formData.descripcion,
         precio: Math.round(Number(formData.precio)) || 0,
@@ -338,7 +360,8 @@ export default function AdminProductos() {
         setEditingId(null)
         setFormData(emptyForm)
         setShowModal(false)
-        showToast(editingId ? 'Producto actualizado' : 'Producto creado')
+        if (overrideSeccion) setActiveTab(overrideSeccion)
+        showToast(editingId ? 'Producto actualizado' : 'Producto creado' + (overrideSeccion ? ` en ${overrideSeccion}` : ''))
       } else {
         const errData = await res.json().catch(() => ({}))
         showToast(errData.error || 'Error al guardar', 'error')
@@ -426,18 +449,32 @@ export default function AdminProductos() {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Productos</h1>
+      <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Productos</h1>
 
       {/* Pestañas */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex overflow-x-auto border-b border-gray-200">
+        {/* MOBILE: select dropdown */}
+        <div className="sm:hidden p-2 border-b border-gray-200">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full rounded-lg border-gray-300 text-xs py-2 px-3 font-semibold text-primary focus:ring-primary focus:border-primary"
+          >
+            {tabs.map((tab) => {
+              const count = productos.filter((p) => p.seccion === tab.id).length
+              return <option key={tab.id} value={tab.id}>{tab.label}{count > 0 ? ` (${count})` : ''}</option>
+            })}
+          </select>
+        </div>
+        {/* TABLET/DESKTOP: tabs horizontales */}
+        <div className="hidden sm:flex overflow-x-auto border-b border-gray-200">
           {tabs.map((tab) => {
             const count = productos.filter((p) => p.seccion === tab.id).length
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-4 md:px-5 py-3 md:py-3.5 text-xs md:text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary text-primary bg-primary/5'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -455,8 +492,59 @@ export default function AdminProductos() {
         </div>
 
         {/* Grid de productos */}
-        <div className="p-3 sm:p-4 md:p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+        <div className="p-2 sm:p-4 md:p-6">
+          {/* MOBILE: grid 2 columnas como página principal */}
+          <div className="sm:hidden grid grid-cols-2 gap-2">
+            <button
+              onClick={openModal}
+              className="group flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-300 rounded-xl p-3 aspect-[3/4] hover:border-primary hover:bg-primary/5 transition-all"
+            >
+              <span className="material-symbols-outlined text-2xl text-gray-300 group-hover:text-primary">add_circle</span>
+              <span className="text-[10px] font-semibold text-gray-400 group-hover:text-primary">Agregar</span>
+            </button>
+
+            {productosDeTab.map((prod) => (
+              <div key={prod.id} className="relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                <div className="relative h-32 bg-gray-100">
+                  {prod.imagenPreview ? (
+                    <img src={prod.imagenPreview} alt={prod.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
+                    </div>
+                  )}
+                  {prod.badge && (
+                    <span className="absolute top-1 left-1 text-[7px] font-bold bg-primary text-white px-1.5 py-0.5 rounded-full">{prod.badge}</span>
+                  )}
+                </div>
+                <div className="px-1.5 py-1.5 flex flex-col flex-1">
+                  <p className="text-[10px] font-bold text-gray-800 line-clamp-2 leading-tight">{prod.nombre}</p>
+                  <p className="text-[8px] text-gray-400 truncate mt-0.5">{prod.subcategoria}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {prod.precio > 0 && (
+                      <span className="text-[10px] font-black text-primary">${prod.precio.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</span>
+                    )}
+                    {prod.precioOriginal && (
+                      <span className="text-[8px] text-gray-400 line-through">${prod.precioOriginal.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 mt-auto pt-1">
+                    <button onClick={() => openEdit(prod)} className="flex-1 flex items-center justify-center gap-0.5 py-1 rounded-md text-[8px] font-semibold text-primary bg-primary/5 active:bg-primary/10">
+                      <span className="material-symbols-outlined text-xs">edit</span>
+                      Editar
+                    </button>
+                    <button onClick={() => setDeleteId(prod.id)} className="flex-1 flex items-center justify-center gap-0.5 py-1 rounded-md text-[8px] font-semibold text-red-500 bg-red-50 active:bg-red-100">
+                      <span className="material-symbols-outlined text-xs">delete</span>
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* TABLET/DESKTOP: grid de tarjetas */}
+          <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
             <button
               onClick={openModal}
               className="group flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-xl p-6 min-h-[200px] hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
@@ -516,17 +604,17 @@ export default function AdminProductos() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h3 className="text-sm font-bold text-gray-800">{editingId ? 'Editar producto' : 'Nuevo producto'}</h3>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-800">{editingId ? 'Editar producto' : 'Nuevo producto'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-gray-400 text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
               {/* Columna izquierda - Imagen */}
-              <div className="w-full sm:w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0 flex flex-col items-center sm:items-start">
                 {formData.imagenPreview ? (
                   <div className="relative">
                     {formData.imagenNaturalW > 0 ? (
@@ -550,24 +638,24 @@ export default function AdminProductos() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
-                    <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
-                    <span className="text-xs text-gray-500">Buscar imagen</span>
-                    <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-40 h-40 sm:w-52 sm:h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                    <span className="material-symbols-outlined text-2xl sm:text-3xl text-gray-400">cloud_upload</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500">Buscar imagen</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-400">JPG, PNG, WEBP</span>
                   </button>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
 
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Precio *</label>
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Precio *</label>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
                       <input type="number" name="precio" value={formData.precio} onChange={handleInputChange} required min="0" step="1" onKeyDown={(e) => ['.', ',', 'e', 'E'].includes(e.key) && e.preventDefault()} className="w-full rounded-md border-gray-300 text-xs py-1.5 pl-6 focus:ring-primary focus:border-primary" placeholder="249990" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Precio anterior</label>
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Precio anterior</label>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
                       <input type="number" name="precioOriginal" value={formData.precioOriginal} onChange={handleInputChange} min="0" step="1" onKeyDown={(e) => ['.', ',', 'e', 'E'].includes(e.key) && e.preventDefault()} className="w-full rounded-md border-gray-300 text-xs py-1.5 pl-6 focus:ring-primary focus:border-primary" placeholder="379990" />
@@ -577,21 +665,21 @@ export default function AdminProductos() {
               </div>
 
               {/* Columna derecha - Info */}
-              <div className="flex-1 flex flex-col gap-3">
+              <div className="flex-1 flex flex-col gap-2 sm:gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nombre *</label>
-                  <input type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Nombre del producto" />
+                  <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Nombre *</label>
+                  <input type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary" placeholder="Nombre del producto" />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Descripción *</label>
-                  <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
+                  <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Descripción *</label>
+                  <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -599,14 +687,14 @@ export default function AdminProductos() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Etiqueta</label>
-                    <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Etiqueta</label>
+                    <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
-                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
+                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar categoría</option>
                       {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
                         <option key={c.id} value={c.nombre}>{c.nombre}</option>
@@ -614,8 +702,8 @@ export default function AdminProductos() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                    <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
+                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar subcategoría</option>
                       {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
                         <option key={s.id} value={s.nombre}>{s.nombre}</option>
@@ -624,11 +712,12 @@ export default function AdminProductos() {
                   </div>
                 </div>
 
+                {formData.tipo === 'producto' && (
                 <div className="space-y-1">
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
-                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-xs py-1 focus:ring-primary focus:border-primary">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
+                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin tallas</option>
                         <option value="calzado">Calzado</option>
                         <option value="ropa">Ropa</option>
@@ -644,8 +733,8 @@ export default function AdminProductos() {
                       </button>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Género</label>
-                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1 focus:ring-primary focus:border-primary">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Género</label>
+                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin definir</option>
                         <option value="Niño">Niño</option>
                         <option value="Niña">Niña</option>
@@ -680,9 +769,10 @@ export default function AdminProductos() {
                     </div>
                   )}
                 </div>
+                )}
 
-                <button type="submit" disabled={saving} className="mt-auto flex items-center justify-center gap-1.5 bg-accent text-primary py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
-                  <span className="material-symbols-outlined text-base">save</span>
+                <button type="submit" disabled={saving} className="mt-auto flex items-center justify-center gap-1 sm:gap-1.5 bg-accent text-primary py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
+                  <span className="material-symbols-outlined text-sm sm:text-base">save</span>
                   {saving ? 'Guardando...' : editingId ? 'Actualizar Producto' : 'Guardar Producto'}
                 </button>
               </div>
@@ -692,6 +782,27 @@ export default function AdminProductos() {
       )}
 
       {/* Popup confirmar eliminación */}
+      {seccionPopup && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setSeccionPopup(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
+              </div>
+              <h3 className="text-sm font-bold text-gray-800">Sección incorrecta</h3>
+              <p className="text-xs text-gray-500 text-center">
+                Los items de tipo <strong>{seccionPopup.label}</strong> deben estar en la sección <strong>{seccionPopup.label}</strong>.
+                ¿Deseas mover este item a su sección correspondiente?
+              </p>
+              <div className="flex gap-2 w-full mt-1">
+                <button onClick={() => setSeccionPopup(null)} className="flex-1 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button onClick={(e) => { const sec = seccionPopup.seccionCorrecta; setSeccionPopup(null); handleSubmit(e, sec) }} className="flex-1 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-light transition-colors">Sí, mover</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {deleteId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setDeleteId(null)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { sections } from '../data/products'
 import ProductCard from './ProductCard'
 
 const API = import.meta.env.VITE_API || ''
@@ -233,17 +232,23 @@ function ImageMarquee({ products, phone, carouselItems, storeUserId }) {
 }
 
 function StoreCarousel({ title, items, onOpenStore }) {
-  const scrollRef = useRef(null)
+  const mobileScrollRef = useRef(null)
+  const desktopScrollRef = useRef(null)
   const intervalRef = useRef(null)
 
-  const firstItem = items[0]
-  const restItems = items.slice(1)
+  const featuredItem = items.find(p => p.owner_plan_id && p.owner_plan_id >= 2) || null
+  const restItems = featuredItem ? items.filter(p => p !== featuredItem) : items
+
+  const getScrollEl = () => {
+    if (window.innerWidth < 640 && mobileScrollRef.current) return mobileScrollRef.current
+    return desktopScrollRef.current
+  }
 
   const scrollOne = useCallback((direction) => {
-    if (!scrollRef.current) return
-    const cardWidth = scrollRef.current.querySelector(':first-child')?.offsetWidth || 200
-    const amount = cardWidth + 16
-    scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
+    const el = getScrollEl()
+    if (!el) return
+    const cardW = el.querySelector(':first-child')?.offsetWidth || 200
+    el.scrollBy({ left: direction === 'left' ? -(cardW + 8) : (cardW + 8), behavior: 'smooth' })
   }, [])
 
   const scroll = (direction) => {
@@ -254,10 +259,11 @@ function StoreCarousel({ title, items, onOpenStore }) {
   const resetAutoScroll = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
     intervalRef.current = setInterval(() => {
-      if (!scrollRef.current) return
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      const el = getScrollEl()
+      if (!el) return
+      const { scrollLeft, scrollWidth, clientWidth } = el
       if (scrollLeft + clientWidth >= scrollWidth - 5) {
-        scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+        el.scrollTo({ left: 0, behavior: 'smooth' })
       } else {
         scrollOne('right')
       }
@@ -265,52 +271,57 @@ function StoreCarousel({ title, items, onOpenStore }) {
   }, [scrollOne])
 
   useEffect(() => {
-    if (restItems.length > 0) {
-      resetAutoScroll()
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [resetAutoScroll, restItems.length])
+    if (items.length > 0) resetAutoScroll()
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [resetAutoScroll, items.length])
 
-  const cardWidth = 'w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] md:w-[calc(20%-13px)]'
+  const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
+  const carouselCardWidth = 'w-[calc(50%-4px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
+
+  if (items.length === 0) return null
 
   return (
     <div>
-      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
-        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
-        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
-        <div className="flex-1 h-px bg-slate-200"></div>
+      {title && (
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+          <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
+          <div className="flex-1 h-px bg-slate-200"></div>
+        </div>
+      )}
+
+      {/* MOBILE: carrusel horizontal, 2 por fila */}
+      <div className="sm:hidden relative group/carousel">
+        <div ref={mobileScrollRef} className="flex gap-2 overflow-x-hidden scroll-smooth py-1 px-1">
+          {items.map((product) => (
+            <div key={product.id} className="shrink-0 w-[calc(50%-4px)]">
+              <ProductCard product={product} onOpenStore={onOpenStore} inStorePage />
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="flex gap-2 sm:gap-3 md:gap-4 py-1 px-1">
-        {firstItem && (
-          <div className={`shrink-0 ${cardWidth} transition-all duration-300`}>
-            <ProductCard product={firstItem} isFirst onOpenStore={onOpenStore} inStorePage />
-          </div>
-        )}
+
+      {/* TABLET/DESKTOP: destacada fija + carrusel */}
+      <div className="hidden sm:flex gap-3 md:gap-4 py-1 px-1">
+        <div className={`shrink-0 ${featuredWidth} transition-all duration-300`}>
+          {featuredItem ? (
+            <ProductCard product={featuredItem} isFirst onOpenStore={onOpenStore} inStorePage />
+          ) : (
+            <ProductCard product={items[0]} isFirst onOpenStore={onOpenStore} inStorePage />
+          )}
+        </div>
+
         {restItems.length > 0 && (
           <div className="relative group/carousel flex-1 min-w-0">
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
-            >
-              <span className="material-symbols-outlined">chevron_left</span>
+            <button onClick={() => scroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100">
+              <span className="material-symbols-outlined text-base md:text-lg">chevron_left</span>
             </button>
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100"
-            >
-              <span className="material-symbols-outlined">chevron_right</span>
+            <button onClick={() => scroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 md:h-10 md:w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100">
+              <span className="material-symbols-outlined text-base md:text-lg">chevron_right</span>
             </button>
-            <div
-              ref={scrollRef}
-              className="flex gap-4 overflow-x-hidden scroll-smooth"
-            >
+            <div ref={desktopScrollRef} className="flex gap-3 md:gap-4 overflow-x-hidden scroll-smooth">
               {restItems.map((product) => (
-                <div
-                  key={product.id}
-                  className={`shrink-0 ${cardWidth} transition-all duration-300`}
-                >
+                <div key={product.id} className={`shrink-0 ${carouselCardWidth} transition-all duration-300`}>
                   <ProductCard product={product} onOpenStore={onOpenStore} inStorePage />
                 </div>
               ))}
@@ -452,6 +463,7 @@ const SECTION_TITLES = {
 export default function StorePage({ store, onBack, onOpenStore }) {
   const [activeCat, setActiveCat] = useState(null)
   const [activeSub, setActiveSub] = useState(null)
+  const [mobileCatOpen, setMobileCatOpen] = useState(false)
   const [carouselItems, setCarouselItems] = useState([])
   const [bannerItems, setBannerItems] = useState([])
   const [apiProducts, setApiProducts] = useState(null)
@@ -473,20 +485,20 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     Promise.all([
       fetch(`${API}/api/listings?user_id=${store.userId}`).then(r => r.json()),
       fetch(`${API}/api/listings?user_id=${store.userId}&carousel=1`).then(r => r.json()),
+      fetch(`${API}/api/listings?user_id=${store.userId}&banner=1`).then(r => r.json()),
       fetch(`${API}/api/business/${store.userId}`).then(r => r.json()),
-    ]).then(([listData, carData, bizData]) => {
+    ]).then(([listData, carData, banData, bizData]) => {
       if (listData.listings) {
-        // Productos normales (sin carrusel ni banner)
-        setApiProducts(listData.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(mapListing))
-        // Banner items
-        const banners = listData.listings.filter(l => l.banner_orden).map(l => ({
-          ...mapListing(l),
-          banner_orden: l.banner_orden,
-        }))
-        setBannerItems(banners)
+        setApiProducts(listData.listings.map(mapListing))
       }
       if (carData.listings) {
         setCarouselItems(carData.listings.map(mapListing))
+      }
+      if (banData.listings) {
+        setBannerItems(banData.listings.map(l => ({
+          ...mapListing(l),
+          banner_orden: l.banner_orden,
+        })))
       }
       if (bizData.business) {
         setStoreInfo(bizData.business)
@@ -504,20 +516,8 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   const PLAN_LIMITS = { 1: 0, 2: 25, 3: 100 }
   const maxListings = PLAN_LIMITS[store.plan_id] || 25
 
-  // Productos: API o estáticos, limitados por plan
-  let storeProducts
-  if (apiProducts) {
-    storeProducts = apiProducts.slice(0, maxListings)
-  } else {
-    storeProducts = []
-    sections.forEach((section) => {
-      section.items.forEach((item) => {
-        if (store.productIds && store.productIds.includes(item.id)) {
-          storeProducts.push(item)
-        }
-      })
-    })
-  }
+  // Productos desde API, limitados por plan
+  const storeProducts = apiProducts ? apiProducts.slice(0, maxListings) : []
 
   // Categorías: dinámicas desde los productos reales (categoria → subcategorias)
   const storeCategories = apiProducts
@@ -537,8 +537,8 @@ export default function StorePage({ store, onBack, onOpenStore }) {
 
   // Filtrar por categoría o subcategoría seleccionada
   const filteredProducts = storeProducts.filter((p) => {
-    if (activeSub) return p.subcategory === activeSub
-    if (activeCat) return p.category === activeCat
+    if (activeSub) return (p.subcategory || '').toLowerCase() === activeSub.toLowerCase()
+    if (activeCat) return (p.category || '').toLowerCase() === activeCat.toLowerCase()
     return true
   })
 
@@ -612,6 +612,62 @@ export default function StorePage({ store, onBack, onOpenStore }) {
 
         {/* Contenido principal */}
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 pt-3 sm:pt-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 overflow-hidden transition-all duration-300">
+          {/* Filtro categorías mobile */}
+          {storeCategories.length > 0 && (
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileCatOpen(!mobileCatOpen)}
+                className="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-xs font-bold w-full justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">filter_list</span>
+                  {activeSub || activeCat || 'Filtrar por categoría'}
+                </div>
+                <span className="material-symbols-outlined text-sm" style={{ transition: 'transform 0.2s', transform: mobileCatOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+              </button>
+              {mobileCatOpen && (
+                <div className="bg-primary text-white rounded-b-lg p-2 -mt-1 shadow-lg max-h-[60vh] overflow-y-auto">
+                  {(activeCat || activeSub) && (
+                    <button
+                      onClick={() => { setActiveCat(null); setActiveSub(null); setMobileCatOpen(false) }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-bold text-accent hover:bg-white/10 w-full mb-1"
+                    >
+                      <span className="material-symbols-outlined text-xs">close</span>
+                      Quitar filtro
+                    </button>
+                  )}
+                  {storeCategories.map((cat) => (
+                    <div key={cat.label}>
+                      <button
+                        onClick={() => { handleCatClick(cat.label); if (!cat.subcategories || cat.subcategories.length === 0) setMobileCatOpen(false) }}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-xs font-normal text-white/60 hover:text-accent w-full ${activeCat === cat.label ? 'bg-white/10 text-accent' : ''}`}
+                      >
+                        <span className="material-symbols-outlined text-xs" style={{ transition: 'transform 0.2s', transform: activeCat === cat.label ? 'rotate(90deg)' : 'rotate(0deg)' }}>chevron_right</span>
+                        <span className="flex-1 text-left">{cat.label}</span>
+                      </button>
+                      {activeCat === cat.label && cat.subcategories && (
+                        <div className="flex flex-col ml-4">
+                          {cat.subcategories.map((sub) => (
+                            <button
+                              key={sub}
+                              onClick={() => { setActiveCat(cat.label); setActiveSub(activeSub === sub ? null : sub); setMobileCatOpen(false) }}
+                              className={`flex items-center gap-2 px-2 py-1 rounded-md text-xs text-white/50 hover:text-accent w-full text-left ${activeSub === sub ? 'text-white font-medium' : ''}`}
+                            >
+                              {activeSub === sub
+                                ? <span className="material-symbols-outlined text-white text-xs shrink-0">check</span>
+                                : <span className="w-1 h-1 rounded-full bg-accent shrink-0"></span>
+                              }
+                              <span>{sub}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {/* Ver todo - cuando hay filtro activo */}
           {(activeCat || activeSub) && (
             <button

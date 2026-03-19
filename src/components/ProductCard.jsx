@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { getStoreForProduct } from '../data/stores'
 
 const API = import.meta.env.VITE_API || ''
 const DEFAULT_PHONE = '56912345678'
@@ -20,7 +19,6 @@ function getWhatsAppUrl(product, phone) {
 }
 
 function getStoreFromProduct(product) {
-  // Si el producto viene del API con datos de negocio, crear store dinámico
   if (product.user_id && product.nombre_negocio) {
     return {
       id: `user-${product.user_id}`,
@@ -30,8 +28,7 @@ function getStoreFromProduct(product) {
       address: product.negocio_direccion || '',
     }
   }
-  // Fallback a tiendas demo estáticas
-  return getStoreForProduct(product.id)
+  return null
 }
 
 function ContactPopup({ icon, title, value, onClose }) {
@@ -77,6 +74,9 @@ function ProductModal({ product, hidePrice, onClose }) {
               alt={product.alt}
               className="w-full h-full object-cover rounded-tr-xl bg-slate-100"
             />
+            {product.badge && (
+              <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-primary text-white rounded-full text-[9px] font-bold shadow-sm">{product.badge}</span>
+            )}
             {product.genero && (
               <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-[9px] font-bold text-slate-700 shadow-sm">{product.genero}</span>
             )}
@@ -254,6 +254,11 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
           {isFirst && (
             <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-amber-400 text-amber-900 px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow">
               Popular
+            </span>
+          )}
+          {!isFirst && product.badge && (
+            <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-primary text-white px-1 sm:px-2 py-0.5 rounded-full text-[6px] sm:text-[8px] font-black uppercase tracking-wider shadow">
+              {product.badge}
             </span>
           )}
         </div>

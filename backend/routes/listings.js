@@ -17,7 +17,7 @@ function sanitize(str) {
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
-    const { tipo, badge, user_id, carousel } = req.query
+    const { tipo, badge, user_id, carousel, banner } = req.query
 
     let query = `
       SELECT l.*, li.url as imagen,
@@ -70,6 +70,13 @@ router.get('/', async (req, res) => {
         query += ' AND l.carousel_posicion = 1'
       }
       query += ' ORDER BY l.carousel_posicion ASC, l.carousel_orden ASC'
+    } else if (banner === '1') {
+      // Solo devolver banner items si el dueño tiene plan >= 3
+      if (user_id && ownerPlan !== null && ownerPlan < 3) {
+        return res.json({ listings: [] })
+      }
+      query += ' AND l.banner_orden IS NOT NULL'
+      query += ' ORDER BY l.banner_orden ASC'
     } else {
       // Excluir items de carrusel y banner del feed principal
       query += ' AND l.carousel_posicion IS NULL AND l.banner_orden IS NULL'

@@ -26,8 +26,8 @@ function getBadgeColor(categoria) {
 }
 
 function isGratis(precio) {
-  if (!precio) return true
-  const lower = precio.toLowerCase().trim()
+  if (!precio || precio === 0) return true
+  const lower = String(precio).toLowerCase().trim()
   return lower === 'entrada libre' || lower === 'gratis' || lower === '' || lower === '$0' || lower === '0'
 }
 
@@ -64,17 +64,6 @@ function EventCard({ event }) {
   )
 }
 
-const DEMO_EVENT_IMG = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&q=80'
-const DEMO_EVENTS = [
-  { id: 'demo-e1', title: 'Festival de la Cerveza Artesanal', date: '22 Mar 2026', location: 'Plaza de Armas', price: '$5.000', type: 'Gastronomía', badge: 'Gastronomía', badgeColor: 'bg-accent text-primary font-black' },
-  { id: 'demo-e2', title: 'Noche de Música en Vivo', date: '25 Mar 2026', location: 'Anfiteatro Municipal', price: 'Entrada libre', type: 'Música', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
-  { id: 'demo-e3', title: 'Feria Artesanal de Otoño', date: '28 Mar 2026', location: 'Costanera Villarrica', price: 'Entrada libre', type: 'Artesanía', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
-  { id: 'demo-e4', title: 'Torneo de Fútbol Amateur', date: '30 Mar 2026', location: 'Estadio Municipal', price: '$2.000', type: 'Deporte', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
-  { id: 'demo-e5', title: 'Obra de Teatro Infantil', date: '2 Abr 2026', location: 'Centro Cultural', price: '$3.000', type: 'Cultura', badge: 'Cultura', badgeColor: 'bg-primary text-white' },
-  { id: 'demo-e6', title: 'Caminata Volcán Villarrica', date: '5 Abr 2026', location: 'Base Volcán', price: '$15.000', type: 'Naturaleza', badge: 'Naturaleza', badgeColor: 'bg-green-600 text-white' },
-  { id: 'demo-e7', title: 'Fiesta Costumbrista', date: '8 Abr 2026', location: 'Parque Municipal', price: '$1.000', type: 'Familiar', badge: 'Familiar', badgeColor: 'bg-blue-400 text-white' },
-  { id: 'demo-e8', title: 'Taller de Cerámica Mapuche', date: '12 Abr 2026', location: 'Museo Leandro Penchulef', price: '$8.000', type: 'Artesanía', badge: 'Artesanía', badgeColor: 'bg-amber-500 text-white' },
-]
 
 export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
   const [allEvents, setAllEvents] = useState([])
@@ -95,13 +84,13 @@ export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
           badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
           badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
         }))
-        setAllEvents(mapped.length > 0 ? mapped : DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG })))
+        setAllEvents(mapped)
       })
-      .catch(() => setAllEvents(DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG }))))
+      .catch(() => setAllEvents([]))
   }, [])
 
   const filteredEvents = activeFilter
-    ? allEvents.filter((e) => e.type === activeFilter)
+    ? allEvents.filter((e) => e.type && e.type.toLowerCase() === activeFilter.toLowerCase())
     : allEvents
 
   const cols = sidebarOpen ? 5 : 6

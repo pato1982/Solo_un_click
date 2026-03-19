@@ -184,29 +184,29 @@ export default function AdminNegocio() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">WhatsApp</label>
+                <label className="block text-[10px] sm:text-xs font-semibold text-gray-500 mb-1">WhatsApp</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 text-lg material-symbols-outlined">chat</span>
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-green-500 text-sm sm:text-lg material-symbols-outlined">chat</span>
                   <input
                     type="tel"
                     value={form.whatsapp}
                     onChange={(e) => update('whatsapp', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    className="w-full border border-gray-300 rounded-lg pl-7 sm:pl-10 pr-1 sm:pr-3 py-1.5 sm:py-2 text-[11px] sm:text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
                     placeholder="+56 9 1234 5678"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Teléfono</label>
+                <label className="block text-[10px] sm:text-xs font-semibold text-gray-500 mb-1">Teléfono</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg material-symbols-outlined">phone</span>
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-primary text-sm sm:text-lg material-symbols-outlined">phone</span>
                   <input
                     type="tel"
                     value={form.telefono}
                     onChange={(e) => update('telefono', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                    className="w-full border border-gray-300 rounded-lg pl-7 sm:pl-10 pr-1 sm:pr-3 py-1.5 sm:py-2 text-[11px] sm:text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
                     placeholder="+56 45 123 4567"
                   />
                 </div>

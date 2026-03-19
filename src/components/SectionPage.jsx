@@ -34,7 +34,7 @@ export default function SectionPage({ section, sidebarOpen, onBack, onOpenStore 
         </span>
       </div>
 
-      <div className={`grid gap-2 sm:gap-3 md:gap-4 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6'} transition-all duration-300`}>
+      <div className={`grid gap-2 sm:gap-3 md:gap-4 transition-all duration-300 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-4 md:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4 md:grid-cols-7'}`}>
         {pageItems.map((product, idx) => (
           <ProductCard key={product.id} product={product} hidePrice={section.hidePrice} isFirst={idx === 0 && product.owner_plan_id && product.owner_plan_id >= 2} onOpenStore={onOpenStore} />
         ))}

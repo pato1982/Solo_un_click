@@ -72,7 +72,7 @@ export default function AdminSidebar({ open, onClose }) {
             <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider">Modo Programador</span>
           </div>
         ) : (
-          <a href="/" className="flex items-center gap-2 text-xs text-primary hover:text-accent transition-colors font-semibold">
+          <a href="/" className="hidden sm:flex items-center gap-2 text-xs text-primary hover:text-accent transition-colors font-semibold">
             <span className="material-symbols-outlined text-sm">open_in_new</span>
             Ver sitio público
           </a>

@@ -559,6 +559,7 @@ export default function AdminCarruseles() {
                   </div>
                 </div>
 
+                {formData.tipo === 'producto' && (
                 <div className="space-y-1">
                   <div className="grid grid-cols-3 gap-3">
                     <div>
@@ -608,6 +609,7 @@ export default function AdminCarruseles() {
                     </div>
                   )}
                 </div>
+                )}
 
                 <button type="submit" disabled={saving} className="mt-auto flex items-center justify-center gap-1.5 bg-accent text-primary py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
                   <span className="material-symbols-outlined text-base">save</span>

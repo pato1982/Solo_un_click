@@ -26,22 +26,11 @@ function getBadgeColor(categoria) {
 }
 
 function isGratis(precio) {
-  if (!precio) return true
-  const lower = precio.toLowerCase().trim()
+  if (!precio || precio === 0) return true
+  const lower = String(precio).toLowerCase().trim()
   return lower === 'entrada libre' || lower === 'gratis' || lower === '' || lower === '$0' || lower === '0'
 }
 
-const DEMO_EVENT_IMG = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&q=80'
-const DEMO_EVENTS = [
-  { id: 'demo-e1', title: 'Festival de la Cerveza Artesanal', date: '22 Mar 2026', location: 'Plaza de Armas', price: '$5.000', badge: 'Gastronomía', badgeColor: 'bg-accent text-primary font-black' },
-  { id: 'demo-e2', title: 'Noche de Música en Vivo', date: '25 Mar 2026', location: 'Anfiteatro Municipal', price: 'Entrada libre', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
-  { id: 'demo-e3', title: 'Feria Artesanal de Otoño', date: '28 Mar 2026', location: 'Costanera Villarrica', price: 'Entrada libre', badge: 'Gratis', badgeColor: 'bg-green-500 text-white' },
-  { id: 'demo-e4', title: 'Torneo de Fútbol Amateur', date: '30 Mar 2026', location: 'Estadio Municipal', price: '$2.000', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
-  { id: 'demo-e5', title: 'Obra de Teatro Infantil', date: '2 Abr 2026', location: 'Centro Cultural', price: '$3.000', badge: 'Cultura', badgeColor: 'bg-primary text-white' },
-  { id: 'demo-e6', title: 'Caminata Volcán Villarrica', date: '5 Abr 2026', location: 'Base Volcán', price: '$15.000', badge: 'Naturaleza', badgeColor: 'bg-green-600 text-white' },
-  { id: 'demo-e7', title: 'Fiesta Costumbrista', date: '8 Abr 2026', location: 'Parque Municipal', price: '$1.000', badge: 'Familiar', badgeColor: 'bg-blue-400 text-white' },
-  { id: 'demo-e8', title: 'Taller de Cerámica Mapuche', date: '12 Abr 2026', location: 'Museo Leandro Penchulef', price: '$8.000', badge: 'Artesanía', badgeColor: 'bg-amber-500 text-white' },
-]
 
 export default function EventsSection({ onViewAll }) {
   const [events, setEvents] = useState([])
@@ -60,9 +49,9 @@ export default function EventsSection({ onViewAll }) {
           badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
           badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
         }))
-        setEvents(mapped.length > 0 ? mapped : DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG })))
+        setEvents(mapped)
       })
-      .catch(() => setEvents(DEMO_EVENTS.map(e => ({ ...e, image: DEMO_EVENT_IMG }))))
+      .catch(() => setEvents([]))
   }, [])
 
   // Mobile carousel: 2 rows, scroll horizontally
@@ -101,7 +90,7 @@ export default function EventsSection({ onViewAll }) {
       key={event.id}
       className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-200 group w-full"
     >
-      <div className="relative h-32 sm:h-24 md:h-28 overflow-hidden">
+      <div className="relative h-32 sm:h-28 md:h-28 overflow-hidden">
         <img
           src={event.image}
           alt={event.title}

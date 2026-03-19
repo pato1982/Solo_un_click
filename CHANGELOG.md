@@ -1,5 +1,153 @@
 # Registro de Cambios - Solo a un Click
 
+## 19 de Marzo 2026 (sesión 12) - Análisis páginas públicas + fixes
+
+### Análisis completo de páginas públicas
+- Revisión exhaustiva de: página principal (App.jsx), StorePage premium, SectionPage, StoresPage, EventsPage, TourismPage, ArriendosPage, ServiciosPage
+- Identificación de datos demo, bugs, inconsistencias y mejoras mobile
+
+### Fix: Imagen tablet EventsSection
+- `EventsSection.jsx`: altura imagen tablet corregida de `h-24` a `h-28` (antes era más chica que mobile `h-32`)
+
+### Fix: Detección de eventos gratuitos
+- `EventsSection.jsx` y `EventsPage.jsx`: función `isGratis()` ahora cubre `precio === 0` numérico y usa `String()` para evitar crash con valores no-string
+
+### Fix: Filtrado case-insensitive unificado
+- Todos los filtros de categoría/subcategoría ahora usan `.toLowerCase()` para comparación
+- Archivos corregidos: `EventsPage.jsx`, `StoresPage.jsx`, `ServiciosPage.jsx`, `ArriendosPage.jsx`, `StorePage.jsx`, `App.jsx`
+- `TourismPage.jsx` ya lo tenía implementado
+
+### Fix: Filtro de categorías mobile en StorePage
+- Nuevo dropdown "Filtrar por categoría" visible solo en mobile (`md:hidden`)
+- Botón muestra filtro activo o "Filtrar por categoría"
+- Despliega lista de categorías con subcategorías expandibles
+- Botón "Quitar filtro" para limpiar selección
+- Se cierra automáticamente al seleccionar subcategoría o categoría sin subs
+
+### Fix: KPI clicks hardcoded en AdminEstadisticas
+- `AdminEstadisticas.jsx`: valor `{resumen.clicks_mes || 100}` cambiado a `{resumen.clicks_mes}` — ya no muestra 100 falso cuando no hay clicks
+
+### Fix: Banner no se mostraba en StorePage premium
+- **Bug:** El endpoint `GET /api/listings?user_id=X` excluía los banner items (`AND banner_orden IS NULL`), por lo que StorePage nunca los recibía
+- **Solución backend:** Nuevo parámetro `banner=1` en `/api/listings` que devuelve solo items con `banner_orden` (solo plan Premium)
+- **Solución frontend:** StorePage ahora hace fetch separado `?user_id=X&banner=1` para obtener los banner items
+- El banner se muestra correctamente bajo el header para negocios plan Premium (plan_id = 3)
+
+### Eliminación completa de datos demo
+- Todos los datos de ejemplo/demo eliminados del frontend — la app ahora solo muestra datos reales de la BD
+- Si no hay datos, se muestra mensaje vacío ("No hay eventos próximos aún", "No hay locales inscritos aún", etc.)
+- **Archivos limpiados:**
+  - `App.jsx` — eliminados DEMO_NAMES, DEMO_PRICES, DEMO_IMG, makeDemoProducts(), DEMO_TURISMO_CATS
+  - `EventsSection.jsx` — eliminados DEMO_EVENTS, DEMO_EVENT_IMG
+  - `EventsPage.jsx` — eliminados DEMO_EVENTS, DEMO_EVENT_IMG
+  - `StoresCarousel.jsx` — eliminados DEMO_STORES, DEMO_STORE_IMG
+  - `StoresPage.jsx` — eliminados DEMO_STORES, DEMO_STORE_IMG
+  - `ArriendosPage.jsx` — eliminados DEMO_ARRIENDOS, DEMO_IMG
+  - `ServiciosPage.jsx` — eliminados DEMO_SERVICIOS (4 empresas con URLs Unsplash)
+  - `TourismPage.jsx` — eliminados DEMO_EMPRESAS, DEMO_TOURS, DEMO_PAGINA, DEMO_TOUR_IMGS
+  - `Sidebar.jsx` — eliminados DEMO_CATS (productos/servicios/arriendos), DEMO_LOCALE_CATS, DEMO_EVENT_CATS
+  - `ProductCard.jsx` — eliminado fallback a getStoreForProduct() de stores.js
+  - `StorePage.jsx` — eliminado import de products.js y fallback a sections estáticas
+
+### Limpieza BD producción
+- Vaciadas 18 tablas (users, businesses, listings, etc.) con TRUNCATE + AUTO_INCREMENT reset
+- Conservadas: categorias (52), subcategorias (578), categorias_barrio (39), categorias_evento (31), plans
+- Eliminadas 6 imágenes del servidor (`/var/www/soloaunclick/uploads/`)
+
+### Archivos modificados
+- `backend/routes/listings.js` — nuevo parámetro `banner=1`
+- `src/admin/pages/AdminEstadisticas.jsx` — quitar fallback 100 del KPI clicks
+- `src/components/EventsSection.jsx` — fix imagen tablet + isGratis
+- `src/components/EventsPage.jsx` — fix isGratis + filtro case-insensitive
+- `src/components/StoresPage.jsx` — filtro case-insensitive
+- `src/components/ServiciosPage.jsx` — filtro case-insensitive
+- `src/components/ArriendosPage.jsx` — filtro case-insensitive
+- `src/components/StorePage.jsx` — filtro case-insensitive + dropdown mobile categorías
+- `src/App.jsx` — filtro case-insensitive en SectionPage
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña**
+
+---
+
+## 18 de Marzo 2026 (sesión 11) - Responsive mobile panel admin + mejoras UX
+
+### Panel Admin - Responsive mobile (breakpoints: mobile <700px, tablet 700-1100px, desktop 1101px+)
+
+#### AdminNegocio
+- Grid principal: 2 columnas (datos + horarios) apiladas en mobile, lado a lado en tablet+
+- Campos WhatsApp/Teléfono, Correo/Dirección, Facebook/Instagram: 1 col mobile, 2 cols tablet+
+- Padding formulario: `p-4` mobile, `p-6` tablet+
+
+#### AdminProductos (modal agregar/editar)
+- Precios siempre en misma fila (2 cols)
+- Categoría + Subcategoría siempre en misma fila (2 cols)
+- Tallas + Medidas + Género siempre en misma fila (3 cols)
+- Tipo + Etiqueta siempre en misma fila (2 cols)
+
+#### AdminCarruseles
+- Popup info actualizado: "¿Dónde aparecen los carruseles?" con texto simple para clientes
+- Popup responsive: `max-w-[280px]` y `p-3` en mobile
+- Tabs: texto más chico, sin conteo de items
+- Grid productos: 2→3→5 columnas responsive
+- Nombre carrusel: input y botón apilados en mobile
+- Modal: flex-col mobile, imagen w-full, max-h-[90vh] con scroll y header sticky
+
+#### AdminBanner
+- Tabs sin conteo, texto responsive
+- Vista previa: `h-48` mobile, `h-72` tablet+
+- Grid productos: 2→3→5 columnas responsive
+- Modal: flex-col mobile, imagen w-full, max-h-[90vh] con scroll y header sticky
+
+#### AdminEstadisticas
+- Grid principal: 1 col mobile, 2 cols tablet+
+- KPIs comercio: 2 cols mobile, 3 cols tablet+
+- Nuevo KPI: **Clicks en productos** (rosa, icono touch_app) — mes actual
+- Números de KPIs todos del mismo tamaño (`text-xl` mobile, `text-2xl` tablet+)
+- Resumen visitas: 2 cols mobile, 4 cols tablet+
+
+#### AdminTurismo (Mi Negocio turismo)
+- Grid principal y campos: 1 col mobile, 2 cols tablet+
+- Tabla negocios: scroll horizontal en mobile con min-width
+
+#### AdminTour
+- Modal: flex-col mobile, imagen w-full, max-h-[90vh] con scroll y header sticky
+
+#### AdminPortada
+- Layout: flex-col mobile, imagen w-full
+- Botón "Guardar categorías" eliminado — todo se guarda con el botón "Guardar cambios"
+- Vista previa: flex-col mobile
+
+#### AdminPagina
+- Layout: flex-col mobile, imagen w-full
+
+### Backend - Nuevo endpoint y mejora analytics
+- `GET /api/business/public/:userId` — datos públicos de un negocio sin autenticación
+- `GET /api/analytics/stats` — nuevo campo `clicks_mes` en resumen (clicks en productos del mes actual)
+
+### "Ver mi página" — Navegación directa
+- Botón ya no abre nueva pestaña (`target="_blank"` eliminado) — navega en misma ventana, mantiene sesión
+- Turismo: carga directa de la página premium sin mostrar el listado general (loading mientras busca)
+- Si la empresa no está en listado público, carga desde API directamente
+- Funciona aunque no tenga portada ni datos de negocio (abre con datos mínimos)
+
+### Archivos modificados
+- `src/admin/pages/AdminNegocio.jsx` — responsive mobile
+- `src/admin/pages/AdminProductos.jsx` — modal campos siempre en fila
+- `src/admin/pages/AdminCarruseles.jsx` — responsive + popup info actualizado
+- `src/admin/pages/AdminBanner.jsx` — responsive mobile
+- `src/admin/pages/AdminEstadisticas.jsx` — responsive + KPI clicks
+- `src/admin/pages/AdminTurismo.jsx` — responsive mobile
+- `src/admin/pages/AdminTour.jsx` — modal responsive
+- `src/admin/pages/AdminPortada.jsx` — responsive + eliminar botón guardar categorías
+- `src/admin/pages/AdminPagina.jsx` — responsive mobile
+- `src/admin/components/AdminHeader.jsx` — Ver mi página sin nueva pestaña
+- `src/components/TourismPage.jsx` — carga directa página premium
+- `backend/routes/business.js` — endpoint público
+- `backend/routes/analytics.js` — clicks_mes
+
+---
+
 ## 18 de Marzo 2026 (sesión 10) - Páginas dedicadas Servicios y Arriendos, menú hamburguesa mobile, StorePage multi-tipo
 
 ### Header mobile - Menú hamburguesa

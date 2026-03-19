@@ -558,9 +558,31 @@ export default function AdminHeader({ onToggleSidebar }) {
           </a>
         </div>
 
-        {/* Barra "Ver mi página" solo para plan Normal y Premium (no programador) */}
+        {/* Barra inferior mobile: Ver sitio público + Ver mi página */}
+        {!isProg && (
+          <div className="sm:hidden bg-[#4A2070] border-t border-white/10 py-1 flex items-center justify-center gap-4">
+            <a href="/" className="flex items-center gap-1 text-[10px] font-bold text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-xs">open_in_new</span>
+              Ver sitio
+            </a>
+            {hasPage && (
+              <>
+                <span className="text-white/20">|</span>
+                <a
+                  href={user.tipo_cuenta === 'turismo' ? `/?turismo=${user.id}` : `/?store=${user.id}`}
+                  className="flex items-center gap-1 text-[10px] font-bold text-accent hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xs">visibility</span>
+                  Ver mi página
+                </a>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Barra "Ver mi página" tablet/desktop - solo plan Normal y Premium */}
         {hasPage && !isProg && (
-          <div className="bg-[#4A2070] border-t border-white/10 py-1.5 flex justify-center">
+          <div className="hidden sm:flex bg-[#4A2070] border-t border-white/10 py-1.5 justify-center">
             <a
               href={user.tipo_cuenta === 'turismo' ? `/?turismo=${user.id}` : `/?store=${user.id}`}
               className="flex items-center gap-1.5 text-xs font-bold text-accent hover:text-white transition-colors"

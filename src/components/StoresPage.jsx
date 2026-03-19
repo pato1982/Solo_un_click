@@ -133,17 +133,6 @@ function StoresMap({ stores, activeFilter }) {
   )
 }
 
-const DEMO_STORE_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80'
-const DEMO_STORES = [
-  { id: 'demo-s1', name: 'Panadería Don Luis', address: 'Av. Pedro de Valdivia 234', type: 'Panadería' },
-  { id: 'demo-s2', name: 'Ferretería El Clavo', address: 'Camilo Henríquez 567', type: 'Ferretería' },
-  { id: 'demo-s3', name: 'Minimarket La Esquina', address: 'Anfión Muñoz 123', type: 'Abarrotes' },
-  { id: 'demo-s4', name: 'Peluquería Estilo', address: 'General Korner 890', type: 'Peluquería' },
-  { id: 'demo-s5', name: 'Librería Austral', address: 'Valentín Letelier 456', type: 'Librería' },
-  { id: 'demo-s6', name: 'Café del Lago', address: 'Costanera 789', type: 'Comida' },
-  { id: 'demo-s7', name: 'Veterinaria Patitas', address: 'Gerónimo de Alderete 321', type: 'Mascotas' },
-  { id: 'demo-s8', name: 'Bazar Todo Hogar', address: 'Vicente Reyes 654', type: 'Bazar' },
-]
 
 export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode, onToggleMap }) {
   const [allStores, setAllStores] = useState([])
@@ -160,13 +149,13 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
           address: l.direccion || '',
           type: l.categoria_nombre || '',
         }))
-        setAllStores(mapped.length > 0 ? mapped : DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG })))
+        setAllStores(mapped)
       })
-      .catch(() => setAllStores(DEMO_STORES.map(s => ({ ...s, image: DEMO_STORE_IMG }))))
+      .catch(() => setAllStores([]))
   }, [])
 
   const filteredStores = activeFilter
-    ? allStores.filter((s) => s.type === activeFilter)
+    ? allStores.filter((s) => s.type && s.type.toLowerCase() === activeFilter.toLowerCase())
     : allStores
 
   const cols = sidebarOpen ? 5 : 6

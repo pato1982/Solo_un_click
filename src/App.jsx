@@ -132,41 +132,6 @@ function mixProductsByPlan(products) {
   return result
 }
 
-// Datos de ejemplo para visualizar tarjetas
-const DEMO_IMG = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80'
-const DEMO_NAMES = {
-  destacados: ['Parlante Bluetooth', 'Reloj Smart', 'Audífonos Pro', 'Mochila Urban', 'Zapatillas Running', 'Lámpara LED', 'Termo Acero', 'Cargador Solar'],
-  ofertas: ['Polera Algodón -30%', 'Jeans Slim -40%', 'Sweater Lana -25%', 'Gorro Invierno -50%', 'Bufanda Polar -35%', 'Guantes Cuero -20%', 'Chaqueta Down -45%', 'Botas Trek -30%'],
-  arriendos: ['Cabaña Lago 4p', 'Depto Centro 2p', 'Casa Volcán 6p', 'Suite Termas 2p', 'Loft Céntrico 3p', 'Hostal Familiar', 'Cabaña Bosque 5p', 'Domo Glamping 2p'],
-  novedades: ['Tablet 10"', 'Mouse Ergonómico', 'Teclado Mecánico', 'Monitor 24"', 'Webcam HD', 'Hub USB-C', 'SSD 1TB', 'Power Bank 20K'],
-  servicios: ['Electricista 24h', 'Gasfiter Urgencia', 'Jardinería', 'Limpieza Hogar', 'Pintor Interior', 'Mudanzas', 'Cerrajería', 'Instalación TV'],
-  liquidacion: ['Silla Oficina -60%', 'Escritorio -50%', 'Estante -40%', 'Alfombra -55%', 'Cortina -45%', 'Cojín Deco -70%', 'Florero -35%', 'Cuadro Arte -50%'],
-  tendencia: ['Air Fryer 5L', 'Aspiradora Robot', 'Cafetera Express', 'Licuadora Pro', 'Olla Programable', 'Sandwichera XL', 'Batidora 800W', 'Tostador Digital'],
-  tecnologia: ['Notebook i5', 'Smartphone 128GB', 'Tablet Niños', 'Drone Mini', 'Cámara 4K', 'Impresora WiFi', 'Router Mesh', 'Smart TV 50"'],
-}
-const DEMO_PRICES = [9990, 14990, 19990, 24990, 29990, 34990, 39990, 49990]
-
-function makeDemoProducts(sectionId) {
-  const names = DEMO_NAMES[sectionId] || DEMO_NAMES.destacados
-  return names.map((name, i) => ({
-    id: `demo-${sectionId}-${i}`,
-    user_id: null,
-    name,
-    description: `Ejemplo de ${SECTION_TITLES[sectionId] || sectionId} - producto de demostración`,
-    image: DEMO_IMG,
-    alt: name,
-    price: sectionId === 'servicios' ? null : DEMO_PRICES[i],
-    originalPrice: sectionId === 'ofertas' || sectionId === 'liquidacion' ? DEMO_PRICES[i] + 15000 : null,
-    badge: sectionId === 'ofertas' ? '-30%' : sectionId === 'liquidacion' ? '-50%' : null,
-    badgeColor: 'bg-primary text-white',
-    rating: null,
-    category: sectionId === 'servicios' ? 'servicios' : sectionId === 'arriendos' ? 'arriendos' : 'productos',
-    tipo: sectionId === 'servicios' ? 'servicio' : sectionId === 'arriendos' ? 'arriendo' : 'producto',
-    subcategory: null,
-    owner_plan_id: i === 0 ? 3 : i < 3 ? 2 : 1,
-    nombre_negocio: `Tienda Demo ${i + 1}`,
-  }))
-}
 
 function buildSectionsFromAPI(listings) {
   const grouped = {}
@@ -182,7 +147,7 @@ function buildSectionsFromAPI(listings) {
       id,
       title: SECTION_TITLES[id] || id,
       hidePrice: id === 'servicios',
-      items: realItems.length > 0 ? realItems : makeDemoProducts(id),
+      items: realItems,
     }
   })
 }
@@ -237,7 +202,6 @@ export default function App() {
       .catch(err => console.error('Error cargando listings:', err))
 
     // Cargar categorías de turismo desde portadas activas
-    const DEMO_TURISMO_CATS = ['Acuático', 'Aventura', 'Cabalgatas', 'Cultural', 'Familiar', 'Fotografía', 'Naturaleza', 'Rafting', 'Relax', 'Spa', 'Termas', 'Trekking', 'Volcanes']
     fetch(`${API}/api/portada/public`)
       .then(r => r.json())
       .then(data => {
@@ -252,13 +216,13 @@ export default function App() {
           setTurismoCategorias(sorted)
           setTurismoCategoriasAll(sorted)
         } else {
-          setTurismoCategorias(DEMO_TURISMO_CATS)
-          setTurismoCategoriasAll(DEMO_TURISMO_CATS)
+          setTurismoCategorias([])
+          setTurismoCategoriasAll([])
         }
       })
       .catch(() => {
-        setTurismoCategorias(DEMO_TURISMO_CATS)
-        setTurismoCategoriasAll(DEMO_TURISMO_CATS)
+        setTurismoCategorias([])
+        setTurismoCategoriasAll([])
       })
 
     // Cargar categorías del sidebar: solo las que tienen productos publicados
@@ -623,8 +587,9 @@ export default function App() {
 
           {currentPage === 'servicios' ? (
             <ServiciosPage
+              sidebarOpen={!!activeSidebar}
+              onBack={goHome}
               activeFilter={activeFilter}
-              onClearFilter={() => setActiveFilter(null)}
               onOpenStore={handleOpenStore}
             />
           ) : currentPage === 'arriendos' ? (
@@ -667,8 +632,8 @@ export default function App() {
                   ...s,
                   items: s.items.filter((item) =>
                     isCategory
-                      ? activeFilter.subcategories.includes(item.subcategory)
-                      : item.subcategory === activeFilter
+                      ? activeFilter.subcategories.some(sub => sub.toLowerCase() === (item.subcategory || '').toLowerCase())
+                      : (item.subcategory || '').toLowerCase() === activeFilter.toLowerCase()
                   ),
                 }))
                 .filter((s) => s.items.length > 0)
