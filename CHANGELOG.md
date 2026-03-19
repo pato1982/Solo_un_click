@@ -115,6 +115,11 @@
 - `src/components/StoresPage.jsx` — eliminados demos, filtro case-insensitive
 - `src/components/TourismPage.jsx` — eliminados demos
 
+### Sidebar — Categorías incluyen carruseles y banners
+- `backend/routes/categorias.js`: endpoint `/api/categorias/sidebar` ya no excluye listings con `carousel_posicion` o `banner_orden`
+- `StorePage.jsx`: categorías del sidebar de tienda premium extraídas de productos + carruseles + banners
+- Ahora todas las categorías de todos los listings aparecen en el sidebar público y en la tienda premium
+
 ### Pendientes
 - **SMTP Gmail para emails de recuperación de contraseña**
 
