@@ -16,70 +16,137 @@ export function StoreFooter({ store }) {
   const waPhone = (store.phone || '').replace(/[\s+]/g, '')
   const igUrl = store.instagram ? (store.instagram.startsWith('http') ? store.instagram : `https://instagram.com/${store.instagram.replace('@', '')}`) : null
   const horarios = Array.isArray(store.horarios) && store.horarios.length > 0 ? store.horarios : null
+  const hasRedes = store.facebook || igUrl
 
   return (
-    <footer className="bg-primary text-white px-3 sm:px-4 md:px-6 py-4">
-      <div className={`mx-auto grid grid-cols-1 sm:grid-cols-2 ${horarios ? 'md:grid-cols-[0.2fr_0.8fr_1.2fr_0.8fr_0.8fr_0.2fr]' : 'md:grid-cols-[0.3fr_1fr_1.5fr_1fr_0.3fr]'} gap-4 sm:gap-6 items-start sm:px-4 md:px-6`}>
-        <div className="hidden md:block"></div>
-        <div>
-          <h3 className="text-xs sm:text-sm font-black italic tracking-tight mb-2 sm:mb-3">{store.name}</h3>
-          <div className="flex items-center justify-center gap-3">
+    <footer className="bg-primary text-white px-4 sm:px-6 md:px-10 py-3 sm:py-4 md:py-2.5">
+      {/* Fila 1: Nombre + Redes sociales centrados */}
+      <div className="text-center mb-2.5 sm:mb-3 md:mb-2">
+        <h3 className="text-xs sm:text-sm md:text-base font-black italic tracking-tight leading-tight">{store.name}</h3>
+        {hasRedes && (
+          <div className="flex items-center justify-center gap-3 mt-2">
             {store.facebook && (
               <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity" title="Facebook">
-                <svg className="w-6 h-6 fill-current text-[#1877F2]" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-current text-[#1877F2]" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
               </a>
             )}
             {igUrl && (
               <a href={igUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity" title="Instagram">
-                <svg className="w-6 h-6" viewBox="0 0 24 24"><defs><linearGradient id="ig-store" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style={{stopColor:'#feda75'}}/><stop offset="25%" style={{stopColor:'#fa7e1e'}}/><stop offset="50%" style={{stopColor:'#d62976'}}/><stop offset="75%" style={{stopColor:'#962fbf'}}/><stop offset="100%" style={{stopColor:'#4f5bd5'}}/></linearGradient></defs><path fill="url(#ig-store)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24"><defs><linearGradient id="ig-store" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style={{stopColor:'#feda75'}}/><stop offset="25%" style={{stopColor:'#fa7e1e'}}/><stop offset="50%" style={{stopColor:'#d62976'}}/><stop offset="75%" style={{stopColor:'#962fbf'}}/><stop offset="100%" style={{stopColor:'#4f5bd5'}}/></linearGradient></defs><path fill="url(#ig-store)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
               </a>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Separador */}
+      <div className="h-px bg-white/10 mb-2.5 sm:mb-3 md:mb-2"></div>
+
+      {/* MOBILE: Descripción arriba + Contacto|Horarios en 2 cols */}
+      <div className="sm:hidden">
+        <div className="text-center mb-3">
+          <h4 className="text-[9px] font-black uppercase tracking-widest text-accent mb-1">Sobre nosotros</h4>
+          <p className="text-white/50 text-[9px] leading-relaxed">{store.description || 'Bienvenido a nuestra tienda.'}</p>
         </div>
-        <div>
-          <p className="text-white/60 text-[10px] leading-relaxed text-justify mt-6">{store.description || 'Bienvenido a nuestra tienda. Ofrecemos productos de calidad con la mejor atención para nuestros clientes en Villarrica y alrededores.'}</p>
-        </div>
-        <div className="flex flex-col items-center">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5">Contacto</h4>
-          <ul className="space-y-0.5 text-[10px] text-white/50 inline-block">
-            {store.email && (
-              <li className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-accent text-xs">mail</span>
-                {store.email}
-              </li>
-            )}
-            {store.phone && (
-              <li className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-accent text-xs">call</span>
-                {store.phone}
-              </li>
-            )}
-            {store.address && (
-              <li className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-accent text-xs">location_on</span>
-                {store.address}
-              </li>
-            )}
-          </ul>
-        </div>
-        {horarios && (
-          <div className="flex flex-col items-center">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5 self-center">Horarios</h4>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0 text-[9px] text-white/50">
-              {horarios.map((h) => (
-                <div key={h.dia} className="flex gap-1">
-                  <span className="font-medium text-white/40 w-7">{h.dia.slice(0, 3)}</span>
-                  {h.activo ? (
-                    <span className="text-white/60">{h.apertura}-{h.cierre}</span>
-                  ) : (
-                    <span className="text-white/30 italic">Cerrado</span>
-                  )}
-                </div>
-              ))}
+        <div className={`grid gap-3 ${horarios ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className="flex justify-center">
+            <div>
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-accent mb-1 text-center">Contacto</h4>
+              <ul className="space-y-0.5 text-[8px] text-white/50">
+                {store.email && (
+                  <li className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-accent text-[10px]">mail</span>
+                    {store.email}
+                  </li>
+                )}
+                {store.phone && (
+                  <li className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-accent text-[10px]">call</span>
+                    {store.phone}
+                  </li>
+                )}
+                {store.address && (
+                  <li className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-accent text-[10px]">location_on</span>
+                    {store.address}
+                  </li>
+                )}
+              </ul>
             </div>
           </div>
-        )}
-        <div className="hidden md:block"></div>
+          {horarios && (
+            <div className="flex justify-center">
+              <div>
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-accent mb-1 text-center">Horarios</h4>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0 text-[8px] text-white/50">
+                  {horarios.map((h) => (
+                    <div key={h.dia} className="flex gap-1">
+                      <span className="font-medium text-white/40 w-6">{h.dia.slice(0, 3)}</span>
+                      {h.activo ? <span className="text-white/60">{h.apertura}-{h.cierre}</span> : <span className="text-white/30 italic">Cerrado</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* TABLET/DESKTOP: 3 columnas — Contacto | Sobre nosotros | Horarios */}
+      <div className="hidden sm:grid grid-cols-3 gap-6 max-w-4xl mx-auto">
+        {/* Contacto */}
+        <div className="flex justify-center">
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5 text-center">Contacto</h4>
+            <ul className="space-y-0.5 text-[10px] text-white/50">
+              {store.email && (
+                <li className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-xs">mail</span>
+                  {store.email}
+                </li>
+              )}
+              {store.phone && (
+                <li className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-xs">call</span>
+                  {store.phone}
+                </li>
+              )}
+              {store.address && (
+                <li className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-accent text-xs">location_on</span>
+                  {store.address}
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* Sobre nosotros */}
+        <div className="flex justify-center">
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5 text-center">Sobre nosotros</h4>
+            <p className="text-white/50 text-[10px] leading-relaxed">{store.description || 'Bienvenido a nuestra tienda.'}</p>
+          </div>
+        </div>
+
+        {/* Horarios */}
+        <div className="flex justify-center">
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5 text-center">Horarios</h4>
+            {horarios ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-0 text-[9px] text-white/50">
+                {horarios.map((h) => (
+                  <div key={h.dia} className="flex gap-1">
+                    <span className="font-medium text-white/40 w-7">{h.dia.slice(0, 3)}</span>
+                    {h.activo ? <span className="text-white/60">{h.apertura}-{h.cierre}</span> : <span className="text-white/30 italic">Cerrado</span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[9px] text-white/30 italic">No disponible</p>
+            )}
+          </div>
+        </div>
       </div>
     </footer>
   )
@@ -276,7 +343,7 @@ function StoreCarousel({ title, items, onOpenStore }) {
   }, [resetAutoScroll, items.length])
 
   const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
-  const carouselCardWidth = 'w-[calc(50%-4px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
+  const carouselCardWidth = 'w-[calc(50%-4px)] sm:w-[calc(33.33%-12px)] md:w-[calc(20%-14px)]'
 
   if (items.length === 0) return null
 

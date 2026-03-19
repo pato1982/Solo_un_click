@@ -53,9 +53,9 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
 
   // Ancho de la tarjeta destacada (fija)
   const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
-  // Ancho de tarjetas del carrusel: en mobile 50% del carrusel (2 visibles), tablet/desktop igual que antes
-  const carouselCardTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(25%-12px)]'
-  const carouselCardDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(16.66%-14px)]'
+  // Ancho de tarjetas del carrusel: compensado para que se vean del mismo tamaño que la destacada
+  const carouselCardTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(33.33%-12px)]'
+  const carouselCardDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(20%-14px)]'
   const carouselCardWidth = `w-[calc(50%-4px)] ${carouselCardTablet} ${carouselCardDesktop}`
 
   return (

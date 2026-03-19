@@ -97,7 +97,7 @@ export default function ArriendosPage({ sidebarOpen, onBack, activeFilter, onOpe
         </div>
       ) : (
         <>
-          <div className={`grid gap-2 sm:gap-3 md:gap-4 transition-all duration-300 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-4 md:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4 md:grid-cols-7'}`}>
+          <div className={`grid gap-2 sm:gap-3 md:gap-4 transition-all duration-300 ${sidebarOpen ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5'}`}>
             {pageItems.map((item, idx) => (
               <ProductCard
                 key={`${item.id}-${idx}`}

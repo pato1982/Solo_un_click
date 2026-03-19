@@ -273,12 +273,23 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
           </div>
           <div className="mt-auto flex items-end justify-between w-full pt-1">
             {hidePrice ? (
-              <button
-                onClick={() => { trackProductClick(product); setShowModal(true) }}
-                className="w-full bg-primary hover:bg-primary-light text-white py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-wide transition-all"
-              >
-                Solicitar
-              </button>
+              <div className="flex items-center gap-1 w-full">
+                <button
+                  onClick={() => { trackProductClick(product); setShowModal(true) }}
+                  className="flex-1 bg-primary hover:bg-primary-light text-white py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-wide transition-all"
+                >
+                  Solicitar
+                </button>
+                {store && !inStorePage && product.owner_plan_id && product.owner_plan_id >= 2 && (
+                  <button
+                    onClick={() => onOpenStore && onOpenStore(store)}
+                    className="bg-accent/20 hover:bg-accent hover:text-primary text-accent h-6 w-6 sm:h-7 sm:w-7 rounded-md sm:rounded-lg flex items-center justify-center transition-all hover:scale-110 shrink-0"
+                    title={store.name}
+                  >
+                    <span className="material-symbols-outlined text-xs sm:text-sm font-bold">storefront</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <>
                 <div className="text-left">

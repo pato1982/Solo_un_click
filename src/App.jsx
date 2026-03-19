@@ -306,23 +306,12 @@ export default function App() {
       return
     }
     // Productos
-    if (currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || currentPage === 'arriendos' || currentPage === 'servicios') {
-      setCurrentPage(null)
-      setActiveStore(null)
-      setStoreMapMode(false)
-      setActiveSidebar(nav)
-      setActiveFilter(null)
+    if (currentPage === 'productos') {
       if (openSidebar) setSidebarOpenKey(k => k + 1)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else {
-      if (activeSidebar === nav) {
-        if (openSidebar) setSidebarOpenKey(k => k + 1)
-        return
-      }
-      setActiveSidebar(nav)
-      setActiveFilter(null)
-      if (openSidebar) setSidebarOpenKey(k => k + 1)
+      return
     }
+    handleViewAllProductos()
+    if (openSidebar) setSidebarOpenKey(k => k + 1)
   }
 
   const goHome = () => {
@@ -363,7 +352,7 @@ export default function App() {
               phone: b.whatsapp || b.telefono || store.phone || '',
               email: b.correo || '',
               address: b.direccion || '',
-              description: '',
+              description: b.descripcion || '',
               facebook: b.facebook || '',
               instagram: b.instagram || '',
               horarios: b.horarios || [],
@@ -428,6 +417,14 @@ export default function App() {
     setActiveFilter(null)
   }
 
+  const handleViewAllProductos = () => {
+    window.scrollTo({ top: 0 })
+    setCurrentPage('productos')
+    setActiveSidebar('productos')
+    setActiveSection(null)
+    setActiveFilter(null)
+  }
+
   const handleSearchSelect = (item) => {
     window.scrollTo({ top: 0 })
     setStoreMapMode(false)
@@ -469,7 +466,7 @@ export default function App() {
   const activeNav = activeSidebar
 
   // Determinar si mostrar botón Inicio
-  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || currentPage === 'arriendos' || currentPage === 'servicios' || activeSection !== null || activeFilter !== null || activeStore !== null || activeSidebar !== null
+  const showInicio = currentPage === 'turismo' || currentPage === 'locales' || currentPage === 'eventos' || currentPage === 'arriendos' || currentPage === 'servicios' || currentPage === 'productos' || activeSection !== null || activeFilter !== null || activeStore !== null || activeSidebar !== null
 
   if (activeStore) {
     return (
@@ -568,7 +565,7 @@ export default function App() {
       <div className="w-full flex flex-1 flex-col md:flex-row relative" style={sidebarH > 0 ? { minHeight: sidebarH } : undefined}>
         <Sidebar
           activeNav={activeSidebar}
-          onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : currentPage === 'arriendos' ? 'arriendos' : currentPage === 'servicios' ? 'servicios' : null)}
+          onClose={() => setActiveSidebar(currentPage === 'turismo' ? 'turismo' : currentPage === 'locales' ? 'locales' : currentPage === 'eventos' ? 'eventos' : currentPage === 'arriendos' ? 'arriendos' : currentPage === 'servicios' ? 'servicios' : currentPage === 'productos' ? 'productos' : null)}
           onGoHome={goHome}
           showInicio={showInicio}
           onFilterSelect={handleFilterSelect}
@@ -585,7 +582,58 @@ export default function App() {
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300">
           {/* <Breadcrumbs /> */}
 
-          {currentPage === 'servicios' ? (
+          {currentPage === 'productos' ? (
+            (() => {
+              const productSections = sections
+                .filter(s => s.id !== 'servicios' && s.id !== 'arriendos')
+                .map(s => ({
+                  ...s,
+                  items: activeFilter
+                    ? s.items.filter(item => {
+                        if (typeof activeFilter === 'object' && activeFilter.subcategories) {
+                          return activeFilter.subcategories.some(sub => sub.toLowerCase() === (item.subcategory || '').toLowerCase())
+                        }
+                        return (item.subcategory || '').toLowerCase() === activeFilter.toLowerCase() || (item.categoria || '').toLowerCase() === activeFilter.toLowerCase()
+                      })
+                    : s.items,
+                }))
+                .filter(s => s.items.length > 0)
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                    <button onClick={goHome} className="flex items-center gap-1 text-primary hover:text-accent transition-colors text-[10px] sm:text-xs font-bold">
+                      <span className="material-symbols-outlined text-sm">arrow_back</span>
+                      Volver
+                    </button>
+                    <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+                    <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">
+                      {activeFilter ? (typeof activeFilter === 'object' ? activeFilter.category : activeFilter) : 'Todos los Productos'}
+                    </h2>
+                  </div>
+                  {productSections.length > 0 ? (
+                    <div className="flex flex-col gap-8">
+                      {productSections.map((section, index) => (
+                        <div key={section.id}>
+                          <ProductCarousel
+                            title={section.title}
+                            items={section.items}
+                            sidebarOpen={!!activeSidebar}
+                            hidePrice={section.hidePrice}
+                            onViewAll={() => handleViewAll(section)}
+                            onOpenStore={handleOpenStore}
+                          />
+                          {index === 0 && <div className="mt-8"><Banner /></div>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-slate-400 text-xs mt-8">No hay productos para mostrar.</p>
+                  )}
+                </div>
+              )
+            })()
+          ) : currentPage === 'servicios' ? (
             <ServiciosPage
               sidebarOpen={!!activeSidebar}
               onBack={goHome}
