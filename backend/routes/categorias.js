@@ -62,8 +62,6 @@ router.get('/sidebar', async (req, res) => {
       WHERE l.activo = 1
         AND l.categoria IS NOT NULL
         AND l.categoria != ''
-        AND l.carousel_posicion IS NULL
-        AND l.banner_orden IS NULL
       ORDER BY l.tipo, l.categoria, l.subcategoria
     `)
 
