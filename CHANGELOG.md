@@ -115,6 +115,26 @@
 - `src/components/StoresPage.jsx` — eliminados demos, filtro case-insensitive
 - `src/components/TourismPage.jsx` — eliminados demos
 
+### Página Productos — Vista con secciones
+- Al apretar "Productos" en el nav, se abre vista dedicada con filas por sección (Destacados, Ofertas, Novedades, Liquidación, Tecnología, Tendencia)
+- Excluye secciones de servicios y arriendos
+- Banner "TU VITRINA DIGITAL" aparece después de la primera sección
+- Filtrado por categoría/subcategoría desde sidebar
+- Botón "Volver" para regresar a página principal
+- Mismo comportamiento que Servicios y Arriendos
+
+### Footer StorePage — Rediseño completo
+- **Mobile:** Nombre + redes centrados arriba, Contacto | Horarios en 2 columnas (centrado con contenido alineado izquierda)
+- **Tablet/Desktop:** 3 columnas iguales: Contacto | Sobre nosotros | Horarios
+- Barra del nombre más compacta en desktop (`py-2.5`)
+- Descripción del negocio ahora se carga desde BD (antes era string vacío)
+
+### Tarjetas uniformes en todas las páginas
+- ProductCarousel: tarjetas del carrusel ajustadas para ser del mismo tamaño que la destacada (`sm:33.33%`, `md:20%` del contenedor)
+- StoreCarousel: mismos anchos que ProductCarousel
+- Páginas de filtro (SectionPage, ArriendosPage, ServiciosPage): grid 2→3→5 columnas
+- ProductCard: botón tienda ahora visible en sección servicios junto a botón "Solicitar"
+
 ### Sidebar — Categorías incluyen carruseles y banners
 - `backend/routes/categorias.js`: endpoint `/api/categorias/sidebar` ya no excluye listings con `carousel_posicion` o `banner_orden`
 - `StorePage.jsx`: categorías del sidebar de tienda premium extraídas de productos + carruseles + banners
