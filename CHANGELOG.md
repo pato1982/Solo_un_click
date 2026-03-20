@@ -1,5 +1,52 @@
 # Registro de Cambios - Solo a un Click
 
+## 19 de Marzo 2026 (sesión 13) - Eliminar datos ejemplo, mejoras UI premium
+
+### Eliminación de datos de ejemplo
+- Eliminados `src/data/products.js` (67 productos falsos), `src/data/stores.js` (2 tiendas ficticias), `src/data/searchIndex.js` (índice estático)
+- Eliminado directorio `src/data/` completo
+- Eliminado import comentado en `App.jsx`
+- **Todo viene ahora exclusivamente de la base de datos**
+
+### Buscador Header dinámico desde BD
+- `Header.jsx`: reemplazado import estático de `searchIndex` por fetch a `/api/categorias`, `/api/locales/categorias` y `/api/eventos/categorias`
+- Índice de búsqueda se construye dinámicamente al cargar la página
+- `backend/routes/categorias.js`: agregado campo `icono` a la query y respuesta
+
+### Eliminación de DEFAULT_PHONE falso
+- `StorePage.jsx` y `ProductCard.jsx`: eliminado `DEFAULT_PHONE = '56912345678'`
+- WhatsApp solo se muestra si el negocio tiene teléfono real configurado
+- Eliminada función `getWhatsAppUrl` no usada en ProductCard
+
+### Banner solo desde admin
+- `StorePage.jsx`: eliminado fallback que usaba productos normales como banner
+- Banner solo aparece si el comerciante configuró items con `banner_orden` desde su admin
+
+### Sidebar mobile en páginas premium
+- Reemplazado dropdown por sidebar lateral (mismo estilo que página principal)
+- Ícono hamburguesa centrado en la barra existente (junto a Volver/Inicio)
+- Panel se abre desde la izquierda con overlay, botón cerrar (X) y scroll
+- Tocar categoría expande subcategorías; volver a tocarla no cierra el menú
+- Menú solo se cierra con X o tocando fuera (overlay)
+
+### Mejoras UI popup de contacto (ProductCard)
+- Popup de contacto ahora se posiciona sobre los botones (sin overlay bloqueante)
+- Click en otro ícono cambia directo al nuevo popup sin cerrarse primero
+- Click en misma ícono hace toggle (cierra)
+- Click en cualquier zona del modal cierra el popup
+- Ocultar ícono storefront en popups dentro de páginas premium
+
+### Mejoras UI tarjetas y botones
+- Imágenes de tarjetas más grandes: `h-32` → `h-44` en mobile, `h-40` → `h-44` en desktop
+- Imagen del popup modal: `h-44` → `h-64` en mobile
+- Botones Volver/Inicio en página premium: sin fondo amarillo, borde delgado amarillo, más compactos
+- Todos los menús (sidebar mobile y desktop): borde amarillo (`border-2 border-accent`), ancho ajustado al contenido (`w-fit`)
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña**
+
+---
+
 ## 19 de Marzo 2026 (sesión 12) - Análisis páginas públicas + fixes
 
 ### Análisis completo de páginas públicas
