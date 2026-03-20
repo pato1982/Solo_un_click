@@ -420,41 +420,34 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
 
   return (
     <>
-      <div className="relative w-full h-48 sm:h-60 md:h-72 overflow-hidden mb-2 bg-white">
-        {slides.map((slide, i) => (
-          <div
-            key={i}
-            className="absolute inset-0 grid grid-cols-2 sm:grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000"
-            style={{ opacity: activeSlide === i ? 1 : 0 }}
-          >
-            {slide[0] && (
-              <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
-                <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="h-full w-1/2 object-contain shrink-0" />
-                <div className="flex flex-col justify-center min-w-0">
-                  <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].name}</p>
-                  <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{slide[0].description}</p>
-                  {slide[0].price > 0 && (
-                    <p className="text-sm font-black text-accent mt-1">${slide[0].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                  )}
+      <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden mb-2 rounded-xl">
+        {slides.map((slide, i) => {
+          const hasSmall = slide.length > 1
+          return (
+            <div
+              key={i}
+              className={`absolute inset-0 gap-1.5 p-1.5 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
+              style={{ opacity: activeSlide === i ? 1 : 0 }}
+            >
+              {/* Imagen grande — ocupa todo si es única, mitad izquierda si hay más */}
+              {slide[0] && (
+                <div className={`rounded-lg overflow-hidden cursor-pointer group ${hasSmall ? '' : 'flex-1'}`} onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
+                  <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style={{ objectPosition: `${slide[0].posX ?? 50}% ${slide[0].posY ?? 50}%` }} />
                 </div>
-              </div>
-            )}
-            {[1, 2, 3, 4].map((idx) => slide[idx] && (
-              <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
-                <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="h-full w-2/5 object-contain shrink-0" />
-                <div className="flex flex-col justify-center min-w-0">
-                  <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].name}</p>
-                  <p className="text-[8px] text-slate-400 line-clamp-1 mt-0.5">{slide[idx].description}</p>
-                  {slide[idx].price > 0 && (
-                    <p className="text-[10px] font-black text-accent mt-0.5">${slide[idx].price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                  )}
+              )}
+              {/* Columna derecha: grid 2x2 con imágenes chicas */}
+              {hasSmall && (
+                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
+                  {[1, 2, 3, 4].map((idx) => slide[idx] ? (
+                    <div key={slide[idx].id || idx} className="rounded-lg overflow-hidden cursor-pointer group" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
+                      <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style={{ objectPosition: `${slide[idx].posX ?? 50}% ${slide[idx].posY ?? 50}%` }} />
+                    </div>
+                  ) : <div key={idx} className="rounded-lg bg-slate-100" />)}
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-primary/30 pointer-events-none"></div>
+              )}
+            </div>
+          )
+        })}
         {/* Indicadores */}
         {slides.length > 1 && (
           <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
@@ -561,6 +554,8 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
         setBannerItems(banData.listings.map(l => ({
           ...mapListing(l),
           banner_orden: l.banner_orden,
+          posX: l.banner_pos_x ?? 50,
+          posY: l.banner_pos_y ?? 50,
         })))
       }
       if (bizData.business) {

@@ -80,19 +80,42 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
-function BannerPreview({ items }) {
+function BannerPreview({ items, onUpdatePos }) {
   const [previewSlide, setPreviewSlide] = useState(0)
-  const intervalRef = useRef(null)
+  const [selectedId, setSelectedId] = useState(null)
+  const dragging = useRef(false)
+  const startPoint = useRef({ x: 0, y: 0 })
+  const startPos = useRef({ x: 50, y: 50 })
+  const containerRef = useRef(null)
 
   const slide1 = items.filter(i => i.orden >= 1 && i.orden <= 5).sort((a, b) => a.orden - b.orden)
   const slide2 = items.filter(i => i.orden >= 6 && i.orden <= 10).sort((a, b) => a.orden - b.orden)
   const slides = [slide1, slide2].filter(s => s.length >= 1)
 
+  const selectedItem = selectedId ? items.find(i => i.id === selectedId) : null
+
+  const handleMouseDown = (e, item) => {
+    e.preventDefault()
+    setSelectedId(item.id)
+    dragging.current = true
+    startPoint.current = { x: e.clientX, y: e.clientY }
+    startPos.current = { x: item.posX ?? 50, y: item.posY ?? 50 }
+  }
+
   useEffect(() => {
-    if (slides.length < 2) return
-    intervalRef.current = setInterval(() => setPreviewSlide(prev => (prev === 0 ? 1 : 0)), 7000)
-    return () => clearInterval(intervalRef.current)
-  }, [slides.length])
+    const handleMove = (e) => {
+      if (!dragging.current || !selectedId) return
+      const dx = e.clientX - startPoint.current.x
+      const dy = e.clientY - startPoint.current.y
+      const newX = Math.max(0, Math.min(100, startPos.current.x - dx * 0.3))
+      const newY = Math.max(0, Math.min(100, startPos.current.y - dy * 0.3))
+      onUpdatePos(selectedId, Math.round(newX), Math.round(newY))
+    }
+    const handleUp = () => { dragging.current = false }
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp) }
+  }, [selectedId, onUpdatePos])
 
   if (slides.length === 0) return (
     <div className="w-full h-48 sm:h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
@@ -101,55 +124,80 @@ function BannerPreview({ items }) {
     </div>
   )
 
+  const renderImage = (item, className = '') => {
+    if (!item) return null
+    const isSelected = selectedId === item.id
+    return (
+      <div
+        className={`rounded-lg overflow-hidden cursor-grab active:cursor-grabbing relative ${className} ${isSelected ? 'ring-2 ring-accent ring-offset-1' : ''}`}
+        onMouseDown={(e) => handleMouseDown(e, item)}
+      >
+        {item.imagenPreview ? (
+          <img
+            src={item.imagenPreview} alt={item.nombre} draggable={false}
+            className="w-full h-full object-cover select-none"
+            style={{ objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%` }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
+          </div>
+        )}
+        {isSelected && (
+          <div className="absolute top-1 left-1 bg-accent text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+            Arrastra para ajustar
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div className="relative w-full h-48 sm:h-72 overflow-hidden rounded-lg bg-white shadow-sm border border-gray-200">
-      {slides.map((slide, i) => (
-        <div key={i} className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 p-1 transition-opacity duration-1000" style={{ opacity: previewSlide === i ? 1 : 0 }}>
-          {slide[0] && (
-            <div className="col-span-2 row-span-2 bg-white rounded-lg overflow-hidden flex items-center gap-3 p-3">
-              {slide[0].imagenPreview ? (
-                <img src={slide[0].imagenPreview} alt={slide[0].nombre} className="h-full w-1/2 object-contain shrink-0" />
-              ) : (
-                <div className="h-full w-1/2 bg-gray-100 rounded flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
+    <div ref={containerRef}>
+      <div className="relative w-full h-64 sm:h-80 overflow-hidden rounded-xl bg-white shadow-sm border border-gray-200">
+        {slides.map((slide, i) => {
+          const hasSmall = slide.length > 1
+          return (
+            <div
+              key={i}
+              className={`absolute inset-0 gap-1.5 p-1.5 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
+              style={{ opacity: previewSlide === i ? 1 : 0 }}
+            >
+              {renderImage(slide[0], hasSmall ? '' : 'flex-1')}
+              {hasSmall && (
+                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
+                  {[1, 2, 3, 4].map(idx => slide[idx]
+                    ? <div key={slide[idx].id}>{renderImage(slide[idx])}</div>
+                    : <div key={idx} className="rounded-lg bg-gray-100" />
+                  )}
                 </div>
               )}
-              <div className="flex flex-col justify-center min-w-0">
-                <p className="text-xs font-black text-primary leading-tight line-clamp-2">{slide[0].nombre}</p>
-                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{slide[0].descripcion}</p>
-                {slide[0].precio > 0 && (
-                  <p className="text-sm font-black text-accent mt-1">${slide[0].precio.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                )}
-              </div>
             </div>
-          )}
-          {[1, 2, 3, 4].map(idx => slide[idx] && (
-            <div key={slide[idx].id || idx} className="bg-white rounded-lg overflow-hidden flex items-center gap-2 p-2">
-              {slide[idx].imagenPreview ? (
-                <img src={slide[idx].imagenPreview} alt={slide[idx].nombre} className="h-full w-2/5 object-contain shrink-0" />
-              ) : (
-                <div className="h-full w-2/5 bg-gray-100 rounded flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg text-gray-300">image</span>
-                </div>
-              )}
-              <div className="flex flex-col justify-center min-w-0">
-                <p className="text-[9px] font-bold text-primary leading-tight line-clamp-1">{slide[idx].nombre}</p>
-                <p className="text-[8px] text-slate-400 line-clamp-1 mt-0.5">{slide[idx].descripcion}</p>
-                {slide[idx].precio > 0 && (
-                  <p className="text-[10px] font-black text-accent mt-0.5">${slide[idx].precio.toLocaleString('es-CL', { maximumFractionDigits: 0 })}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
-      <div className="absolute inset-0 bg-primary/30 pointer-events-none rounded-lg"></div>
-      {slides.length > 1 && (
-        <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
-          {slides.map((_, i) => (
-            <button key={i} onClick={() => { setPreviewSlide(i); clearInterval(intervalRef.current) }}
-              className={`h-1.5 rounded-full transition-all ${previewSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'}`} />
-          ))}
+          )
+        })}
+        {slides.length > 1 && (
+          <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
+            {slides.map((_, i) => (
+              <button key={i} onClick={() => setPreviewSlide(i)}
+                className={`h-1.5 rounded-full transition-all ${previewSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      {selectedItem && (
+        <div className="flex items-center gap-3 mt-2 bg-gray-50 rounded-lg px-3 py-2">
+          <span className="text-[10px] font-semibold text-gray-500 shrink-0">{selectedItem.nombre}</span>
+          <div className="flex items-center gap-1.5 flex-1">
+            <span className="text-[9px] text-gray-400">X</span>
+            <input type="range" min="0" max="100" value={selectedItem.posX ?? 50} onChange={(e) => onUpdatePos(selectedId, Number(e.target.value), selectedItem.posY ?? 50)} className="flex-1 h-1 accent-primary" />
+          </div>
+          <div className="flex items-center gap-1.5 flex-1">
+            <span className="text-[9px] text-gray-400">Y</span>
+            <input type="range" min="0" max="100" value={selectedItem.posY ?? 50} onChange={(e) => onUpdatePos(selectedId, selectedItem.posX ?? 50, Number(e.target.value))} className="flex-1 h-1 accent-primary" />
+          </div>
+          <button onClick={() => setSelectedId(null)} className="text-gray-400 hover:text-gray-600">
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
         </div>
       )}
     </div>
@@ -189,6 +237,7 @@ export default function AdminBanner() {
             subcategoria: l.subcategoria, badge: l.badge, tipo: l.tipo,
             tallas: l.tallas, medidas: l.medidas, genero: l.genero,
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null, imagenUrl: l.imagen,
+            posX: l.banner_pos_x ?? 50, posY: l.banner_pos_y ?? 50,
           })))
         }
       })
@@ -350,6 +399,33 @@ export default function AdminBanner() {
     setShowModal(true)
   }
 
+  const [dirtyPositions, setDirtyPositions] = useState(new Set())
+  const [savingPos, setSavingPos] = useState(false)
+
+  const handleUpdatePos = useCallback((id, posX, posY) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, posX, posY } : i))
+    setDirtyPositions(prev => new Set(prev).add(id))
+  }, [])
+
+  const handleSavePositions = async () => {
+    setSavingPos(true)
+    try {
+      const promises = [...dirtyPositions].map(id => {
+        const item = items.find(i => i.id === id)
+        if (!item) return null
+        return fetch(`${API}/api/listings/${id}/banner-pos`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ banner_pos_x: item.posX, banner_pos_y: item.posY }),
+        })
+      }).filter(Boolean)
+      await Promise.all(promises)
+      setDirtyPositions(new Set())
+      showToast('Posiciones guardadas')
+    } catch { showToast('Error al guardar posiciones', 'error') }
+    setSavingPos(false)
+  }
+
   if (!esPremium) {
     return (
       <div>
@@ -402,9 +478,16 @@ export default function AdminBanner() {
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">visibility</span>
-              Vista previa real — así se verá en tu página premium
+              Vista previa real — así se verá en tu página premium. Haz click en una imagen y arrastra para ajustar posición.
             </p>
-            <BannerPreview items={items} />
+            <BannerPreview items={items} onUpdatePos={handleUpdatePos} />
+            {dirtyPositions.size > 0 && (
+              <button onClick={handleSavePositions} disabled={savingPos}
+                className="mt-2 flex items-center gap-1.5 bg-accent text-primary px-4 py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
+                <span className="material-symbols-outlined text-sm">save</span>
+                {savingPos ? 'Guardando...' : 'Guardar posiciones'}
+              </button>
+            )}
           </div>
 
           {/* Grid de productos */}

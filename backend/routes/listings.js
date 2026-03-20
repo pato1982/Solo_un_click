@@ -313,4 +313,26 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 })
 
+// PATCH /api/listings/:id/banner-pos — actualizar posición de imagen en banner
+router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { banner_pos_x, banner_pos_y } = req.body
+
+    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    if (owner.length === 0) return res.status(404).json({ error: 'No encontrado' })
+    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+
+    await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=? WHERE id=?', [
+      Math.max(0, Math.min(100, parseInt(banner_pos_x) || 50)),
+      Math.max(0, Math.min(100, parseInt(banner_pos_y) || 50)),
+      id
+    ])
+    res.json({ message: 'Posición actualizada' })
+  } catch (err) {
+    console.error('Error actualizando posición banner:', err)
+    res.status(500).json({ error: 'Error al actualizar' })
+  }
+})
+
 module.exports = router
