@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
   try {
     const { tipo } = req.query
     let query = `
-      SELECT c.id as cat_id, c.nombre as categoria, c.tipo,
+      SELECT c.id as cat_id, c.nombre as categoria, c.tipo, c.icono,
              s.id as sub_id, s.nombre as subcategoria
       FROM categorias c
       LEFT JOIN subcategorias s ON s.categoria_id = c.id
@@ -35,6 +35,7 @@ router.get('/', async (req, res) => {
           id: row.cat_id,
           nombre: row.categoria,
           tipo: row.tipo,
+          icono: row.icono || '',
           subcategorias: [],
         })
       }

@@ -14,8 +14,6 @@ import EventsPage from './components/EventsPage'
 import ArriendosPage from './components/ArriendosPage'
 import ServiciosPage from './components/ServiciosPage'
 import StorePage, { StoreFooter } from './components/StorePage'
-// import { sections as staticSections } from './data/products'
-
 const API = import.meta.env.VITE_API || ''
 
 const SECTION_TITLES = {
@@ -162,6 +160,7 @@ export default function App() {
   const [sidebarOpenKey, setSidebarOpenKey] = useState(0)
   const [activeStore, setActiveStore] = useState(null)
   const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
+  const [storeCatKey, setStoreCatKey] = useState(0)
   const [sections, setSections] = useState([])
   const [turismoCategorias, setTurismoCategorias] = useState([])
   const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
@@ -512,9 +511,16 @@ export default function App() {
           </header>
           <nav className="bg-[#4A2070] px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 border-y-2 border-accent shadow-md">
             <div className="max-w-7xl mx-auto flex items-center justify-between relative">
-              <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-xs font-bold bg-accent text-primary px-2 sm:px-3 py-1 rounded-full hover:brightness-110 transition-all">
-                <span className="material-symbols-outlined text-sm sm:text-base">arrow_back</span>
+              <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-accent border border-accent px-2 sm:px-2.5 py-0.5 rounded-full hover:bg-accent/10 transition-all">
+                <span className="material-symbols-outlined text-sm">arrow_back</span>
                 Volver
+              </button>
+              {/* Hamburguesa centrada — solo mobile */}
+              <button
+                onClick={() => setStoreCatKey(k => k + 1)}
+                className="md:hidden absolute left-1/2 -translate-x-1/2 p-0.5 rounded-md hover:bg-white/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-white text-xl">menu</span>
               </button>
               <div className="flex items-center gap-2 sm:gap-4">
               {user ? (
@@ -539,8 +545,8 @@ export default function App() {
                   </button>
                 </>
               ) : (
-                <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-xs font-bold bg-accent text-primary px-2 sm:px-3 py-1 rounded-full hover:brightness-110 transition-all">
-                  <span className="material-symbols-outlined text-sm sm:text-base">home</span>
+                <button onClick={goHome} className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-accent border border-accent px-2 sm:px-2.5 py-0.5 rounded-full hover:bg-accent/10 transition-all">
+                  <span className="material-symbols-outlined text-sm">home</span>
                   Inicio
                 </button>
               )}
@@ -550,7 +556,7 @@ export default function App() {
         </div>
 
         <div className="w-full flex flex-1 flex-col md:flex-row">
-          <StorePage store={activeStore} onBack={goHome} onOpenStore={handleOpenStore} />
+          <StorePage store={activeStore} onBack={goHome} onOpenStore={handleOpenStore} mobileCatKey={storeCatKey} />
         </div>
 
         <StoreFooter store={activeStore} />

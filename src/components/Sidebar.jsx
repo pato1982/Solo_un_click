@@ -250,7 +250,7 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
         {/* Overlay para cerrar al tocar fuera */}
         <div className="absolute inset-0 bg-black/20" onClick={handleMobileClose}></div>
         {/* Panel del menú */}
-        <div className="relative min-w-[180px] w-fit max-w-[55%] h-full bg-primary text-white shadow-lg flex flex-col">
+        <div className="relative w-fit h-full bg-primary text-white shadow-lg flex flex-col border-r-2 border-accent">
         {/* Título + cerrar */}
         <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
           <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">{panel.title}</h3>
@@ -332,9 +332,9 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
       </div>
 
       {/* ===== Desktop: sidebar vertical normal (sin cambios) ===== */}
-      <aside className="hidden md:block shrink-0 w-max max-w-44 sticky top-[112px] self-start mt-3 ml-1 z-30 mb-6">
+      <aside className="hidden md:block shrink-0 w-max sticky top-[112px] self-start mt-3 ml-1 z-30 mb-6">
         <div className="bg-primary text-white animate-slide-in shadow-lg p-2">
-          <div className="border border-accent rounded-lg p-2 pt-3">
+          <div className="border-2 border-accent rounded-lg p-2 pt-3">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-black uppercase tracking-tight">{panel.title}</h3>
               {!showInicio && (

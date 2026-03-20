@@ -1,8 +1,6 @@
 import { useState } from 'react'
 
 const API = import.meta.env.VITE_API || ''
-const DEFAULT_PHONE = '56912345678'
-
 function trackProductClick(product) {
   const userId = product.user_id
   if (!userId) return
@@ -10,12 +8,6 @@ function trackProductClick(product) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: product.id }),
   }).catch(() => {})
-}
-
-function getWhatsAppUrl(product, phone) {
-  const p = phone ? phone.replace(/[\s+]/g, '') : DEFAULT_PHONE
-  const msg = `Hola! Me interesa este producto:\n\n*${product.name}*\n${product.price ? `Precio: $${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}` : ''}\n\n${product.image}`
-  return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
 }
 
 function getStoreFromProduct(product) {
@@ -33,9 +25,8 @@ function getStoreFromProduct(product) {
 
 function ContactPopup({ icon, title, value, onClose }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10001 }} onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30"></div>
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-xs w-full p-5" onClick={(e) => e.stopPropagation()}>
+    <div className="absolute inset-x-0 bottom-full mb-2 flex justify-center" style={{ zIndex: 10001 }}>
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 border border-slate-200">
         <button onClick={onClose} className="absolute top-2 right-2 h-5 w-5 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors">
           <span className="material-symbols-outlined text-slate-500 text-xs">close</span>
         </button>
@@ -51,14 +42,14 @@ function ContactPopup({ icon, title, value, onClose }) {
   )
 }
 
-function ProductModal({ product, hidePrice, onClose }) {
+function ProductModal({ product, hidePrice, inStorePage, onClose }) {
   const [contactPopup, setContactPopup] = useState(null)
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div
         className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); setContactPopup(null) }}
       >
         {/* Botón cerrar */}
         <button onClick={onClose} className="absolute top-2 right-2 z-10 h-6 w-6 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors">
@@ -68,7 +59,7 @@ function ProductModal({ product, hidePrice, onClose }) {
         {/* Contenido principal */}
         <div className="flex flex-col md:flex-row md:min-h-[220px]">
           {/* Imagen - lado izquierdo más grande */}
-          <div className="md:w-[50%] h-44 md:h-auto shrink-0 p-1 relative">
+          <div className="md:w-[50%] h-64 md:h-auto shrink-0 p-1 relative">
             <img
               src={product.image}
               alt={product.alt}
@@ -198,29 +189,32 @@ function ProductModal({ product, hidePrice, onClose }) {
               </div>
 
               {/* Contacto - derecha */}
-              <div className="flex items-center gap-1.5">
-                {product.owner_plan_id && product.owner_plan_id >= 2 && (
+              <div className="relative flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {contactPopup && (
+                  <ContactPopup icon={contactPopup.icon} title={contactPopup.title} value={contactPopup.value} onClose={() => setContactPopup(null)} />
+                )}
+                {!inStorePage && product.owner_plan_id && product.owner_plan_id >= 2 && (
                   <button className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Tienda">
                     <span className="material-symbols-outlined text-sm">storefront</span>
                   </button>
                 )}
                 {product.negocio_whatsapp && (
-                  <button onClick={() => setContactPopup({ icon: 'chat', title: 'WhatsApp', value: product.negocio_whatsapp })} className="h-7 w-7 rounded-lg bg-green-500/10 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all" title="WhatsApp">
+                  <button onClick={() => setContactPopup(contactPopup?.title === 'WhatsApp' ? null : { icon: 'chat', title: 'WhatsApp', value: product.negocio_whatsapp })} className="h-7 w-7 rounded-lg bg-green-500/10 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all" title="WhatsApp">
                     <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
                   </button>
                 )}
                 {product.negocio_telefono && (
-                  <button onClick={() => setContactPopup({ icon: 'call', title: 'Teléfono', value: product.negocio_telefono })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Teléfono">
+                  <button onClick={() => setContactPopup(contactPopup?.title === 'Teléfono' ? null : { icon: 'call', title: 'Teléfono', value: product.negocio_telefono })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Teléfono">
                     <span className="material-symbols-outlined text-sm">call</span>
                   </button>
                 )}
                 {product.negocio_correo && (
-                  <button onClick={() => setContactPopup({ icon: 'mail', title: 'Correo', value: product.negocio_correo })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Correo">
+                  <button onClick={() => setContactPopup(contactPopup?.title === 'Correo' ? null : { icon: 'mail', title: 'Correo', value: product.negocio_correo })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Correo">
                     <span className="material-symbols-outlined text-sm">mail</span>
                   </button>
                 )}
                 {product.negocio_direccion && (
-                  <button onClick={() => setContactPopup({ icon: 'location_on', title: 'Ubicación', value: product.negocio_direccion })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Ubicación">
+                  <button onClick={() => setContactPopup(contactPopup?.title === 'Ubicación' ? null : { icon: 'location_on', title: 'Ubicación', value: product.negocio_direccion })} className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Ubicación">
                     <span className="material-symbols-outlined text-sm">location_on</span>
                   </button>
                 )}
@@ -229,11 +223,6 @@ function ProductModal({ product, hidePrice, onClose }) {
           </div>
         </div>
       </div>
-
-      {/* Popup de contacto */}
-      {contactPopup && (
-        <ContactPopup icon={contactPopup.icon} title={contactPopup.title} value={contactPopup.value} onClose={() => setContactPopup(null)} />
-      )}
     </div>
   )
 }
@@ -245,7 +234,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
   return (
     <>
       <div className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col group ${isFirst ? 'border-2 border-amber-400 outline outline-2 outline-amber-400 outline-offset-2' : 'border border-slate-100'}`}>
-        <div className="relative h-32 sm:h-32 md:h-40 bg-slate-50 overflow-hidden">
+        <div className="relative h-44 sm:h-40 md:h-44 bg-slate-50 overflow-hidden">
           <img
             alt={product.alt}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -326,7 +315,7 @@ export default function ProductCard({ product, hidePrice, isFirst, onOpenStore, 
       </div>
 
       {showModal && (
-        <ProductModal product={product} hidePrice={hidePrice} onClose={() => setShowModal(false)} />
+        <ProductModal product={product} hidePrice={hidePrice} inStorePage={inStorePage} onClose={() => setShowModal(false)} />
       )}
     </>
   )

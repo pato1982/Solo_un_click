@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import PlansModal from './PlansModal'
 import LoginModal from './LoginModal'
 import RegisterModal from './RegisterModal'
-import { searchIndex } from '../data/searchIndex'
+const API = import.meta.env.VITE_API || ''
 
 export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onSearchSelect, user, onLoginSuccess, onLogout }) {
   const [showPlans, setShowPlans] = useState(false)
@@ -14,7 +14,46 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [showResults, setShowResults] = useState(false)
+  const [searchIndex, setSearchIndex] = useState([])
   const searchRef = useRef(null)
+
+  // Cargar índice de búsqueda desde la BD
+  useEffect(() => {
+    async function loadSearchIndex() {
+      try {
+        const [catRes, locRes, evRes] = await Promise.all([
+          fetch(`${API}/api/categorias`).then(r => r.json()),
+          fetch(`${API}/api/locales/categorias`).then(r => r.json()),
+          fetch(`${API}/api/eventos/categorias`).then(r => r.json()),
+        ])
+        const tipoNav = { producto: 'productos', servicio: 'servicios', arriendo: 'arriendos', turismo: 'turismo' }
+        const tipoLabel = { producto: 'Productos', servicio: 'Servicios', arriendo: 'Arriendos', turismo: 'Turismo' }
+        const index = []
+        // Categorías de productos/servicios/arriendos/turismo
+        ;(catRes.categorias || []).forEach(cat => {
+          const nav = tipoNav[cat.tipo] || cat.tipo
+          const section = tipoLabel[cat.tipo] || cat.tipo
+          index.push({ icon: cat.icono || 'category', label: cat.nombre, section, type: 'category', nav, subcategories: cat.subcategorias.map(s => s.nombre) })
+          cat.subcategorias.forEach(sub => {
+            index.push({ icon: cat.icono || 'category', label: sub.nombre, section: `${section} → ${cat.nombre}`, type: 'subcategory', nav })
+          })
+        })
+        // Locales de barrio
+        ;(locRes.categorias || []).forEach(cat => {
+          index.push({ icon: cat.icono || 'storefront', label: cat.nombre, section: 'Negocios', type: 'subcategory', nav: 'locales' })
+        })
+        // Eventos
+        ;(evRes.categorias || []).forEach(cat => {
+          index.push({ icon: cat.icono || 'event', label: cat.nombre, section: 'Eventos', type: 'subcategory', nav: 'eventos' })
+        })
+        setSearchIndex(index)
+      } catch (err) {
+        console.error('Error cargando índice de búsqueda:', err)
+      }
+    }
+    loadSearchIndex()
+  }, [])
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {

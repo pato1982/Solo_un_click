@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import ProductCard from './ProductCard'
 
 const API = import.meta.env.VITE_API || ''
-const DEFAULT_PHONE = '56912345678'
 
 function trackClick(userId, listingId) {
   if (!userId) return
@@ -153,7 +152,8 @@ export function StoreFooter({ store }) {
 }
 
 function getWhatsAppUrl(product, phone) {
-  const p = phone ? phone.replace(/[\s+]/g, '') : DEFAULT_PHONE
+  const p = phone ? phone.replace(/[\s+]/g, '') : ''
+  if (!p) return null
   const msg = `Hola! Me interesa este producto:\n\n*${product.name}*\n${product.price ? `Precio: $${product.price.toLocaleString('es-CL', { maximumFractionDigits: 0 })}` : ''}\n\n${product.image}`
   return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
 }
@@ -170,7 +170,7 @@ function MarqueeModal({ product, phone, onClose }) {
           <span className="material-symbols-outlined text-slate-600 text-sm">close</span>
         </button>
         <div className="flex flex-col md:flex-row md:min-h-[220px]">
-          <div className="md:w-[50%] h-44 md:h-auto shrink-0 p-1">
+          <div className="md:w-[50%] h-64 md:h-auto shrink-0 p-1">
             <img src={product.image} alt={product.alt || product.name} className="w-full h-full object-cover rounded-tr-xl bg-slate-100" />
           </div>
           <div className="md:w-[50%] p-3 flex flex-col flex-1">
@@ -234,12 +234,11 @@ function MarqueeModal({ product, phone, onClose }) {
         </div>
         <div className="border-t border-slate-100 px-3 py-2 flex items-center justify-end">
           <div className="flex items-center gap-1.5">
-            <button className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Tienda">
-              <span className="material-symbols-outlined text-sm">storefront</span>
-            </button>
-            <a href={getWhatsAppUrl(product, phone)} target="_blank" rel="noopener noreferrer" className="h-7 w-7 rounded-lg bg-green-500/10 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all" title="WhatsApp">
-              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
-            </a>
+            {getWhatsAppUrl(product, phone) && (
+              <a href={getWhatsAppUrl(product, phone)} target="_blank" rel="noopener noreferrer" className="h-7 w-7 rounded-lg bg-green-500/10 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all" title="WhatsApp">
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.347 0-4.522-.809-6.236-2.164l-.436-.35-3.233 1.084 1.084-3.233-.35-.436A9.956 9.956 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+              </a>
+            )}
             <button className="h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary flex items-center justify-center transition-all" title="Ubicación">
               <span className="material-symbols-outlined text-sm">location_on</span>
             </button>
@@ -405,19 +404,11 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const intervalRef = useRef(null)
 
-  // Usar banner items del API si están disponibles, sino productos
-  let slides
-  if (bannerItems && bannerItems.length > 0) {
-    const slide1 = bannerItems.filter(b => b.banner_orden >= 1 && b.banner_orden <= 5).sort((a, b) => a.banner_orden - b.banner_orden)
-    const slide2 = bannerItems.filter(b => b.banner_orden >= 6 && b.banner_orden <= 10).sort((a, b) => a.banner_orden - b.banner_orden)
-    slides = [slide1, slide2].filter(s => s.length >= 1)
-  } else {
-    const bannerProducts = products.filter((p) => p.image).slice(0, 10)
-    slides = [
-      bannerProducts.slice(0, 5),
-      bannerProducts.slice(5, 10),
-    ].filter((s) => s.length >= 5)
-  }
+  // Solo mostrar banner si el admin configuró items con banner_orden
+  if (!bannerItems || bannerItems.length === 0) return null
+  const slide1 = bannerItems.filter(b => b.banner_orden >= 1 && b.banner_orden <= 5).sort((a, b) => a.banner_orden - b.banner_orden)
+  const slide2 = bannerItems.filter(b => b.banner_orden >= 6 && b.banner_orden <= 10).sort((a, b) => a.banner_orden - b.banner_orden)
+  const slides = [slide1, slide2].filter(s => s.length >= 1)
 
   useEffect(() => {
     if (slides.length < 2) return
@@ -527,10 +518,15 @@ const SECTION_TITLES = {
   turismo: 'Tendencia',
 }
 
-export default function StorePage({ store, onBack, onOpenStore }) {
+export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) {
   const [activeCat, setActiveCat] = useState(null)
   const [activeSub, setActiveSub] = useState(null)
   const [mobileCatOpen, setMobileCatOpen] = useState(false)
+
+  // Abrir sidebar mobile cuando cambia mobileCatKey
+  useEffect(() => {
+    if (mobileCatKey > 0) setMobileCatOpen(true)
+  }, [mobileCatKey])
   const [carouselItems, setCarouselItems] = useState([])
   const [bannerItems, setBannerItems] = useState([])
   const [apiProducts, setApiProducts] = useState(null)
@@ -610,8 +606,9 @@ export default function StorePage({ store, onBack, onOpenStore }) {
     return true
   })
 
-  const handleCatClick = (catLabel) => {
+  const handleCatClick = (catLabel, collapseOnly) => {
     if (activeCat === catLabel) {
+      if (collapseOnly) return // En mobile solo colapsa visualmente, no cierra menú
       setActiveCat(null)
       setActiveSub(null)
     } else {
@@ -631,9 +628,9 @@ export default function StorePage({ store, onBack, onOpenStore }) {
   return (
     <>
       {/* Sidebar con categorías y subcategorías */}
-      <aside className="hidden md:block shrink-0 w-max max-w-44 sticky top-[92px] self-start mt-3 ml-1 z-30 mb-6">
+      <aside className="hidden md:block shrink-0 w-max sticky top-[92px] self-start mt-3 ml-1 z-30 mb-6">
           <div className="bg-primary text-white animate-slide-in shadow-lg p-2">
-            <div className="border border-accent rounded-lg p-2 pt-3">
+            <div className="border-2 border-accent rounded-lg p-2 pt-3">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-black uppercase tracking-tight">Categorías</h3>
               </div>
@@ -680,52 +677,49 @@ export default function StorePage({ store, onBack, onOpenStore }) {
 
         {/* Contenido principal */}
         <main className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8 pt-3 sm:pt-4 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 overflow-hidden transition-all duration-300">
-          {/* Filtro categorías mobile */}
-          {storeCategories.length > 0 && (
-            <div className="md:hidden">
-              <button
-                onClick={() => setMobileCatOpen(!mobileCatOpen)}
-                className="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-xs font-bold w-full justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">filter_list</span>
-                  {activeSub || activeCat || 'Filtrar por categoría'}
+          {/* Sidebar categorías mobile — estilo igual que página principal */}
+          {mobileCatOpen && storeCategories.length > 0 && (
+            <div className="md:hidden fixed inset-0 z-40" style={{ top: (document.getElementById('main-header')?.offsetHeight || 90) + 'px' }}>
+              <div className="absolute inset-0 bg-black/20" onClick={() => setMobileCatOpen(false)}></div>
+              <div className="relative w-fit h-full bg-primary text-white shadow-lg flex flex-col border-r-2 border-accent">
+                <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1 shrink-0">
+                  <h3 className="text-xs font-black uppercase tracking-tight whitespace-nowrap">Categorías</h3>
+                  <button onClick={() => setMobileCatOpen(false)} className="hover:bg-white/10 rounded-full p-0.5 transition-colors shrink-0">
+                    <span className="material-symbols-outlined text-white/60 text-base hover:text-white">close</span>
+                  </button>
                 </div>
-                <span className="material-symbols-outlined text-sm" style={{ transition: 'transform 0.2s', transform: mobileCatOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
-              </button>
-              {mobileCatOpen && (
-                <div className="bg-primary text-white rounded-b-lg p-2 -mt-1 shadow-lg max-h-[60vh] overflow-y-auto">
+                <div className="flex-1 min-h-0 flex flex-col gap-0.5 px-2 pb-2 overflow-y-auto sidebar-scroll">
                   {(activeCat || activeSub) && (
                     <button
                       onClick={() => { setActiveCat(null); setActiveSub(null); setMobileCatOpen(false) }}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-bold text-accent hover:bg-white/10 w-full mb-1"
+                      className="flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-bold text-accent hover:bg-white/10 transition-colors"
                     >
                       <span className="material-symbols-outlined text-xs">close</span>
-                      Quitar filtro
+                      <span>Quitar filtro</span>
                     </button>
                   )}
                   {storeCategories.map((cat) => (
                     <div key={cat.label}>
                       <button
-                        onClick={() => { handleCatClick(cat.label); if (!cat.subcategories || cat.subcategories.length === 0) setMobileCatOpen(false) }}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-xs font-normal text-white/60 hover:text-accent w-full ${activeCat === cat.label ? 'bg-white/10 text-accent' : ''}`}
+                        onClick={() => { handleCatClick(cat.label, true); if (!cat.subcategories || cat.subcategories.length === 0) setMobileCatOpen(false) }}
+                        className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${activeCat === cat.label ? 'bg-white/10 text-accent' : 'text-white/60 hover:text-accent'}`}
                       >
                         <span className="material-symbols-outlined text-xs" style={{ transition: 'transform 0.2s', transform: activeCat === cat.label ? 'rotate(90deg)' : 'rotate(0deg)' }}>chevron_right</span>
-                        <span className="flex-1 text-left">{cat.label}</span>
+                        <span className="whitespace-nowrap">{cat.label}</span>
                       </button>
-                      {activeCat === cat.label && cat.subcategories && (
+                      {activeCat === cat.label && cat.subcategories && cat.subcategories.length > 0 && (
                         <div className="flex flex-col ml-4">
                           {cat.subcategories.map((sub) => (
                             <button
                               key={sub}
                               onClick={() => { setActiveCat(cat.label); setActiveSub(activeSub === sub ? null : sub); setMobileCatOpen(false) }}
-                              className={`flex items-center gap-2 px-2 py-1 rounded-md text-xs text-white/50 hover:text-accent w-full text-left ${activeSub === sub ? 'text-white font-medium' : ''}`}
+                              className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10px] transition-colors ${activeSub === sub ? 'text-white font-bold' : 'text-white/40 hover:text-accent'}`}
                             >
                               {activeSub === sub
-                                ? <span className="material-symbols-outlined text-white text-xs shrink-0">check</span>
+                                ? <span className="material-symbols-outlined text-white text-[10px] shrink-0">check</span>
                                 : <span className="w-1 h-1 rounded-full bg-accent shrink-0"></span>
                               }
-                              <span>{sub}</span>
+                              <span className="whitespace-nowrap">{sub}</span>
                             </button>
                           ))}
                         </div>
@@ -733,7 +727,7 @@ export default function StorePage({ store, onBack, onOpenStore }) {
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
           )}
           {/* Ver todo - cuando hay filtro activo */}
