@@ -120,27 +120,20 @@ function BannerPreview({ items, onUpdateItem }) {
     if (!item) return null
     const isSelected = selectedId === item.id
     const scale = item.scale ?? 1
-    const posX = item.posX ?? 50
-    const posY = item.posY ?? 50
     return (
       <div
         className={`rounded-lg overflow-hidden relative cursor-pointer ${className} ${isSelected ? 'ring-3 ring-amber-400 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
         onClick={() => setSelectedId(isSelected ? null : item.id)}
       >
         {item.imagenPreview ? (
-          <div className="w-full h-full relative">
-            <img
-              src={item.imagenPreview} alt={item.nombre} draggable={false}
-              className="absolute select-none"
-              style={{
-                width: `${scale * 100}%`,
-                height: `${scale * 100}%`,
-                left: `${((100 - scale * 100) * posX) / 100}%`,
-                top: `${((100 - scale * 100) * posY) / 100}%`,
-                objectFit: 'cover',
-              }}
-            />
-          </div>
+          <img
+            src={item.imagenPreview} alt={item.nombre} draggable={false}
+            className="w-full h-full object-cover select-none"
+            style={{
+              objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
+              transform: `scale(${scale})`,
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
