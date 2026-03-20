@@ -1,5 +1,45 @@
 # Registro de Cambios - Solo a un Click
 
+## 20 de Marzo 2026 (sesión 14) - Banner premium, navegación admin SPA
+
+### Navegación admin sin recarga
+- Cambiados todos los `<a href="/admin">` a `<Link to="/admin">` en Header.jsx y App.jsx
+- Navegación al panel admin ahora es SPA (sin recarga de página completa)
+- Eliminado el efecto de "pantalla en blanco" al entrar al panel
+
+### Fix banner no visible en página premium
+- **Bug backend:** el filtro `rows.filter(r => !r.banner_orden)` eliminaba los banner items al pedirlos con `?banner=1` — corregido agregando `banner !== '1'` a la condición
+- **ProductCard:** ahora pasa `plan_id` desde `owner_plan_id` al abrir tienda, asegurando que `store.plan_id >= 3` se evalúe correctamente
+
+### Rediseño visual del banner premium
+- Layout: imagen principal grande a la izquierda + 4 imágenes en grid 2x2 a la derecha
+- Imágenes completas (`object-contain`) dentro de marcos blancos con borde y sombra
+- Fondo `slate-50` detrás de los marcos
+- Si hay 1 solo producto, la imagen ocupa todo el banner
+- Sin texto en las tarjetas del banner — info aparece al hacer click (MarqueeModal)
+- Altura del banner aumentada: `h-64 / h-80 / h-96`
+
+### Vista previa del banner en admin actualizada
+- BannerPreview en AdminBanner coincide con el diseño de la página premium
+- Marcos blancos, imágenes completas, mismo layout
+
+### Base de datos
+- Nuevas columnas en `listings`: `banner_pos_x` (INT DEFAULT 50), `banner_pos_y` (INT DEFAULT 50), `banner_scale` (DECIMAL DEFAULT 1.00)
+- Nuevo endpoint `PATCH /api/listings/:id/banner-pos` para posición/escala del banner
+
+### Fix modal banner en mobile
+- Imagen y cropper centrados en el modal en vista mobile
+- Botón subir imagen centrado con ancho fijo
+
+### Fix useCallback
+- Restaurado `useCallback` en import de AdminBanner (necesario para ImageCropper del modal)
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña**
+- **Analizar página principal, StorePage premium y páginas de filtrado "Ver todos"**
+
+---
+
 ## 19 de Marzo 2026 (sesión 13) - Eliminar datos ejemplo, mejoras UI premium
 
 ### Eliminación de datos de ejemplo
