@@ -90,7 +90,7 @@ function BannerPreview({ items, onUpdateItem }) {
 
   const selectedItem = selectedId ? items.find(i => i.id === selectedId) : null
 
-  const STEP = 5
+  const STEP = 10
 
   const movePos = (dir) => {
     if (!selectedItem) return
@@ -131,7 +131,7 @@ function BannerPreview({ items, onUpdateItem }) {
             className="w-full h-full object-cover select-none"
             style={{
               objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
-              transform: `scale(${scale})`,
+              transform: `scale(${scale}) translate(${(50 - (item.posX ?? 50)) * 0.5}%, ${(50 - (item.posY ?? 50)) * 0.5}%)`,
             }}
           />
         ) : (
