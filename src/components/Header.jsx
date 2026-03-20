@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import PlansModal from './PlansModal'
 import LoginModal from './LoginModal'
 import RegisterModal from './RegisterModal'
@@ -237,9 +238,9 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           <div className="flex items-center gap-1 shrink-0">
             {user ? (
               <>
-                <a href="/admin" className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">
+                <Link to="/admin" className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">
                   <span className="material-symbols-outlined text-base">{user.rol === 'programador' ? 'terminal' : 'dashboard'}</span>
-                </a>
+                </Link>
                 <button onClick={onLogout} className="p-1 text-white/70 hover:text-accent rounded-full hover:bg-white/10 transition-colors">
                   <span className="material-symbols-outlined text-base">logout</span>
                 </button>
@@ -297,15 +298,15 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
                   <>
                     <span className="text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
                     </span>
-                    <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
+                    <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
                       <span className="material-symbols-outlined text-xl">dashboard</span>
-                    </a>
+                    </Link>
                   </>
                 )}
                 {user.rol === 'programador' && (
-                  <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
+                  <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
                     <span className="material-symbols-outlined text-xl">terminal</span>
-                  </a>
+                  </Link>
                 )}
                 <button onClick={onLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
                   <span className="material-symbols-outlined text-xl">logout</span>
@@ -333,9 +334,9 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           <div className="absolute right-0 flex sm:flex md:hidden items-center gap-2">
             {user ? (
               <>
-                <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel">
+                <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel">
                   <span className="material-symbols-outlined text-lg">{user.rol === 'programador' ? 'terminal' : 'dashboard'}</span>
-                </a>
+                </Link>
                 <button onClick={onLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
                   <span className="material-symbols-outlined text-lg">logout</span>
                 </button>

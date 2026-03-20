@@ -86,7 +86,7 @@ router.get('/', async (req, res) => {
     let [rows] = await pool.query(query, params)
 
     // Si es vista pública con user_id, filtrar banners según plan y limitar cantidad
-    if (user_id && ownerPlan !== null && carousel !== '1') {
+    if (user_id && ownerPlan !== null && carousel !== '1' && banner !== '1') {
       // Eliminar banners si plan < 3 (ya están excluidos arriba, pero por seguridad)
       rows = rows.filter(r => !r.banner_orden)
       // Limitar al máximo del plan

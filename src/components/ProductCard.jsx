@@ -18,6 +18,7 @@ function getStoreFromProduct(product) {
       name: product.nombre_negocio,
       phone: product.negocio_whatsapp || product.negocio_telefono || '',
       address: product.negocio_direccion || '',
+      plan_id: product.owner_plan_id || 1,
     }
   }
   return null

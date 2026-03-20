@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Breadcrumbs from './components/Breadcrumbs'
@@ -530,15 +531,15 @@ export default function App() {
                       <span className="hidden md:inline text-xs text-white/70">Hola, <span className="font-bold text-accent">{(() => { const n = user.nombre.split(' ')[0]; return n.length > 10 ? n.slice(0, 10) + '...' : n })()}</span>
                         {' '}<span className="text-white/50">Plan {user.plan_id === 3 ? 'Premium' : user.plan_id === 2 ? 'Normal' : 'Gratis'}</span>
                       </span>
-                      <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
+                      <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel de administrador">
                         <span className="material-symbols-outlined text-lg sm:text-xl">dashboard</span>
-                      </a>
+                      </Link>
                     </>
                   )}
                   {user.rol === 'programador' && (
-                    <a href="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
+                    <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel programador">
                       <span className="material-symbols-outlined text-lg sm:text-xl">terminal</span>
-                    </a>
+                    </Link>
                   )}
                   <button onClick={handleLogout} className="flex items-center text-white/90 hover:text-accent transition-colors" title="Salir">
                     <span className="material-symbols-outlined text-lg sm:text-xl">logout</span>
