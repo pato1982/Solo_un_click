@@ -326,7 +326,7 @@ router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
     await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=?, banner_scale=? WHERE id=?', [
       Math.max(0, Math.min(100, parseInt(banner_pos_x) || 50)),
       Math.max(0, Math.min(100, parseInt(banner_pos_y) || 50)),
-      Math.max(1, Math.min(3, parseFloat(banner_scale) || 1)),
+      Math.max(0.5, Math.min(3, parseFloat(banner_scale) || 1)),
       id
     ])
     res.json({ message: 'Posición actualizada' })

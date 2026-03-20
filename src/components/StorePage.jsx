@@ -431,16 +431,16 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
             >
               {/* Imagen grande — ocupa todo si es única, mitad izquierda si hay más */}
               {slide[0] && (
-                <div className={`rounded-lg overflow-hidden cursor-pointer group ${hasSmall ? '' : 'flex-1'}`} onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
-                  <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="w-full h-full object-cover transition-transform duration-300" style={{ objectPosition: `${slide[0].posX ?? 50}% ${slide[0].posY ?? 50}%`, transform: `scale(${slide[0].scale ?? 1})` }} />
+                <div className={`rounded-lg overflow-hidden cursor-pointer group bg-slate-100 ${hasSmall ? '' : 'flex-1'}`} onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
+                  <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="w-full h-full transition-transform duration-300" style={{ objectFit: (slide[0].scale ?? 1) >= 1.5 ? 'cover' : 'contain', objectPosition: `${slide[0].posX ?? 50}% ${slide[0].posY ?? 50}%`, transform: `scale(${slide[0].scale ?? 1})` }} />
                 </div>
               )}
               {/* Columna derecha: grid 2x2 con imágenes chicas */}
               {hasSmall && (
                 <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
                   {[1, 2, 3, 4].map((idx) => slide[idx] ? (
-                    <div key={slide[idx].id || idx} className="rounded-lg overflow-hidden cursor-pointer group" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
-                      <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="w-full h-full object-cover transition-transform duration-300" style={{ objectPosition: `${slide[idx].posX ?? 50}% ${slide[idx].posY ?? 50}%`, transform: `scale(${slide[idx].scale ?? 1})` }} />
+                    <div key={slide[idx].id || idx} className="rounded-lg overflow-hidden cursor-pointer group bg-slate-100" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
+                      <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="w-full h-full transition-transform duration-300" style={{ objectFit: (slide[idx].scale ?? 1) >= 1.5 ? 'cover' : 'contain', objectPosition: `${slide[idx].posX ?? 50}% ${slide[idx].posY ?? 50}%`, transform: `scale(${slide[idx].scale ?? 1})` }} />
                     </div>
                   ) : <div key={idx} className="rounded-lg bg-slate-100" />)}
                 </div>

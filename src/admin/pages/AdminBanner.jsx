@@ -105,7 +105,7 @@ function BannerPreview({ items, onUpdateItem }) {
   const changeScale = (delta) => {
     if (!selectedItem) return
     const curr = selectedItem.scale ?? 1
-    const next = Math.max(1, Math.min(3, +(curr + delta).toFixed(2)))
+    const next = Math.max(0.5, Math.min(3, +(curr + delta).toFixed(2)))
     onUpdateItem(selectedId, { scale: next })
   }
 
@@ -122,16 +122,17 @@ function BannerPreview({ items, onUpdateItem }) {
     const scale = item.scale ?? 1
     return (
       <div
-        className={`rounded-lg overflow-hidden relative cursor-pointer ${className} ${isSelected ? 'ring-3 ring-amber-400 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
+        className={`rounded-lg overflow-hidden relative cursor-pointer bg-slate-100 ${className} ${isSelected ? 'ring-3 ring-amber-400 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
         onClick={() => setSelectedId(isSelected ? null : item.id)}
       >
         {item.imagenPreview ? (
           <img
             src={item.imagenPreview} alt={item.nombre} draggable={false}
-            className="w-full h-full object-cover select-none transition-transform duration-150"
+            className="w-full h-full select-none transition-all duration-150"
             style={{
+              objectFit: scale >= 1.5 ? 'cover' : 'contain',
               objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
-              transform: scale !== 1 ? `scale(${scale})` : undefined,
+              transform: `scale(${scale})`,
             }}
           />
         ) : (
