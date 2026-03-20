@@ -80,13 +80,9 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
-function BannerPreview({ items, onUpdatePos }) {
+function BannerPreview({ items, onUpdateItem }) {
   const [previewSlide, setPreviewSlide] = useState(0)
   const [selectedId, setSelectedId] = useState(null)
-  const dragging = useRef(false)
-  const startPoint = useRef({ x: 0, y: 0 })
-  const startPos = useRef({ x: 50, y: 50 })
-  const containerRef = useRef(null)
 
   const slide1 = items.filter(i => i.orden >= 1 && i.orden <= 5).sort((a, b) => a.orden - b.orden)
   const slide2 = items.filter(i => i.orden >= 6 && i.orden <= 10).sort((a, b) => a.orden - b.orden)
@@ -94,28 +90,24 @@ function BannerPreview({ items, onUpdatePos }) {
 
   const selectedItem = selectedId ? items.find(i => i.id === selectedId) : null
 
-  const handleMouseDown = (e, item) => {
-    e.preventDefault()
-    setSelectedId(item.id)
-    dragging.current = true
-    startPoint.current = { x: e.clientX, y: e.clientY }
-    startPos.current = { x: item.posX ?? 50, y: item.posY ?? 50 }
+  const STEP = 5
+
+  const movePos = (dir) => {
+    if (!selectedItem) return
+    let { posX = 50, posY = 50 } = selectedItem
+    if (dir === 'left') posX = Math.max(0, posX - STEP)
+    if (dir === 'right') posX = Math.min(100, posX + STEP)
+    if (dir === 'up') posY = Math.max(0, posY - STEP)
+    if (dir === 'down') posY = Math.min(100, posY + STEP)
+    onUpdateItem(selectedId, { posX, posY })
   }
 
-  useEffect(() => {
-    const handleMove = (e) => {
-      if (!dragging.current || !selectedId) return
-      const dx = e.clientX - startPoint.current.x
-      const dy = e.clientY - startPoint.current.y
-      const newX = Math.max(0, Math.min(100, startPos.current.x - dx * 0.3))
-      const newY = Math.max(0, Math.min(100, startPos.current.y - dy * 0.3))
-      onUpdatePos(selectedId, Math.round(newX), Math.round(newY))
-    }
-    const handleUp = () => { dragging.current = false }
-    window.addEventListener('mousemove', handleMove)
-    window.addEventListener('mouseup', handleUp)
-    return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp) }
-  }, [selectedId, onUpdatePos])
+  const changeScale = (delta) => {
+    if (!selectedItem) return
+    const curr = selectedItem.scale ?? 1
+    const next = Math.max(1, Math.min(3, +(curr + delta).toFixed(2)))
+    onUpdateItem(selectedId, { scale: next })
+  }
 
   if (slides.length === 0) return (
     <div className="w-full h-48 sm:h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
@@ -127,16 +119,20 @@ function BannerPreview({ items, onUpdatePos }) {
   const renderImage = (item, className = '') => {
     if (!item) return null
     const isSelected = selectedId === item.id
+    const scale = item.scale ?? 1
     return (
       <div
-        className={`rounded-lg overflow-hidden cursor-grab active:cursor-grabbing relative ${className} ${isSelected ? 'ring-2 ring-accent ring-offset-1' : ''}`}
-        onMouseDown={(e) => handleMouseDown(e, item)}
+        className={`rounded-lg overflow-hidden relative cursor-pointer ${className} ${isSelected ? 'ring-3 ring-amber-400 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
+        onClick={() => setSelectedId(isSelected ? null : item.id)}
       >
         {item.imagenPreview ? (
           <img
             src={item.imagenPreview} alt={item.nombre} draggable={false}
-            className="w-full h-full object-cover select-none"
-            style={{ objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%` }}
+            className="w-full h-full object-cover select-none transition-transform duration-150"
+            style={{
+              objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
+              transform: scale !== 1 ? `scale(${scale})` : undefined,
+            }}
           />
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -144,16 +140,14 @@ function BannerPreview({ items, onUpdatePos }) {
           </div>
         )}
         {isSelected && (
-          <div className="absolute top-1 left-1 bg-accent text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full">
-            Arrastra para ajustar
-          </div>
+          <div className="absolute inset-0 border-3 border-amber-400 rounded-lg pointer-events-none" />
         )}
       </div>
     )
   }
 
   return (
-    <div ref={containerRef}>
+    <div>
       <div className="relative w-full h-64 sm:h-80 overflow-hidden rounded-xl bg-white shadow-sm border border-gray-200">
         {slides.map((slide, i) => {
           const hasSmall = slide.length > 1
@@ -184,19 +178,54 @@ function BannerPreview({ items, onUpdatePos }) {
           </div>
         )}
       </div>
+
+      {/* Panel de controles */}
       {selectedItem && (
-        <div className="flex items-center gap-3 mt-2 bg-gray-50 rounded-lg px-3 py-2">
-          <span className="text-[10px] font-semibold text-gray-500 shrink-0">{selectedItem.nombre}</span>
-          <div className="flex items-center gap-1.5 flex-1">
-            <span className="text-[9px] text-gray-400">X</span>
-            <input type="range" min="0" max="100" value={selectedItem.posX ?? 50} onChange={(e) => onUpdatePos(selectedId, Number(e.target.value), selectedItem.posY ?? 50)} className="flex-1 h-1 accent-primary" />
+        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="material-symbols-outlined text-amber-500 text-base">tune</span>
+            <span className="text-xs font-bold text-amber-700 truncate max-w-[120px]">{selectedItem.nombre}</span>
           </div>
-          <div className="flex items-center gap-1.5 flex-1">
-            <span className="text-[9px] text-gray-400">Y</span>
-            <input type="range" min="0" max="100" value={selectedItem.posY ?? 50} onChange={(e) => onUpdatePos(selectedId, selectedItem.posX ?? 50, Number(e.target.value))} className="flex-1 h-1 accent-primary" />
+
+          {/* Flechas de dirección */}
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-gray-500 font-semibold mr-1">Mover</span>
+            <button onClick={() => movePos('left')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Izquierda">
+              <span className="material-symbols-outlined text-sm text-gray-600">arrow_back</span>
+            </button>
+            <div className="flex flex-col gap-0.5">
+              <button onClick={() => movePos('up')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Arriba">
+                <span className="material-symbols-outlined text-sm text-gray-600">arrow_upward</span>
+              </button>
+              <button onClick={() => movePos('down')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Abajo">
+                <span className="material-symbols-outlined text-sm text-gray-600">arrow_downward</span>
+              </button>
+            </div>
+            <button onClick={() => movePos('right')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Derecha">
+              <span className="material-symbols-outlined text-sm text-gray-600">arrow_forward</span>
+            </button>
           </div>
-          <button onClick={() => setSelectedId(null)} className="text-gray-400 hover:text-gray-600">
-            <span className="material-symbols-outlined text-sm">close</span>
+
+          {/* Zoom */}
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-gray-500 font-semibold mr-1">Zoom</span>
+            <button onClick={() => changeScale(-0.1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Alejar">
+              <span className="material-symbols-outlined text-sm text-gray-600">zoom_out</span>
+            </button>
+            <span className="text-[10px] font-bold text-gray-600 w-8 text-center">{Math.round((selectedItem.scale ?? 1) * 100)}%</span>
+            <button onClick={() => changeScale(0.1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Acercar">
+              <span className="material-symbols-outlined text-sm text-gray-600">zoom_in</span>
+            </button>
+          </div>
+
+          {/* Resetear */}
+          <button onClick={() => onUpdateItem(selectedId, { posX: 50, posY: 50, scale: 1 })} className="text-[9px] font-semibold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-0.5" title="Resetear">
+            <span className="material-symbols-outlined text-xs">restart_alt</span>Reset
+          </button>
+
+          {/* Cerrar */}
+          <button onClick={() => setSelectedId(null)} className="ml-auto text-gray-400 hover:text-gray-600">
+            <span className="material-symbols-outlined text-base">close</span>
           </button>
         </div>
       )}
@@ -237,7 +266,7 @@ export default function AdminBanner() {
             subcategoria: l.subcategoria, badge: l.badge, tipo: l.tipo,
             tallas: l.tallas, medidas: l.medidas, genero: l.genero,
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null, imagenUrl: l.imagen,
-            posX: l.banner_pos_x ?? 50, posY: l.banner_pos_y ?? 50,
+            posX: l.banner_pos_x ?? 50, posY: l.banner_pos_y ?? 50, scale: parseFloat(l.banner_scale) || 1,
           })))
         }
       })
@@ -402,8 +431,8 @@ export default function AdminBanner() {
   const [dirtyPositions, setDirtyPositions] = useState(new Set())
   const [savingPos, setSavingPos] = useState(false)
 
-  const handleUpdatePos = useCallback((id, posX, posY) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, posX, posY } : i))
+  const handleUpdateItem = useCallback((id, updates) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
     setDirtyPositions(prev => new Set(prev).add(id))
   }, [])
 
@@ -416,7 +445,7 @@ export default function AdminBanner() {
         return fetch(`${API}/api/listings/${id}/banner-pos`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ banner_pos_x: item.posX, banner_pos_y: item.posY }),
+          body: JSON.stringify({ banner_pos_x: item.posX, banner_pos_y: item.posY, banner_scale: item.scale ?? 1 }),
         })
       }).filter(Boolean)
       await Promise.all(promises)
@@ -478,9 +507,9 @@ export default function AdminBanner() {
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">visibility</span>
-              Vista previa real — así se verá en tu página premium. Haz click en una imagen y arrastra para ajustar posición.
+              Vista previa real — haz click en una imagen para ajustar posición y zoom
             </p>
-            <BannerPreview items={items} onUpdatePos={handleUpdatePos} />
+            <BannerPreview items={items} onUpdateItem={handleUpdateItem} />
             {dirtyPositions.size > 0 && (
               <button onClick={handleSavePositions} disabled={savingPos}
                 className="mt-2 flex items-center gap-1.5 bg-accent text-primary px-4 py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">

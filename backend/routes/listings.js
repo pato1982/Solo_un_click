@@ -313,19 +313,20 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 })
 
-// PATCH /api/listings/:id/banner-pos — actualizar posición de imagen en banner
+// PATCH /api/listings/:id/banner-pos — actualizar posición y escala de imagen en banner
 router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params
-    const { banner_pos_x, banner_pos_y } = req.body
+    const { banner_pos_x, banner_pos_y, banner_scale } = req.body
 
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'No encontrado' })
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
 
-    await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=? WHERE id=?', [
+    await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=?, banner_scale=? WHERE id=?', [
       Math.max(0, Math.min(100, parseInt(banner_pos_x) || 50)),
       Math.max(0, Math.min(100, parseInt(banner_pos_y) || 50)),
+      Math.max(1, Math.min(3, parseFloat(banner_scale) || 1)),
       id
     ])
     res.json({ message: 'Posición actualizada' })
