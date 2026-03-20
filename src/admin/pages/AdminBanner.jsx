@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 const MAX_PER_SLIDE = 5
@@ -80,34 +80,18 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   )
 }
 
-function BannerPreview({ items, onUpdateItem }) {
+function BannerPreview({ items }) {
   const [previewSlide, setPreviewSlide] = useState(0)
-  const [selectedId, setSelectedId] = useState(null)
 
   const slide1 = items.filter(i => i.orden >= 1 && i.orden <= 5).sort((a, b) => a.orden - b.orden)
   const slide2 = items.filter(i => i.orden >= 6 && i.orden <= 10).sort((a, b) => a.orden - b.orden)
   const slides = [slide1, slide2].filter(s => s.length >= 1)
 
-  const selectedItem = selectedId ? items.find(i => i.id === selectedId) : null
-
-  const STEP = 10
-
-  const movePos = (dir) => {
-    if (!selectedItem) return
-    let { posX = 50, posY = 50 } = selectedItem
-    if (dir === 'left') posX = Math.max(0, posX - STEP)
-    if (dir === 'right') posX = Math.min(100, posX + STEP)
-    if (dir === 'up') posY = Math.max(0, posY - STEP)
-    if (dir === 'down') posY = Math.min(100, posY + STEP)
-    onUpdateItem(selectedId, { posX, posY })
-  }
-
-  const changeScale = (delta) => {
-    if (!selectedItem) return
-    const curr = selectedItem.scale ?? 1
-    const next = Math.max(0.5, Math.min(3, +(curr + delta).toFixed(2)))
-    onUpdateItem(selectedId, { scale: next })
-  }
+  useEffect(() => {
+    if (slides.length < 2) return
+    const id = setInterval(() => setPreviewSlide(prev => (prev === 0 ? 1 : 0)), 7000)
+    return () => clearInterval(id)
+  }, [slides.length])
 
   if (slides.length === 0) return (
     <div className="w-full h-48 sm:h-72 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 bg-gray-50">
@@ -116,117 +100,49 @@ function BannerPreview({ items, onUpdateItem }) {
     </div>
   )
 
-  const renderImage = (item, className = '') => {
-    if (!item) return null
-    const isSelected = selectedId === item.id
-    const scale = item.scale ?? 1
-    return (
-      <div
-        className={`rounded-lg overflow-hidden relative cursor-pointer ${className} ${isSelected ? 'ring-3 ring-amber-400 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
-        onClick={() => setSelectedId(isSelected ? null : item.id)}
-      >
-        {item.imagenPreview ? (
-          <img
-            src={item.imagenPreview} alt={item.nombre} draggable={false}
-            className="w-full h-full object-cover select-none"
-            style={{
-              objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
-              transform: `scale(${scale}) translate(${(50 - (item.posX ?? 50)) * 0.5}%, ${(50 - (item.posY ?? 50)) * 0.5}%)`,
-            }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-            <span className="material-symbols-outlined text-2xl text-gray-300">image</span>
-          </div>
-        )}
-        {isSelected && (
-          <div className="absolute inset-0 border-3 border-amber-400 rounded-lg pointer-events-none" />
-        )}
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <div className="relative w-full h-64 sm:h-80 overflow-hidden rounded-xl bg-white shadow-sm border border-gray-200">
-        {slides.map((slide, i) => {
-          const hasSmall = slide.length > 1
-          return (
-            <div
-              key={i}
-              className={`absolute inset-0 gap-1.5 p-1.5 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
-              style={{ opacity: previewSlide === i ? 1 : 0 }}
-            >
-              {renderImage(slide[0], hasSmall ? '' : 'flex-1')}
-              {hasSmall && (
-                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
-                  {[1, 2, 3, 4].map(idx => slide[idx]
-                    ? <div key={slide[idx].id}>{renderImage(slide[idx])}</div>
-                    : <div key={idx} className="rounded-lg bg-gray-100" />
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-        {slides.length > 1 && (
-          <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
-            {slides.map((_, i) => (
-              <button key={i} onClick={() => setPreviewSlide(i)}
-                className={`h-1.5 rounded-full transition-all ${previewSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'}`} />
-            ))}
+    <div className="relative w-full h-64 sm:h-80 overflow-hidden rounded-xl bg-slate-50 shadow-sm border border-gray-200">
+      {slides.map((slide, i) => {
+        const hasSmall = slide.length > 1
+        return (
+          <div
+            key={i}
+            className={`absolute inset-0 gap-2 p-2 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
+            style={{ opacity: previewSlide === i ? 1 : 0 }}
+          >
+            {/* Imagen principal izquierda */}
+            {slide[0] && (
+              <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex items-center justify-center p-2 ${hasSmall ? '' : 'flex-1'}`}>
+                {slide[0].imagenPreview ? (
+                  <img src={slide[0].imagenPreview} alt={slide[0].nombre} className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <span className="material-symbols-outlined text-3xl text-gray-300">image</span>
+                )}
+              </div>
+            )}
+            {/* 4 imágenes derecha en grid 2x2 */}
+            {hasSmall && (
+              <div className="grid grid-cols-2 grid-rows-2 gap-2">
+                {[1, 2, 3, 4].map(idx => (
+                  <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm flex items-center justify-center p-1.5">
+                    {slide[idx]?.imagenPreview ? (
+                      <img src={slide[idx].imagenPreview} alt={slide[idx].nombre} className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <span className="material-symbols-outlined text-xl text-gray-200">image</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Panel de controles */}
-      {selectedItem && (
-        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="material-symbols-outlined text-amber-500 text-base">tune</span>
-            <span className="text-xs font-bold text-amber-700 truncate max-w-[120px]">{selectedItem.nombre}</span>
-          </div>
-
-          {/* Flechas de dirección */}
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] text-gray-500 font-semibold mr-1">Mover</span>
-            <button onClick={() => movePos('left')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Izquierda">
-              <span className="material-symbols-outlined text-sm text-gray-600">arrow_back</span>
-            </button>
-            <div className="flex flex-col gap-0.5">
-              <button onClick={() => movePos('up')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Arriba">
-                <span className="material-symbols-outlined text-sm text-gray-600">arrow_upward</span>
-              </button>
-              <button onClick={() => movePos('down')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Abajo">
-                <span className="material-symbols-outlined text-sm text-gray-600">arrow_downward</span>
-              </button>
-            </div>
-            <button onClick={() => movePos('right')} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Derecha">
-              <span className="material-symbols-outlined text-sm text-gray-600">arrow_forward</span>
-            </button>
-          </div>
-
-          {/* Zoom */}
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] text-gray-500 font-semibold mr-1">Zoom</span>
-            <button onClick={() => changeScale(-0.1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Alejar">
-              <span className="material-symbols-outlined text-sm text-gray-600">zoom_out</span>
-            </button>
-            <span className="text-[10px] font-bold text-gray-600 w-8 text-center">{Math.round((selectedItem.scale ?? 1) * 100)}%</span>
-            <button onClick={() => changeScale(0.1)} className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors" title="Acercar">
-              <span className="material-symbols-outlined text-sm text-gray-600">zoom_in</span>
-            </button>
-          </div>
-
-          {/* Resetear */}
-          <button onClick={() => onUpdateItem(selectedId, { posX: 50, posY: 50, scale: 1 })} className="text-[9px] font-semibold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-0.5" title="Resetear">
-            <span className="material-symbols-outlined text-xs">restart_alt</span>Reset
-          </button>
-
-          {/* Cerrar */}
-          <button onClick={() => setSelectedId(null)} className="ml-auto text-gray-400 hover:text-gray-600">
-            <span className="material-symbols-outlined text-base">close</span>
-          </button>
+        )
+      })}
+      {slides.length > 1 && (
+        <div className="absolute bottom-2 right-3 flex gap-1.5 z-10">
+          {slides.map((_, i) => (
+            <button key={i} onClick={() => setPreviewSlide(i)}
+              className={`h-1.5 rounded-full transition-all ${previewSlide === i ? 'w-5 bg-accent' : 'w-1.5 bg-white/50'}`} />
+          ))}
         </div>
       )}
     </div>
@@ -428,32 +344,6 @@ export default function AdminBanner() {
     setShowModal(true)
   }
 
-  const [dirtyPositions, setDirtyPositions] = useState(new Set())
-  const [savingPos, setSavingPos] = useState(false)
-
-  const handleUpdateItem = useCallback((id, updates) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-    setDirtyPositions(prev => new Set(prev).add(id))
-  }, [])
-
-  const handleSavePositions = async () => {
-    setSavingPos(true)
-    try {
-      const promises = [...dirtyPositions].map(id => {
-        const item = items.find(i => i.id === id)
-        if (!item) return null
-        return fetch(`${API}/api/listings/${id}/banner-pos`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ banner_pos_x: item.posX, banner_pos_y: item.posY, banner_scale: item.scale ?? 1 }),
-        })
-      }).filter(Boolean)
-      await Promise.all(promises)
-      setDirtyPositions(new Set())
-      showToast('Posiciones guardadas')
-    } catch { showToast('Error al guardar posiciones', 'error') }
-    setSavingPos(false)
-  }
 
   if (!esPremium) {
     return (
@@ -507,16 +397,9 @@ export default function AdminBanner() {
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">visibility</span>
-              Vista previa real — haz click en una imagen para ajustar posición y zoom
+              Vista previa real — así se verá en tu página premium
             </p>
-            <BannerPreview items={items} onUpdateItem={handleUpdateItem} />
-            {dirtyPositions.size > 0 && (
-              <button onClick={handleSavePositions} disabled={savingPos}
-                className="mt-2 flex items-center gap-1.5 bg-accent text-primary px-4 py-2 rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
-                <span className="material-symbols-outlined text-sm">save</span>
-                {savingPos ? 'Guardando...' : 'Guardar posiciones'}
-              </button>
-            )}
+            <BannerPreview items={items} />
           </div>
 
           {/* Grid de productos */}

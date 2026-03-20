@@ -420,29 +420,33 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
 
   return (
     <>
-      <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden mb-2 rounded-xl">
+      <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden mb-2 rounded-xl bg-slate-50">
         {slides.map((slide, i) => {
           const hasSmall = slide.length > 1
           return (
             <div
               key={i}
-              className={`absolute inset-0 gap-1.5 p-1.5 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
+              className={`absolute inset-0 gap-2 p-2 transition-opacity duration-1000 ${hasSmall ? 'grid grid-cols-2 grid-rows-1' : 'flex'}`}
               style={{ opacity: activeSlide === i ? 1 : 0 }}
             >
-              {/* Imagen grande — ocupa todo si es única, mitad izquierda si hay más */}
+              {/* Imagen principal izquierda */}
               {slide[0] && (
-                <div className={`rounded-lg overflow-hidden cursor-pointer group ${hasSmall ? '' : 'flex-1'}`} onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
-                  <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="w-full h-full object-cover" style={{ objectPosition: `${slide[0].posX ?? 50}% ${slide[0].posY ?? 50}%`, transform: `scale(${slide[0].scale ?? 1}) translate(${(50-(slide[0].posX??50))*0.5}%, ${(50-(slide[0].posY??50))*0.5}%)` }} />
+                <div className={`bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center p-2 cursor-pointer hover:shadow-md transition-shadow ${hasSmall ? '' : 'flex-1'}`} onClick={() => { trackClick(storeUserId, slide[0]?.id); setSelectedProduct(slide[0]) }}>
+                  <img src={slide[0].image} alt={slide[0].alt || slide[0].name} className="max-w-full max-h-full object-contain" />
                 </div>
               )}
-              {/* Columna derecha: grid 2x2 con imágenes chicas */}
+              {/* 4 imágenes derecha en grid 2x2 */}
               {hasSmall && (
-                <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
-                  {[1, 2, 3, 4].map((idx) => slide[idx] ? (
-                    <div key={slide[idx].id || idx} className="rounded-lg overflow-hidden cursor-pointer group" onClick={() => { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) }}>
-                      <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="w-full h-full object-cover" style={{ objectPosition: `${slide[idx].posX ?? 50}% ${slide[idx].posY ?? 50}%`, transform: `scale(${slide[idx].scale ?? 1}) translate(${(50-(slide[idx].posX??50))*0.5}%, ${(50-(slide[idx].posY??50))*0.5}%)` }} />
+                <div className="grid grid-cols-2 grid-rows-2 gap-2">
+                  {[1, 2, 3, 4].map((idx) => (
+                    <div key={idx} className="bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center p-1.5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => { if (slide[idx]) { trackClick(storeUserId, slide[idx]?.id); setSelectedProduct(slide[idx]) } }}>
+                      {slide[idx] ? (
+                        <img src={slide[idx].image} alt={slide[idx].alt || slide[idx].name} className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <span className="material-symbols-outlined text-xl text-slate-200">image</span>
+                      )}
                     </div>
-                  ) : <div key={idx} className="rounded-lg bg-slate-100" />)}
+                  ))}
                 </div>
               )}
             </div>
