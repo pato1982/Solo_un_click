@@ -482,9 +482,9 @@ export default function AdminBanner() {
 
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 p-4">
               {/* Columna izquierda - Imagen */}
-              <div className="w-full sm:w-52 shrink-0">
+              <div className="w-full sm:w-52 shrink-0 flex flex-col items-center">
                 {formData.imagenPreview ? (
-                  <div className="relative">
+                  <div className="relative w-52 mx-auto">
                     {formData.imagenNaturalW > 0 ? (
                       <ImageCropper src={formData.imagenPreview} pos={formData.imagenPos}
                         onPosChange={(pos) => setFormData(prev => ({ ...prev, imagenPos: pos }))}
@@ -501,7 +501,7 @@ export default function AdminBanner() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full sm:w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-52 h-52 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
                     <span className="material-symbols-outlined text-3xl text-gray-400">cloud_upload</span>
                     <span className="text-xs text-gray-500">Buscar imagen</span>
                     <span className="text-[10px] text-gray-400">JPG, PNG, WEBP</span>
