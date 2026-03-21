@@ -1,5 +1,38 @@
 # Registro de Cambios - Solo a un Click
 
+## 20 de Marzo 2026 (sesión 15) - Fix filtrado sidebar, carrusel/banner en grid público
+
+### Footer — Accesos funcionales
+- Todos los accesos (Productos, Arriendos, Servicios, Negocios, Turismo) navegan a su sección
+- No abren el sidebar al navegar (el usuario lo abre con la hamburguesa)
+
+### Header mobile — Hamburguesa oculta en página principal
+- El icono hamburguesa solo aparece cuando el usuario está dentro de una sección
+- En la página principal no se muestra (no hay sidebar que abrir)
+
+### Fix sidebar categorías — Eventos
+- `/api/eventos/categorias` ahora usa INNER JOIN con eventos activos
+- Solo muestra categorías que tienen al menos un evento real (igual que locales)
+
+### Carrusel y Banner aparecen en el feed público
+- **Backend `listings.js`:** eliminada la exclusión `AND l.carousel_posicion IS NULL AND l.banner_orden IS NULL` del feed principal
+- Los items de carrusel y banner ahora aparecen en la página principal, filtros públicos y StorePage
+- Sus categorías y subcategorías aparecen en los menús laterales para filtrar
+
+### AdminCarruseles y AdminBanner — Selector de sección
+- Al elegir tipo **Producto**: aparece dropdown de sección (Destacados, Ofertas, Novedades, Liquidación, Tecnología, Tendencia)
+- Al elegir **Servicio** o **Arriendo**: sección asignada automáticamente
+- Así los items de carrusel/banner saben en qué sección aparecer en el grid público
+
+### StorePage — Categorías del sidebar simplificadas
+- `storeCategories` ahora se construye solo desde `apiProducts` (ya incluye todo)
+- Eliminada redundancia de sumar carouselItems + bannerItems por separado
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña**
+
+---
+
 ## 20 de Marzo 2026 (sesión 14) - Banner premium, navegación admin SPA
 
 ### Navegación admin sin recarga
