@@ -236,6 +236,7 @@ export default function App() {
 
   const [turismoDirectUserId, setTurismoDirectUserId] = useState(null)
   const [turismoResetKey, setTurismoResetKey] = useState(0)
+  const [turismoScrollTo, setTurismoScrollTo] = useState(null)
 
   // Abrir tienda o turismo directamente si viene ?store= o ?turismo= en la URL
   useEffect(() => {
@@ -250,6 +251,21 @@ export default function App() {
       setCurrentPage('turismo')
       setActiveSidebar('turismo')
       setTurismoDirectUserId(parseInt(turismoUserId))
+    }
+
+    // Navegar a sección si viene desde el admin (navTo)
+    const navTo = localStorage.getItem('navTo')
+    if (navTo) {
+      localStorage.removeItem('navTo')
+      if (navTo === 'turismo') {
+        setCurrentPage('turismo')
+        setActiveSidebar('turismo')
+        const scrollTo = localStorage.getItem('turismo_scroll_to')
+        if (scrollTo) {
+          localStorage.removeItem('turismo_scroll_to')
+          setTurismoScrollTo(parseInt(scrollTo))
+        }
+      }
     }
   }, [])
 
@@ -676,6 +692,8 @@ export default function App() {
               initialUserId={turismoDirectUserId}
               onInitialUserConsumed={() => setTurismoDirectUserId(null)}
               resetKey={turismoResetKey}
+              scrollToUserId={turismoScrollTo}
+              onScrollConsumed={() => setTurismoScrollTo(null)}
             />
           ) : activeFilter ? (
             /* Filtro activo: mostrar secciones (filas) que tengan productos de esa subcategoría o categoría */

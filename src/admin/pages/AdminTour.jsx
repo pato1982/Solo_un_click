@@ -140,10 +140,8 @@ export default function AdminTour() {
     setSaving(true)
 
     try {
-      // Subir imágenes nuevas
-      const finalUrls = []
-      for (let i = 0; i < 3; i++) {
-        const img = form.imagenes[i]
+      // Subir imágenes nuevas en paralelo
+      const uploadPromises = form.imagenes.map(async (img) => {
         if (img instanceof File) {
           const fd = new FormData()
           fd.append('imagen', img)
@@ -153,13 +151,13 @@ export default function AdminTour() {
             body: fd
           })
           const upData = await upRes.json()
-          finalUrls.push(upData.url || null)
+          return upData.url || null
         } else if (typeof img === 'string') {
-          finalUrls.push(img)
-        } else {
-          finalUrls.push(null)
+          return img
         }
-      }
+        return null
+      })
+      const finalUrls = await Promise.all(uploadPromises)
 
       const body = {
         nombre: form.nombre,
@@ -254,7 +252,7 @@ export default function AdminTour() {
             <div key={tour.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
               {/* Imagen principal */}
               {imagen ? (
-                <img src={imagen} alt={tour.nombre} className="w-full h-40 object-cover" />
+                <img src={imagen} alt={tour.nombre} className="w-full h-40 object-contain bg-slate-50" />
               ) : (
                 <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
                   <span className="material-symbols-outlined text-4xl text-gray-300">image</span>

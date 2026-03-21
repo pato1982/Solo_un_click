@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -326,16 +326,12 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
         <div className="flex-1 h-px bg-slate-200"></div>
       </div>
 
-      {/* Fila 1: Imagen izquierda + Texto derecho */}
-      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+      {/* Fila 1: Imagen izquierda + Texto derecho — solo si hay página personalizada */}
+      {pagina && (
+      <div className="flex flex-col-reverse md:flex-row gap-4 sm:gap-6 items-center">
         {imgSup && (
-          <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgSup} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-cover"
-              style={cropSup && (cropSup.zoom > 1 || cropSup.x || cropSup.y) ? {
-                transform: `scale(${cropSup.zoom}) translate(${cropSup.x / cropSup.zoom}px, ${cropSup.y / cropSup.zoom}px)`,
-                transformOrigin: 'center center',
-              } : undefined}
-            />
+          <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md bg-slate-50">
+            <img src={imgSup} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-contain" />
           </div>
         )}
         <div className={imgSup ? 'md:w-1/2 flex flex-col' : 'w-full flex flex-col'}>
@@ -343,6 +339,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           <p className="text-xs text-slate-500 leading-relaxed">{textoSup}</p>
         </div>
       </div>
+      )}
 
       {/* Botón flotante "Ver todos" cuando hay filtro activo */}
       {activeFilter && !loadingTours && (
@@ -358,7 +355,8 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
         </div>
       )}
 
-      {/* Tours / Panoramas — entre las dos filas */}
+      {/* Tours / Panoramas — solo si hay tours o están cargando */}
+      {(loadingTours || tours.length > 0) && (
       <div>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-1 h-5 bg-accent rounded-full"></div>
@@ -372,8 +370,6 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           <div className="flex items-center justify-center py-10">
             <span className="material-symbols-outlined text-primary text-2xl animate-spin">progress_activity</span>
           </div>
-        ) : tours.length === 0 ? (
-          <p className="text-center text-slate-400 text-xs py-6">Esta empresa aún no ha publicado tours.</p>
         ) : (() => {
           const visibleTours = activeFilter
             ? tours.filter(t => t.categoria && t.categoria.toLowerCase() === activeFilter.toLowerCase())
@@ -416,89 +412,98 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
           )
         })()}
       </div>
+      )}
 
-      {/* Fila 2: Datos empresa + Imagen derecha */}
-      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
-        <div className="w-full md:w-1/2 bg-white rounded-xl border border-slate-100 shadow-sm p-3 sm:p-4 md:p-5 sm:pl-6 md:pl-8">
-          <h3 className="text-sm font-black text-primary mb-4">{tituloInf}</h3>
-          {textoInf && <p className="text-xs text-slate-500 leading-relaxed mb-4">{textoInf}</p>}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-10">
-            {/* Columna 1 */}
-            <div className="flex flex-col gap-2.5">
+      {/* Fila 2: Texto + Imagen, y debajo Contacto | Horarios */}
+      {pagina && (
+      <div className="flex flex-col gap-4 sm:gap-6">
+        {/* Arriba: texto izquierda + imagen derecha */}
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+          <div className={imgInf ? 'w-full md:w-1/2 flex flex-col' : 'w-full flex flex-col'}>
+            <h3 className="text-sm font-black text-primary mb-2">{tituloInf}</h3>
+            {textoInf && <p className="text-xs text-slate-500 leading-relaxed">{textoInf}</p>}
+          </div>
+          {imgInf && (
+            <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md bg-slate-50">
+              <img src={imgInf} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-contain" />
+            </div>
+          )}
+        </div>
+
+        {/* Abajo: dos columnas — Contacto | Horarios */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/* Columna Contacto */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-accent text-base">contact_phone</span>
+              <h4 className="text-xs font-black text-primary uppercase tracking-wide">Contacto</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
               {company.direccion && (
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-accent text-sm">location_on</span>
-                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.direccion}</span>
+                  <span className="text-[11px] text-slate-600">{company.direccion}</span>
                 </div>
               )}
               {company.telefono && (
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-accent text-sm">call</span>
-                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.telefono}</span>
+                  <span className="text-[11px] text-slate-600">{company.telefono}</span>
                 </div>
               )}
-            </div>
-            {/* Columna 2 */}
-            <div className="flex flex-col gap-2.5">
               {company.whatsapp && (
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-accent text-sm">chat</span>
-                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.whatsapp}</span>
+                  <span className="text-[11px] text-slate-600">{company.whatsapp}</span>
                 </div>
               )}
               {company.correo && (
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-accent text-sm">mail</span>
-                  <span className="text-[11px] text-slate-600 whitespace-nowrap">{company.correo}</span>
+                  <span className="text-[11px] text-slate-600">{company.correo}</span>
+                </div>
+              )}
+              {(company.facebook || company.instagram) && (
+                <div className="flex items-center gap-3 mt-1">
+                  {company.facebook && (
+                    <a href={company.facebook.startsWith('http') ? company.facebook : `https://${company.facebook}`} target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform" title="Facebook">
+                      <svg className="w-5 h-5 fill-current text-[#1877F2]" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </a>
+                  )}
+                  {company.instagram && (
+                    <a href={company.instagram.startsWith('http') ? company.instagram : `https://instagram.com/${company.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform" title="Instagram">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24"><defs><linearGradient id="ig-detail" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style={{stopColor:'#feda75'}}/><stop offset="25%" style={{stopColor:'#fa7e1e'}}/><stop offset="50%" style={{stopColor:'#d62976'}}/><stop offset="75%" style={{stopColor:'#962fbf'}}/><stop offset="100%" style={{stopColor:'#4f5bd5'}}/></linearGradient></defs><path fill="url(#ig-detail)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    </a>
+                  )}
                 </div>
               )}
             </div>
-            {/* Columna 3 — Redes sociales */}
-            <div className="flex flex-col gap-2">
-              {(company.facebook || company.instagram) && (
-                <>
-                  <h4 className="text-xs font-black text-accent uppercase tracking-widest">Síguenos</h4>
-                  <div className="flex items-center gap-4">
-                    {company.facebook && (
-                      <a href={company.facebook.startsWith('http') ? company.facebook : `https://${company.facebook}`} target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform" title="Facebook">
-                        <svg className="w-6 h-6 fill-current text-[#1877F2]" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                      </a>
-                    )}
-                    {company.instagram && (
-                      <a href={company.instagram.startsWith('http') ? company.instagram : `https://instagram.com/${company.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform" title="Instagram">
-                        <svg className="w-6 h-6" viewBox="0 0 24 24"><defs><linearGradient id="ig-detail" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style={{stopColor:'#feda75'}}/><stop offset="25%" style={{stopColor:'#fa7e1e'}}/><stop offset="50%" style={{stopColor:'#d62976'}}/><stop offset="75%" style={{stopColor:'#962fbf'}}/><stop offset="100%" style={{stopColor:'#4f5bd5'}}/></linearGradient></defs><path fill="url(#ig-detail)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                      </a>
-                    )}
-                  </div>
-                </>
-              )}
+          </div>
+
+          {/* Columna Horarios */}
+          {company.horarios && company.horarios.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-accent text-base">schedule</span>
+              <h4 className="text-xs font-black text-primary uppercase tracking-wide">Horarios de atención</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {company.horarios.map(h => (
+                <div key={h.dia} className="flex items-center justify-between text-[11px]">
+                  <span className={`font-semibold ${h.activo ? 'text-slate-700' : 'text-slate-400'}`}>{h.dia}</span>
+                  {h.activo ? (
+                    <span className="text-slate-500">{h.apertura} - {h.cierre}</span>
+                  ) : (
+                    <span className="text-slate-400 italic">Cerrado</span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-          {company.horarios && company.horarios.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-accent text-base">schedule</span>
-                <span className="text-xs font-bold text-slate-600">Horarios</span>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-0.5 pl-6">
-                {company.horarios.filter(h => h.activo).map(h => (
-                  <span key={h.dia} className="text-[11px] text-slate-500">{h.dia}: {h.apertura} - {h.cierre}</span>
-                ))}
-              </div>
-            </div>
           )}
         </div>
-        {imgInf && (
-          <div className="w-full md:w-1/2 rounded-xl overflow-hidden shadow-md">
-            <img src={imgInf} alt={company.name} className="w-full h-44 sm:h-52 md:h-64 object-cover"
-              style={cropInf && (cropInf.zoom > 1 || cropInf.x || cropInf.y) ? {
-                transform: `scale(${cropInf.zoom}) translate(${cropInf.x / cropInf.zoom}px, ${cropInf.y / cropInf.zoom}px)`,
-                transformOrigin: 'center center',
-              } : undefined}
-            />
-          </div>
-        )}
       </div>
+      )}
 
       {/* Modal detalle tour */}
       {selectedTour && (
@@ -514,7 +519,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
 /* =========================================
    Página principal de turismo
    ========================================= */
-export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias, initialUserId, onInitialUserConsumed, resetKey }) {
+export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCategorias, initialUserId, onInitialUserConsumed, resetKey, scrollToUserId, onScrollConsumed }) {
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCompany, setSelectedCompany] = useState(null)
@@ -632,6 +637,20 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     }
   }, [selectedCompany])
 
+  // Scroll hasta la portada del usuario cuando viene del admin
+  useEffect(() => {
+    if (!scrollToUserId || loading) return
+    const el = document.getElementById(`turismo-card-${scrollToUserId}`)
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('ring-2', 'ring-accent', 'ring-offset-2')
+        setTimeout(() => el.classList.remove('ring-2', 'ring-accent', 'ring-offset-2'), 3000)
+      }, 300)
+    }
+    if (onScrollConsumed) onScrollConsumed()
+  }, [scrollToUserId, loading, empresas])
+
   const trackCardClick = (userId) => {
     fetch(`${API}/api/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -695,7 +714,8 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
         {filteredCompanies.map((company) => (
           <div
             key={company.id}
-            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-stretch min-h-[195px] sm:min-h-0"
+            id={`turismo-card-${company.userId}`}
+            className="flex flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-100 p-3 sm:p-4 md:p-5 gap-3 sm:gap-4 items-stretch min-h-[195px] sm:min-h-0 transition-all duration-500"
           >
             <div className="flex-1 flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 mb-1">

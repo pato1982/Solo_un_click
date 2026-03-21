@@ -72,18 +72,18 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
   const drawH = naturalH * fitScale
 
   const clampPos = useCallback((x, y) => {
-    let minX, maxX, minY, maxY
+    let cx, cy
     if (drawW >= 208) {
-      minX = 208 - drawW; maxX = 0
+      cx = Math.max(208 - drawW, Math.min(0, x))
     } else {
-      minX = 0; maxX = 208 - drawW
+      cx = (208 - drawW) / 2
     }
     if (drawH >= 208) {
-      minY = 208 - drawH; maxY = 0
+      cy = Math.max(208 - drawH, Math.min(0, y))
     } else {
-      minY = 0; maxY = 208 - drawH
+      cy = (208 - drawH) / 2
     }
-    return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) }
+    return { x: cx, y: cy }
   }, [drawW, drawH])
 
   const handleStart = (clientX, clientY) => {
@@ -119,22 +119,50 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
 
   useEffect(() => { onPosChange(clampPos(pos.x, pos.y)) }, [scale])
 
+  const step = 10
+  const nudge = (dx, dy) => onPosChange(clampPos(pos.x + dx, pos.y + dy))
+
+  const canMove = {
+    left: drawW > 208 && pos.x < 0,
+    right: drawW > 208 && pos.x > 208 - drawW,
+    up: drawH > 208 && pos.y < 0,
+    down: drawH > 208 && pos.y > 208 - drawH,
+  }
+
+  const arrowBtn = "absolute z-10 bg-white/80 hover:bg-white rounded-full shadow p-0.5 transition-all disabled:opacity-0 disabled:pointer-events-none"
+
   return (
     <div className="relative">
-      <div
-        ref={containerRef}
-        className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-white"
-        onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX, e.clientY) }}
-        onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-      >
-        <img src={src} alt="Preview" draggable={false} className="pointer-events-none" style={{ width: drawW, height: drawH, transform: `translate(${pos.x}px, ${pos.y}px)`, maxWidth: 'none' }} />
+      <div className="relative">
+        {/* Flechas de dirección */}
+        <button type="button" onClick={() => nudge(step, 0)} disabled={!canMove.left} className={`${arrowBtn} left-1 top-1/2 -translate-y-1/2`}>
+          <span className="material-symbols-outlined text-gray-500 text-base">chevron_left</span>
+        </button>
+        <button type="button" onClick={() => nudge(-step, 0)} disabled={!canMove.right} className={`${arrowBtn} right-1 top-1/2 -translate-y-1/2`}>
+          <span className="material-symbols-outlined text-gray-500 text-base">chevron_right</span>
+        </button>
+        <button type="button" onClick={() => nudge(0, step)} disabled={!canMove.up} className={`${arrowBtn} top-1 left-1/2 -translate-x-1/2`}>
+          <span className="material-symbols-outlined text-gray-500 text-base">expand_less</span>
+        </button>
+        <button type="button" onClick={() => nudge(0, -step)} disabled={!canMove.down} className={`${arrowBtn} bottom-1 left-1/2 -translate-x-1/2`}>
+          <span className="material-symbols-outlined text-gray-500 text-base">expand_more</span>
+        </button>
+
+        <div
+          ref={containerRef}
+          className="w-52 h-52 rounded-lg border border-gray-200 overflow-hidden cursor-grab active:cursor-grabbing select-none bg-white"
+          onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX, e.clientY) }}
+          onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+        >
+          <img src={src} alt="Preview" draggable={false} className="pointer-events-none" style={{ width: drawW, height: drawH, transform: `translate(${pos.x}px, ${pos.y}px)`, maxWidth: 'none' }} />
+        </div>
       </div>
       <div className="flex items-center gap-2 mt-2">
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_out</span>
         <input type="range" min="0.5" max="1.5" step="0.02" value={scale} onChange={(e) => onScaleChange(Number(e.target.value))} className="flex-1 h-1 accent-primary" />
         <span className="material-symbols-outlined text-gray-400 text-sm">zoom_in</span>
       </div>
-      <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra para ajustar posición</p>
+      <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra o usa las flechas</p>
     </div>
   )
 }

@@ -363,7 +363,7 @@ function ProfileModal({ onClose }) {
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${tipoCuenta === 'general' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                       >Comercio</button>
                       <button
-                        onClick={() => setTipoCuenta('turismo')}
+                        onClick={() => { setTipoCuenta('turismo'); if (planId === 2) setPlanId(1) }}
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${tipoCuenta === 'turismo' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                       >Turismo</button>
                     </div>
@@ -406,7 +406,7 @@ function ProfileModal({ onClose }) {
                   <p className="text-sm text-slate-700">Plan {planLabel(user.plan_id)}</p>
                 ) : (
                   <div className="flex gap-2 mt-1">
-                    {[1, 2, 3].map(p => (
+                    {(tipoCuenta === 'turismo' ? [1, 3] : [1, 2, 3]).map(p => (
                       <button
                         key={p}
                         onClick={() => setPlanId(p)}

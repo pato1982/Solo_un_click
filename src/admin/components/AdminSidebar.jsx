@@ -127,6 +127,20 @@ export default function AdminSidebar({ open, onClose }) {
         })}
       </nav>
 
+      {/* Botón Ver Turismo para usuarios turismo */}
+      {tipoCuenta === 'turismo' && !isProg && (
+        <div className="px-3 mt-2">
+          <a
+            href="/"
+            onClick={() => { localStorage.setItem('navTo', 'turismo'); localStorage.setItem('turismo_scroll_to', user.id) }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-bold text-white bg-accent hover:bg-accent/90 transition-colors shadow-sm"
+          >
+            <span className="material-symbols-outlined text-base">visibility</span>
+            Ver Turismo
+          </a>
+        </div>
+      )}
+
       {/* Enlace al sitio para programador */}
       {isProg && (
         <div className="px-4 mt-3 pt-3 mx-3 border-t border-slate-700">
