@@ -36,7 +36,13 @@ function sanitize(str) {
 // GET /api/eventos/categorias — categorías de evento (público)
 router.get('/categorias', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, nombre, icono FROM categorias_evento WHERE activo = 1 ORDER BY orden ASC')
+    const [rows] = await pool.query(`
+      SELECT DISTINCT ce.id, ce.nombre, ce.icono
+      FROM categorias_evento ce
+      INNER JOIN eventos e ON e.categoria_evento_id = ce.id AND e.activo = 1
+      WHERE ce.activo = 1
+      ORDER BY ce.orden ASC
+    `)
     res.json({ categorias: rows })
   } catch (err) {
     console.error('Error al obtener categorías de evento:', err)

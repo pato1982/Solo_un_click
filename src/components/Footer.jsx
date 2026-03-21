@@ -27,15 +27,11 @@ export default function Footer({ onNavigate }) {
               <div>
                 <h4 className="font-black tracking-widest text-accent text-[10px] mb-2">Accesos</h4>
                 <ul className="space-y-1 text-[9px] font-normal text-white/50">
-                  <li><a className="hover:text-accent transition-colors" href="#">Productos</a></li>
-                  <li><a className="hover:text-accent transition-colors" href="#">Arriendos</a></li>
-                  <li><a className="hover:text-accent transition-colors" href="#">Servicios</a></li>
-                  <li><a className="hover:text-accent transition-colors" href="#">Negocios</a></li>
-                  <li>
-                    <a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo') }} href="#">
-                      Turismo
-                    </a>
-                  </li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('productos', false) }} href="#">Productos</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('arriendos', false) }} href="#">Arriendos</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('servicios', false) }} href="#">Servicios</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('negocios', false) }} href="#">Negocios</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo', false) }} href="#">Turismo</a></li>
                 </ul>
               </div>
             </div>
@@ -117,15 +113,11 @@ export default function Footer({ onNavigate }) {
             <div>
               <h4 className="font-black tracking-widest text-accent text-[10px] mb-2">Accesos</h4>
               <ul className="space-y-1 text-[10px] font-normal text-white/50">
-                <li><a className="hover:text-accent transition-colors" href="#">Productos</a></li>
-                <li><a className="hover:text-accent transition-colors" href="#">Arriendos</a></li>
-                <li><a className="hover:text-accent transition-colors" href="#">Servicios</a></li>
-                <li><a className="hover:text-accent transition-colors" href="#">Negocios</a></li>
-                <li>
-                  <a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo') }} href="#">
-                    Turismo
-                  </a>
-                </li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('productos', false) }} href="#">Productos</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('arriendos', false) }} href="#">Arriendos</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('servicios', false) }} href="#">Servicios</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('negocios', false) }} href="#">Negocios</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo', false) }} href="#">Turismo</a></li>
               </ul>
             </div>
             <div>
@@ -191,15 +183,11 @@ export default function Footer({ onNavigate }) {
           <div className="md:px-20">
             <h4 className="font-black tracking-widest text-accent text-sm mb-6">Accesos</h4>
             <ul className="space-y-2 text-xs font-normal text-white/50">
-              <li><a className="hover:text-accent transition-colors" href="#">Productos</a></li>
-              <li><a className="hover:text-accent transition-colors" href="#">Arriendos</a></li>
-              <li><a className="hover:text-accent transition-colors" href="#">Servicios</a></li>
-              <li><a className="hover:text-accent transition-colors" href="#">Negocios</a></li>
-              <li>
-                <a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo') }} href="#">
-                  Turismo
-                </a>
-              </li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('productos', false) }} href="#">Productos</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('arriendos', false) }} href="#">Arriendos</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('servicios', false) }} href="#">Servicios</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('negocios', false) }} href="#">Negocios</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); onNavigate?.('turismo', false) }} href="#">Turismo</a></li>
             </ul>
           </div>
           <div className="md:px-10">

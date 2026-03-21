@@ -582,11 +582,11 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
   // Productos desde API, limitados por plan
   const storeProducts = apiProducts ? apiProducts.slice(0, maxListings) : []
 
-  // Categorías: dinámicas desde productos + carruseles + banners
+  // Categorías: dinámicas desde todos los listings (ya incluye carrusel y banner)
   const storeCategories = apiProducts
     ? (() => {
         const catMap = {}
-        const allItems = [...apiProducts, ...carouselItems, ...bannerItems]
+        const allItems = apiProducts
         allItems.forEach(p => {
           if (!p.category) return
           if (!catMap[p.category]) catMap[p.category] = new Set()

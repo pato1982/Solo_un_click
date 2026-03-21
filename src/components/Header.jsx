@@ -191,13 +191,15 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
         </div>
         {/* Segunda fila: Hamburguesa + Buscador + Sesión + Planes */}
         <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-white/10">
-          {/* Botón hamburguesa — abre sidebar de categorías */}
-          <button
-            onClick={() => { if (activeNav) toggleNav(activeNav) }}
-            className="shrink-0 p-0.5 rounded-md hover:bg-white/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-xl text-white/70">menu</span>
-          </button>
+          {/* Botón hamburguesa — abre sidebar de categorías (oculto en página principal) */}
+          {showInicio && (
+            <button
+              onClick={() => { if (activeNav) toggleNav(activeNav) }}
+              className="shrink-0 p-0.5 rounded-md hover:bg-white/10 transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl text-white/70">menu</span>
+            </button>
+          )}
           {/* Buscador (angosto) */}
           <div className="relative group flex-1 min-w-0">
             <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none z-10">

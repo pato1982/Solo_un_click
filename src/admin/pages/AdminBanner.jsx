@@ -7,8 +7,17 @@ const TALLAS_CALZADO = ['20','21','22','23','24','25','26','27','28','29','30','
 const TALLAS_ROPA = ['2','4','6','8','10','12','14','16','XS','S','M','L','XL','XXL','XXXL']
 const TALLAS_ACCESORIOS = ['XS','S','M','L','XL','Único']
 
+const SECCIONES_PRODUCTO = [
+  { value: 'destacados', label: 'Destacados' },
+  { value: 'ofertas', label: 'Ofertas' },
+  { value: 'novedades', label: 'Novedades' },
+  { value: 'liquidacion', label: 'Liquidación' },
+  { value: 'tecnologia', label: 'Tecnología' },
+  { value: 'tendencia', label: 'Tendencia' },
+]
+
 const emptyForm = {
-  nombre: '', descripcion: '', precio: '', precioOriginal: '', categoria: '', subcategoria: '', badge: '', tipo: 'producto',
+  nombre: '', descripcion: '', precio: '', precioOriginal: '', categoria: '', subcategoria: '', badge: '', tipo: 'producto', seccion: 'destacados',
   attrMedidas: false, tallasTipo: '', tallasSeleccion: [],
   medidasAlto: '', medidasAncho: '', medidasProfundidad: '', genero: '',
   imagen: null, imagenPreview: null, imagenPos: { x: 0, y: 0 }, imagenScale: 1, imagenNaturalW: 0, imagenNaturalH: 0,
@@ -179,7 +188,7 @@ export default function AdminBanner() {
           setItems(data.listings.filter(l => l.banner_orden).map(l => ({
             id: l.id, orden: l.banner_orden,
             nombre: l.nombre, descripcion: l.descripcion, precio: l.precio, precioOriginal: l.precio_original,
-            subcategoria: l.subcategoria, badge: l.badge, tipo: l.tipo,
+            subcategoria: l.subcategoria, categoria: l.categoria || '', badge: l.badge, tipo: l.tipo, seccion: l.seccion || 'destacados',
             tallas: l.tallas, medidas: l.medidas, genero: l.genero,
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null, imagenUrl: l.imagen,
             posX: l.banner_pos_x ?? 50, posY: l.banner_pos_y ?? 50, scale: parseFloat(l.banner_scale) || 1,
@@ -262,7 +271,7 @@ export default function AdminBanner() {
 
       const body = {
         tipo: formData.tipo || 'producto',
-        seccion: 'destacados',
+        seccion: formData.tipo === 'servicio' ? 'servicios' : formData.tipo === 'arriendo' ? 'arriendos' : (formData.seccion || 'destacados'),
         nombre: formData.nombre, descripcion: formData.descripcion,
         precio: Math.round(Number(formData.precio)) || 0,
         precio_original: formData.precioOriginal ? Math.round(Number(formData.precioOriginal)) : null,
@@ -299,7 +308,7 @@ export default function AdminBanner() {
   }
 
   const buildBodyFromItem = (item) => ({
-    tipo: item.tipo || 'producto', seccion: 'destacados', nombre: item.nombre, descripcion: item.descripcion,
+    tipo: item.tipo || 'producto', seccion: item.tipo === 'servicio' ? 'servicios' : item.tipo === 'arriendo' ? 'arriendos' : (item.seccion || 'destacados'), nombre: item.nombre, descripcion: item.descripcion,
     precio: item.precio || 0, precio_original: item.precioOriginal || null, categoria: item.categoria || '', subcategoria: item.subcategoria,
     badge: item.badge, genero: item.genero || null, imagen: item.imagenUrl,
     tallas: item.tallas, medidas: item.medidas,
@@ -336,6 +345,7 @@ export default function AdminBanner() {
       nombre: prod.nombre, descripcion: prod.descripcion,
       precio: String(prod.precio), precioOriginal: prod.precioOriginal ? String(prod.precioOriginal) : '',
       categoria: prod.categoria || '', subcategoria: prod.subcategoria, badge: prod.badge || '', tipo: prod.tipo || 'producto',
+      seccion: prod.seccion || 'destacados',
       attrMedidas: !!prod.medidas, tallasTipo: prod.tallas?.tipo || '', tallasSeleccion: prod.tallas?.seleccion || [],
       medidasAlto: prod.medidas?.alto || '', medidasAncho: prod.medidas?.ancho || '', medidasProfundidad: prod.medidas?.profundidad || '',
       genero: prod.genero || '', imagen: null, imagenPreview: prod.imagenPreview || null,
@@ -541,7 +551,7 @@ export default function AdminBanner() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '', seccion: 'destacados' }))} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -553,6 +563,18 @@ export default function AdminBanner() {
                     <input type="text" name="badge" value={formData.badge} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary" placeholder="Ej: Top Ventas" />
                   </div>
                 </div>
+
+                {formData.tipo === 'producto' && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Sección en la tienda *</label>
+                    <select name="seccion" value={formData.seccion} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary">
+                      {SECCIONES_PRODUCTO.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>

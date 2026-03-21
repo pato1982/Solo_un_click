@@ -78,8 +78,6 @@ router.get('/', async (req, res) => {
       query += ' AND l.banner_orden IS NOT NULL'
       query += ' ORDER BY l.banner_orden ASC'
     } else {
-      // Excluir items de carrusel y banner del feed principal
-      query += ' AND l.carousel_posicion IS NULL AND l.banner_orden IS NULL'
       query += ' ORDER BY l.created_at DESC'
     }
 
