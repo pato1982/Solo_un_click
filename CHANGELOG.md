@@ -1,5 +1,47 @@
 # Registro de Cambios - Solo a un Click
 
+## 21 de Marzo 2026 (sesión 16) - Mejoras cropper, página premium turismo, planes y admin tour
+
+### Cropper productos — Zoom centrado y flechas de dirección
+- Fix zoom out: la imagen ahora se centra automáticamente al alejar en vez de irse a la izquierda
+- Flechas de dirección (arriba, abajo, izquierda, derecha) sobre la imagen para ajustar posición
+- Las flechas aparecen solo cuando hay espacio para mover en esa dirección
+- Touch y arrastre siguen funcionando sin bloquear las flechas ni el zoom
+
+### Sidebar admin turismo — Botón "Ver Turismo"
+- Nuevo botón "Ver Turismo" en el sidebar para usuarios de tipo turismo
+- Redirige a la página pública de turismo y hace scroll automático hasta la portada del usuario
+- La tarjeta se resalta con borde accent por 3 segundos para identificarla
+
+### Planes turismo — Solo Gratis y Premium
+- El selector de plan en datos personales ahora muestra solo 2 planes para turismo (Gratis y Premium)
+- Si un usuario cambia de comercio a turismo y tenía plan Normal, se resetea a Gratis automáticamente
+
+### Página premium turismo — Secciones condicionales
+- Fila 1 (imagen + texto superior): solo se muestra si hay datos en "Mi Página", no toma info de portada
+- Sección tours: se oculta completamente si no hay tours publicados
+- Fila 2 (imagen + texto inferior + contacto/horarios): solo se muestra si hay página personalizada
+- Imágenes superior e inferior: se ven completas (object-contain) sin recortarse
+
+### Página premium turismo — Contacto y horarios reorganizados
+- Contacto y horarios separados en dos tarjetas/columnas independientes debajo del texto e imagen inferior
+- Dentro de cada tarjeta, el contenido se distribuye en 2 columnas internas
+- Contacto: dirección, teléfono, WhatsApp, correo y redes sociales
+- Horarios: los 7 días repartidos en 2 columnas con estado activo/cerrado
+
+### Página premium turismo — Modo móvil
+- En ambas filas (superior e inferior), el texto aparece sobre la imagen en móvil
+- En desktop mantiene el layout lado a lado (imagen + texto)
+
+### Admin Tour — Velocidad y visualización
+- Subida de imágenes en paralelo (Promise.all) en vez de secuencial: guardado más rápido
+- Imagen en tarjeta del tour se ve completa (object-contain) sin cortarse
+
+### Pendiente
+- **SMTP Gmail para emails de recuperación de contraseña** (único pendiente crítico)
+
+---
+
 ## 20 de Marzo 2026 (sesión 15) - Fix filtrado sidebar, carrusel/banner en grid público
 
 ### Footer — Accesos funcionales
