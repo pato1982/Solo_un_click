@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
@@ -8,6 +8,7 @@ import Banner from './components/Banner'
 import TourismPage from './components/TourismPage'
 import EventsSection from './components/EventsSection'
 import StoresCarousel from './components/StoresCarousel'
+import TurismoSection from './components/TurismoSection'
 import Footer from './components/Footer'
 import SectionPage from './components/SectionPage'
 import StoresPage from './components/StoresPage'
@@ -151,6 +152,82 @@ function buildSectionsFromAPI(listings) {
   })
 }
 
+// --- Rotación de secciones cada 5 horas ---
+function seededRandom(seed) {
+  let s = seed
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0xffffffff
+    return (s >>> 0) / 0xffffffff
+  }
+}
+
+function seededShuffle(arr, rng) {
+  const result = [...arr]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
+function buildShuffledRows(sections, seed) {
+  if (sections.length === 0) return []
+  const rng = seededRandom(seed)
+
+  // Convertir secciones de productos a rows
+  const productRows = sections.map(s => ({ type: 'product', id: s.id, data: s }))
+
+  // Secciones especiales
+  const specialRows = [
+    { type: 'banner', id: '_banner' },
+    { type: 'turismo', id: '_turismo' },
+    { type: 'eventos', id: '_eventos' },
+    { type: 'locales', id: '_locales' },
+  ]
+
+  // 1) Barajar productos y tomar los 2 primeros para posiciones 0,1
+  const shuffledProducts = seededShuffle(productRows, rng)
+  const first2 = shuffledProducts.slice(0, 2)
+  const restProducts = shuffledProducts.slice(2)
+
+  // 2) Mezclar los 6 productos restantes + 4 especiales para posiciones 2-11
+  let pool = seededShuffle([...restProducts, ...specialRows], rng)
+
+  // 3) Asegurar que Banner y Locales no estén adyacentes
+  for (let attempts = 0; attempts < 50; attempts++) {
+    let conflict = false
+    for (let i = 0; i < pool.length - 1; i++) {
+      const a = pool[i].type
+      const b = pool[i + 1].type
+      if ((a === 'banner' && b === 'locales') || (a === 'locales' && b === 'banner')) {
+        // Buscar un producto más adelante para intercambiar
+        let swapped = false
+        for (let j = i + 2; j < pool.length; j++) {
+          if (pool[j].type === 'product') {
+            ;[pool[i + 1], pool[j]] = [pool[j], pool[i + 1]]
+            swapped = true
+            break
+          }
+        }
+        if (!swapped) {
+          // Buscar producto antes
+          for (let j = i - 1; j >= 0; j--) {
+            if (pool[j].type === 'product') {
+              ;[pool[i], pool[j]] = [pool[j], pool[i]]
+              break
+            }
+          }
+        }
+        conflict = true
+        break
+      }
+    }
+    if (!conflict) break
+  }
+
+  return [...first2, ...pool]
+}
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState(null)
   const [activeSidebar, setActiveSidebar] = useState(null)
@@ -163,6 +240,18 @@ export default function App() {
   const [scrollBeforeStore, setScrollBeforeStore] = useState(0)
   const [storeCatKey, setStoreCatKey] = useState(0)
   const [sections, setSections] = useState([])
+  const [shuffleSeed, setShuffleSeed] = useState(() => Math.floor(Date.now() / (5 * 60 * 60 * 1000)))
+  const shuffledRows = useMemo(() => buildShuffledRows(sections, shuffleSeed), [sections, shuffleSeed])
+
+  // Verificar cada minuto si cambió la ventana de 5 horas
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSeed = Math.floor(Date.now() / (5 * 60 * 60 * 1000))
+      setShuffleSeed(prev => prev !== newSeed ? newSeed : prev)
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   const [turismoCategorias, setTurismoCategorias] = useState([])
   const [turismoCategoriasAll, setTurismoCategoriasAll] = useState([])
   const [listingSubcategorias, setListingSubcategorias] = useState([])
@@ -761,19 +850,22 @@ export default function App() {
               onOpenStore={handleOpenStore}
             />
           ) : (
-            sections.map((section, index) => (
-              <div key={section.id}>
-                <ProductCarousel
-                  title={section.title}
-                  items={section.items}
-                  sidebarOpen={!!activeSidebar}
-                  hidePrice={section.hidePrice}
-                  onViewAll={() => handleViewAll(section)}
-                  onOpenStore={handleOpenStore}
-                />
-                {index === 1 && <div className="mt-8"><Banner /></div>}
-                {index === 2 && <div className="mt-8"><EventsSection onViewAll={handleViewAllEvents} /></div>}
-                {index === 4 && <div className="mt-8"><StoresCarousel onViewAll={handleViewAllStores} /></div>}
+            shuffledRows.map((row) => (
+              <div key={row.id}>
+                {row.type === 'product' && (
+                  <ProductCarousel
+                    title={row.data.title}
+                    items={row.data.items}
+                    sidebarOpen={!!activeSidebar}
+                    hidePrice={row.data.hidePrice}
+                    onViewAll={() => handleViewAll(row.data)}
+                    onOpenStore={handleOpenStore}
+                  />
+                )}
+                {row.type === 'banner' && <div className="mt-8"><Banner /></div>}
+                {row.type === 'turismo' && <div className="mt-8"><TurismoSection onViewAll={() => { setCurrentPage('turismo'); setActiveSidebar('turismo') }} onOpenTour={(userId) => { setCurrentPage('turismo'); setActiveSidebar('turismo'); setTurismoDirectUserId(userId) }} /></div>}
+                {row.type === 'eventos' && <div className="mt-8"><EventsSection onViewAll={handleViewAllEvents} /></div>}
+                {row.type === 'locales' && <div className="mt-8"><StoresCarousel onViewAll={handleViewAllStores} /></div>}
               </div>
             ))
           )}
