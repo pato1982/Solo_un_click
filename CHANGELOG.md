@@ -1,5 +1,34 @@
 # Registro de Cambios - Solo a un Click
 
+## 25 de Marzo 2026 (sesión 17) - Sección Turismo en home + rotación de secciones
+
+### Nueva sección "Turismo" en página principal
+- Sección Turismo insertada debajo de "Productos en Ofertas" y el Banner
+- Consulta `GET /api/tours/public` para traer todos los tours activos de clientes premium
+- Tarjetas muestran: imagen principal (elegida por el admin), categoría como badge, nombre y ubicación
+- Ícono de tienda (storefront) en esquina superior derecha de la imagen con borde circular
+- Al hacer clic en el ícono, navega a la página de turismo de la empresa dueña del tour
+- Carrusel responsive: 2 tarjetas en móvil, 3 en tablet, 5 en desktop
+- Auto-rotación cada 4 segundos con reinicio al llegar al final
+- Flechas izquierda/derecha en tablet/desktop (aparecen con hover)
+- Botón "Ver todo" navega a la página completa de turismo
+
+### Rotación automática de secciones cada 5 horas
+- Todas las filas de la home (8 secciones de productos + Banner + Turismo + Eventos + Locales) rotan cada 5 horas
+- Semilla basada en hora actual: todos los usuarios ven el mismo orden al mismo tiempo
+- Reglas de restricción:
+  - Fila 1 y 2: siempre secciones de productos (nunca Turismo, Eventos, Banner ni Locales)
+  - Turismo y Eventos: nunca en fila 1 ni fila 2
+  - Banner: nunca en fila 1
+  - Locales del Barrio: nunca en fila 1
+  - Banner y Locales nunca pueden estar en filas contiguas
+- Los productos dentro de cada sección se mantienen sin cambios, solo rota la posición de la fila
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña** (único pendiente crítico)
+
+---
+
 ## 21 de Marzo 2026 (sesión 16) - Mejoras cropper, página premium turismo, planes y admin tour
 
 ### Cropper productos — Zoom centrado y flechas de dirección
