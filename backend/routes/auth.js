@@ -349,7 +349,7 @@ async function deleteAllTurismData(userId) {
 // PUT /api/auth/profile — actualizar tipo de cuenta y plan, con eliminación de datos
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id, delete_tipos } = req.body
+    const { tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id, delete_tipos, email, telefono, direccion } = req.body
     const uid = req.userId
 
     // Obtener estado actual del usuario
@@ -380,14 +380,26 @@ router.put('/profile', authMiddleware, async (req, res) => {
     const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : current.plan_id
     const tipo = ['general', 'turismo'].includes(tipo_cuenta) ? tipo_cuenta : current.tipo_cuenta
 
+    // Validar email si se proporcionó uno diferente
+    const newEmail = (typeof email === 'string' && email.trim()) ? email.trim() : current.email
+    if (newEmail !== current.email) {
+      const [existing] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, uid])
+      if (existing.length > 0) return res.status(400).json({ error: 'Ese correo ya está registrado por otro usuario' })
+    }
+    const newTelefono = (typeof telefono === 'string') ? telefono.trim() : current.telefono
+    const newDireccion = (typeof direccion === 'string') ? direccion.trim() : current.direccion
+
     await pool.query(
-      `UPDATE users SET tipo_cuenta = ?, vende_productos = ?, ofrece_servicios = ?, ofrece_arriendos = ?, plan_id = ? WHERE id = ?`,
+      `UPDATE users SET tipo_cuenta = ?, vende_productos = ?, ofrece_servicios = ?, ofrece_arriendos = ?, plan_id = ?, email = ?, telefono = ?, direccion = ? WHERE id = ?`,
       [
         tipo,
         tipo === 'general' ? (vende_productos ? 1 : 0) : 0,
         tipo === 'general' ? (ofrece_servicios ? 1 : 0) : 0,
         tipo === 'general' ? (ofrece_arriendos ? 1 : 0) : 0,
         selectedPlan,
+        newEmail,
+        newTelefono,
+        newDireccion,
         uid
       ]
     )
@@ -429,6 +441,44 @@ router.put('/profile', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error actualizando perfil:', err)
     res.status(500).json({ error: 'Error al actualizar perfil' })
+  }
+})
+
+// GET /api/auth/profile/plans-info — planes disponibles según tipo de cuenta
+router.get('/profile/plans-info', authMiddleware, async (req, res) => {
+  try {
+    const tipo = req.query.tipo || 'general'
+    let rows
+    if (tipo === 'turismo') {
+      [rows] = await pool.query('SELECT * FROM plans WHERE id IN (1, 3) ORDER BY id')
+    } else {
+      [rows] = await pool.query('SELECT * FROM plans ORDER BY id')
+    }
+    res.json({ plans: rows })
+  } catch (err) {
+    console.error('Error obteniendo planes:', err)
+    res.status(500).json({ error: 'Error al obtener planes' })
+  }
+})
+
+// GET /api/auth/profile/history — historial de cambios de plan y tipo de cuenta
+router.get('/profile/history', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT accion, detalles, created_at FROM activity_log
+       WHERE user_id = ? AND accion IN ('cambio_plan', 'cambio_tipo_cuenta')
+       ORDER BY created_at DESC LIMIT 50`,
+      [req.userId]
+    )
+    // Parsear detalles JSON
+    const history = rows.map(r => ({
+      ...r,
+      detalles: r.detalles ? (typeof r.detalles === 'string' ? JSON.parse(r.detalles) : r.detalles) : null,
+    }))
+    res.json({ history })
+  } catch (err) {
+    console.error('Error obteniendo historial:', err)
+    res.status(500).json({ error: 'Error al obtener historial' })
   }
 })
 

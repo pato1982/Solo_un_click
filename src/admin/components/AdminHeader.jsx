@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { GeneralPlans, TurismoPlans } from '../../components/PlansModal.jsx'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -97,16 +98,25 @@ function ProfileModal({ onClose }) {
   const [counts, setCounts] = useState(null)
   const [confirmPopup, setConfirmPopup] = useState(null)
   const [downgradePopup, setDowngradePopup] = useState(null)
+  const [activeTab, setActiveTab] = useState('datos')
+  const [showPlansModal, setShowPlansModal] = useState(false)
+  const [history, setHistory] = useState(null)
 
-  // Campos editables
+  // Campos editables - Datos personales
+  const [editEmail, setEditEmail] = useState('')
+  const [editTelefono, setEditTelefono] = useState('')
+  const [editDireccion, setEditDireccion] = useState('')
+
+  // Campos editables - Plan
   const [tipoCuenta, setTipoCuenta] = useState('general')
   const [vendeProductos, setVendeProductos] = useState(false)
   const [ofreceServicios, setOfreceServicios] = useState(false)
   const [ofreceArriendos, setOfreceArriendos] = useState(false)
   const [planId, setPlanId] = useState(1)
 
+  const token = localStorage.getItem('token')
+
   useEffect(() => {
-    const token = localStorage.getItem('token')
     if (!token || token === 'dev-token') { setLoading(false); return }
     Promise.all([
       fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
@@ -121,112 +131,98 @@ function ProfileModal({ onClose }) {
         setOfreceServicios(!!u.ofrece_servicios)
         setOfreceArriendos(!!u.ofrece_arriendos)
         setPlanId(u.plan_id || 1)
+        setEditEmail(u.email || '')
+        setEditTelefono(u.telefono || '')
+        setEditDireccion(u.direccion || '')
       }
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
 
+  // Cargar historial cuando se abre la pestaña
+  useEffect(() => {
+    if (activeTab === 'historial' && !history && token) {
+      fetch(`${API}/api/auth/profile/history`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(data => setHistory(data.history || []))
+        .catch(() => setHistory([]))
+    }
+  }, [activeTab])
+
   const buildDeleteWarning = () => {
-    const warnings = []
     const deleteDetails = []
     const deleteTipos = []
 
-    // Cambio de comercio a turismo
     if (user.tipo_cuenta === 'general' && tipoCuenta === 'turismo') {
       const total = (counts?.productos || 0) + (counts?.servicios || 0) + (counts?.arriendos || 0)
       if (total > 0) deleteDetails.push(`${total} publicaciones (productos, servicios y arriendos)`)
       if (counts?.carousels > 0) deleteDetails.push(`${counts.carousels} carruseles y sus imágenes`)
       if (counts?.negocio > 0) deleteDetails.push('Datos del negocio')
       if (deleteDetails.length > 0) {
-        return {
-          message: 'Al cambiar a Turismo se eliminarán todos los datos de tu cuenta de Comercio. Deberás configurar tu nuevo panel de turismo desde cero.',
-          details: deleteDetails,
-          deleteTipos: [],
-        }
+        return { message: 'Al cambiar a Turismo se eliminarán todos los datos de tu cuenta de Comercio.', details: deleteDetails, deleteTipos: [] }
       }
     }
 
-    // Cambio de turismo a comercio
     if (user.tipo_cuenta === 'turismo' && tipoCuenta === 'general') {
       if (counts?.tours > 0) deleteDetails.push(`${counts.tours} tours`)
       if (counts?.portada > 0) deleteDetails.push('Portada y sus imágenes')
       if (counts?.pagina > 0) deleteDetails.push('Página personalizada')
       if (counts?.negocio > 0) deleteDetails.push('Datos del negocio')
       if (deleteDetails.length > 0) {
-        return {
-          message: 'Al cambiar a Comercio se eliminarán todos los datos de tu cuenta de Turismo. Deberás configurar tu nuevo panel de comercio desde cero.',
-          details: deleteDetails,
-          deleteTipos: [],
-        }
+        return { message: 'Al cambiar a Comercio se eliminarán todos los datos de tu cuenta de Turismo.', details: deleteDetails, deleteTipos: [] }
       }
     }
 
-    // Quitar opciones dentro de comercio
     if (tipoCuenta === 'general') {
       if (user.vende_productos && !vendeProductos) {
         const n = counts?.productos || 0
-        deleteDetails.push(n > 0 ? `${n} productos (publicaciones, carrusel y banner)` : 'Sección de Productos y todos sus datos futuros')
+        deleteDetails.push(n > 0 ? `${n} productos (publicaciones, carrusel y banner)` : 'Sección de Productos')
         deleteTipos.push('producto')
       }
       if (user.ofrece_servicios && !ofreceServicios) {
         const n = counts?.servicios || 0
-        deleteDetails.push(n > 0 ? `${n} servicios publicados` : 'Sección de Servicios y todos sus datos futuros')
+        deleteDetails.push(n > 0 ? `${n} servicios publicados` : 'Sección de Servicios')
         deleteTipos.push('servicio')
       }
       if (user.ofrece_arriendos && !ofreceArriendos) {
         const n = counts?.arriendos || 0
-        deleteDetails.push(n > 0 ? `${n} arriendos publicados` : 'Sección de Arriendos y todos sus datos futuros')
+        deleteDetails.push(n > 0 ? `${n} arriendos publicados` : 'Sección de Arriendos')
         deleteTipos.push('arriendo')
       }
       if (deleteTipos.length > 0) {
         const nombres = deleteTipos.map(t => t === 'producto' ? 'Productos' : t === 'servicio' ? 'Servicios' : 'Arriendos').join(', ')
-        return {
-          message: `Al desmarcar ${nombres} se eliminarán todos los datos ingresados en esas secciones incluyendo publicaciones, tarjetas de carrusel y banner asociadas, sin poder recuperarlos.`,
-          details: deleteDetails,
-          deleteTipos,
-        }
+        return { message: `Al desmarcar ${nombres} se eliminarán todos los datos de esas secciones.`, details: deleteDetails, deleteTipos }
       }
     }
-
     return null
   }
 
-  // Advertencia al bajar de plan (no borra datos, solo oculta)
   const buildDowngradeWarning = () => {
-    if (planId >= user.plan_id) return null // upgrade o mismo plan, sin advertencia
+    if (planId >= user.plan_id) return null
     const esTurismo = tipoCuenta === 'turismo'
     const items = []
-
     if (esTurismo) {
-      // Turismo: de Premium a Gratis
       if (user.plan_id >= 3 && planId < 3) {
         if (counts?.tours > 0) items.push(`${counts.tours} tours dejarán de mostrarse`)
         if (counts?.pagina > 0) items.push('Tu página personalizada no será accesible')
         items.push('Las estadísticas no estarán disponibles')
       }
     } else {
-      // Comercio: de Premium a Normal o Gratis
       if (user.plan_id >= 3 && planId < 3) {
         items.push('Tus banners dejarán de mostrarse públicamente')
         items.push('Las estadísticas no estarán disponibles')
       }
-      // De Premium/Normal a Gratis
       if (user.plan_id >= 2 && planId < 2) {
         if (counts?.carousels > 0) items.push('Tus carruseles dejarán de mostrarse públicamente')
         items.push('Tu página de tienda no será accesible')
         items.push('Si tienes más de 5 productos, solo los 5 más recientes serán visibles')
       }
     }
-
     if (items.length === 0) return null
-    return {
-      message: `Al bajar de Plan ${planLabel(user.plan_id)} a Plan ${planLabel(planId)}, tu contenido no se eliminará pero dejará de estar visible públicamente. Si vuelves a subir de plan, se restaurará automáticamente.`,
-      items,
-    }
+    return { message: `Al bajar de Plan ${planLabel(user.plan_id)} a Plan ${planLabel(planId)}, tu contenido no se eliminará pero dejará de estar visible. Si vuelves a subir, se restaurará.`, items }
   }
 
   const handleSave = async (deleteTipos = []) => {
-    const token = localStorage.getItem('token')
     if (!token) return
     setSaving(true)
     try {
@@ -237,6 +233,9 @@ function ProfileModal({ onClose }) {
         ofrece_arriendos: tipoCuenta === 'general' ? ofreceArriendos : false,
         plan_id: planId,
         delete_tipos: deleteTipos,
+        email: editEmail.trim(),
+        telefono: editTelefono.trim(),
+        direccion: editDireccion.trim(),
       }
       const res = await fetch(`${API}/api/auth/profile`, {
         method: 'PUT',
@@ -244,8 +243,16 @@ function ProfileModal({ onClose }) {
         body: JSON.stringify(body),
       })
       const data = await res.json()
+      if (data.error) {
+        alert(data.error)
+        setSaving(false)
+        return
+      }
       if (data.user) {
         setUser(data.user)
+        setEditEmail(data.user.email || '')
+        setEditTelefono(data.user.telefono || '')
+        setEditDireccion(data.user.direccion || '')
         const stored = JSON.parse(localStorage.getItem('user') || '{}')
         Object.assign(stored, {
           tipo_cuenta: data.user.tipo_cuenta,
@@ -255,9 +262,10 @@ function ProfileModal({ onClose }) {
           ofrece_arriendos: data.user.ofrece_arriendos,
         })
         localStorage.setItem('user', JSON.stringify(stored))
-        // Recargar counts
         const countsRes = await fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
         setCounts(await countsRes.json())
+        // Invalidar historial para que recargue
+        setHistory(null)
       }
       setEditing(false)
     } catch (err) {
@@ -268,21 +276,26 @@ function ProfileModal({ onClose }) {
 
   const handleSaveClick = () => {
     const warning = buildDeleteWarning()
-    if (warning) {
-      setConfirmPopup(warning)
-      return
-    }
+    if (warning) { setConfirmPopup(warning); return }
     const downgrade = buildDowngradeWarning()
-    if (downgrade) {
-      setDowngradePopup(downgrade)
-      return
-    }
+    if (downgrade) { setDowngradePopup(downgrade); return }
     handleSave()
   }
 
-  const planLabel = (id) => id === 3 ? 'Premium' : id === 2 ? 'Normal' : 'Gratis'
-  const planColor = user?.plan_id === 3 ? 'text-amber-400' : user?.plan_id === 2 ? 'text-blue-400' : 'text-slate-400'
+  const cancelEditing = () => {
+    setEditing(false)
+    setTipoCuenta(user.tipo_cuenta || 'general')
+    setVendeProductos(!!user.vende_productos)
+    setOfreceServicios(!!user.ofrece_servicios)
+    setOfreceArriendos(!!user.ofrece_arriendos)
+    setPlanId(user.plan_id || 1)
+    setEditEmail(user.email || '')
+    setEditTelefono(user.telefono || '')
+    setEditDireccion(user.direccion || '')
+  }
 
+  const planLabel = (id) => id === 3 ? 'Premium' : id === 2 ? 'Normal' : 'Gratis'
+  const planColor = (id) => id === 3 ? 'text-amber-400' : id === 2 ? 'text-blue-400' : 'text-slate-400'
   const tipoCuentaLabel = () => {
     if (user?.tipo_cuenta === 'turismo') return 'Turismo'
     const tipos = []
@@ -292,203 +305,371 @@ function ProfileModal({ onClose }) {
     return tipos.length > 0 ? tipos.join(', ') : '—'
   }
 
-  const ubicacion = [user?.direccion, user?.comuna].filter(Boolean).join(', ') || '—'
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'
+  const formatDateTime = (d) => d ? new Date(d).toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 
   const checkboxClass = (checked) =>
     `w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${checked ? 'bg-primary border-primary' : 'border-slate-300 hover:border-primary/50'}`
 
+  const tabs = [
+    { id: 'datos', label: 'Datos', icon: 'person' },
+    { id: 'plan', label: 'Plan', icon: 'star' },
+    { id: 'historial', label: 'Historial', icon: 'history' },
+  ]
+
+  // ===================== TAB: DATOS PERSONALES =====================
+  const renderDatosTab = () => (
+    <div className="space-y-3">
+      {/* Nombre (solo lectura) */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">badge</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Nombre</p>
+          <p className="text-sm text-slate-700 font-medium">{user.nombre}</p>
+        </div>
+      </div>
+
+      {/* Correo */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">mail</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Correo</p>
+          {!editing ? (
+            <p className="text-sm text-slate-700">{user.email}</p>
+          ) : (
+            <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
+              className="w-full text-sm text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1.5 mt-1 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
+          )}
+        </div>
+      </div>
+
+      {/* Teléfono */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">call</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Teléfono</p>
+          {!editing ? (
+            <p className="text-sm text-slate-700">{user.telefono || '—'}</p>
+          ) : (
+            <input type="tel" value={editTelefono} onChange={e => setEditTelefono(e.target.value)}
+              className="w-full text-sm text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1.5 mt-1 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
+          )}
+        </div>
+      </div>
+
+      {/* Dirección */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">location_on</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Dirección</p>
+          {!editing ? (
+            <p className="text-sm text-slate-700">{[user.direccion, user.comuna].filter(Boolean).join(', ') || '—'}</p>
+          ) : (
+            <input type="text" value={editDireccion} onChange={e => setEditDireccion(e.target.value)}
+              className="w-full text-sm text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1.5 mt-1 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" />
+          )}
+        </div>
+      </div>
+
+      {/* Fecha inscripción */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">calendar_today</span>
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Miembro desde</p>
+          <p className="text-sm text-slate-700">{formatDate(user.created_at)}</p>
+        </div>
+      </div>
+
+      {/* Botones editar/guardar */}
+      <div className="pt-2 border-t border-slate-100">
+        {!editing ? (
+          <button onClick={() => setEditing(true)}
+            className="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">edit</span>
+            Editar datos
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={cancelEditing}
+              className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">Cancelar</button>
+            <button onClick={handleSaveClick} disabled={saving}
+              className="flex-1 py-2 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50">
+              {saving ? 'Guardando...' : <><span className="material-symbols-outlined text-sm">save</span>Guardar</>}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // ===================== TAB: PLAN =====================
+  const renderPlanTab = () => (
+    <div className="space-y-3">
+      {/* Plan actual */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">workspace_premium</span>
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Plan actual</p>
+          <p className={`text-sm font-bold ${planColor(user.plan_id)}`}>Plan {planLabel(user.plan_id)}</p>
+        </div>
+      </div>
+
+      {/* Tipo de cuenta */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">storefront</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Tipo de cuenta</p>
+          {!editing ? (
+            <p className="text-sm text-slate-700">{tipoCuentaLabel()}</p>
+          ) : (
+            <div className="mt-1 space-y-2">
+              <div className="flex gap-2">
+                <button onClick={() => setTipoCuenta('general')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tipoCuenta === 'general' ? 'bg-primary text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                  <span className="material-symbols-outlined text-sm">storefront</span>Comercio
+                </button>
+                <button onClick={() => { setTipoCuenta('turismo'); if (planId === 2) setPlanId(1) }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tipoCuenta === 'turismo' ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                  <span className="material-symbols-outlined text-sm">park</span>Turismo
+                </button>
+              </div>
+              {tipoCuenta === 'general' && (
+                <div className="bg-slate-50 rounded-lg p-2.5 space-y-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer" onClick={() => setVendeProductos(!vendeProductos)}>
+                    <div className={checkboxClass(vendeProductos)}>
+                      {vendeProductos && <span className="material-symbols-outlined text-white text-xs">check</span>}
+                    </div>
+                    <span className="text-xs text-slate-600">Productos</span>
+                    {counts?.productos > 0 && <span className="text-[10px] text-slate-400">({counts.productos})</span>}
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer" onClick={() => setOfreceServicios(!ofreceServicios)}>
+                    <div className={checkboxClass(ofreceServicios)}>
+                      {ofreceServicios && <span className="material-symbols-outlined text-white text-xs">check</span>}
+                    </div>
+                    <span className="text-xs text-slate-600">Servicios</span>
+                    {counts?.servicios > 0 && <span className="text-[10px] text-slate-400">({counts.servicios})</span>}
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer" onClick={() => setOfreceArriendos(!ofreceArriendos)}>
+                    <div className={checkboxClass(ofreceArriendos)}>
+                      {ofreceArriendos && <span className="material-symbols-outlined text-white text-xs">check</span>}
+                    </div>
+                    <span className="text-xs text-slate-600">Arriendos</span>
+                    {counts?.arriendos > 0 && <span className="text-[10px] text-slate-400">({counts.arriendos})</span>}
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Selección de plan */}
+      <div className="flex items-start gap-3">
+        <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">star</span>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Plan</p>
+          {!editing ? (
+            <p className="text-sm text-slate-700">Plan {planLabel(user.plan_id)}</p>
+          ) : (
+            <div className="flex gap-2 mt-1">
+              {(tipoCuenta === 'turismo' ? [1, 3] : [1, 2, 3]).map(p => (
+                <button key={p} onClick={() => setPlanId(p)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${planId === p
+                    ? (p === 3 ? 'bg-amber-400 text-amber-900' : p === 2 ? 'bg-blue-500 text-white' : 'bg-slate-500 text-white')
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                  {planLabel(p)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Botón ver planes disponibles */}
+      <button onClick={() => setShowPlansModal(true)}
+        className="w-full py-2.5 bg-gradient-to-r from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-primary/20">
+        <span className="material-symbols-outlined text-sm">info</span>
+        Ver planes disponibles
+      </button>
+
+      {/* Botones editar/guardar */}
+      <div className="pt-2 border-t border-slate-100">
+        {!editing ? (
+          <button onClick={() => setEditing(true)}
+            className="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">edit</span>
+            Cambiar plan
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={cancelEditing}
+              className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">Cancelar</button>
+            <button onClick={handleSaveClick} disabled={saving}
+              className="flex-1 py-2 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50">
+              {saving ? 'Guardando...' : <><span className="material-symbols-outlined text-sm">save</span>Guardar</>}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // ===================== TAB: HISTORIAL =====================
+  const renderHistorialTab = () => (
+    <div className="space-y-4">
+      {/* Info de cuenta */}
+      <div className="bg-slate-50 rounded-xl p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-base text-primary/60">event</span>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Fecha de registro</p>
+            <p className="text-sm text-slate-700 font-medium">{formatDate(user.created_at)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-base text-primary/60">workspace_premium</span>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Plan actual</p>
+            <p className={`text-sm font-bold ${planColor(user.plan_id)}`}>Plan {planLabel(user.plan_id)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline de cambios */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase mb-3">Historial de cambios</p>
+        {!history ? (
+          <div className="flex items-center justify-center py-6">
+            <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <span className="text-xs text-slate-400 ml-2">Cargando...</span>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="text-center py-6">
+            <span className="material-symbols-outlined text-3xl text-slate-300">timeline</span>
+            <p className="text-xs text-slate-400 mt-1">Sin cambios registrados</p>
+          </div>
+        ) : (
+          <div className="relative pl-6">
+            {/* Línea vertical del timeline */}
+            <div className="absolute left-2 top-1 bottom-1 w-0.5 bg-slate-200"></div>
+            <div className="space-y-3">
+              {history.map((item, i) => {
+                const isPlan = item.accion === 'cambio_plan'
+                const isUpgrade = isPlan && item.detalles?.tipo === 'upgrade'
+                const dotColor = isPlan ? (isUpgrade ? 'bg-green-400' : 'bg-amber-400') : 'bg-blue-400'
+                return (
+                  <div key={i} className="relative">
+                    <div className={`absolute -left-4 top-1 w-3 h-3 rounded-full ${dotColor} border-2 border-white shadow-sm`}></div>
+                    <div className="bg-white border border-slate-100 rounded-lg p-2.5 shadow-sm">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`material-symbols-outlined text-sm ${isPlan ? (isUpgrade ? 'text-green-500' : 'text-amber-500') : 'text-blue-500'}`}>
+                          {isPlan ? (isUpgrade ? 'upgrade' : 'downgrade') : 'swap_horiz'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">
+                          {isPlan ? 'Cambio de plan' : 'Cambio de tipo'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        {isPlan ? (
+                          <>Plan <span className="font-bold">{item.detalles?.plan_anterior_nombre}</span> → <span className="font-bold">{item.detalles?.plan_nuevo_nombre}</span></>
+                        ) : (
+                          <>Tipo <span className="font-bold">{item.detalles?.tipo_anterior === 'general' ? 'Comercio' : 'Turismo'}</span> → <span className="font-bold">{item.detalles?.tipo_nuevo === 'general' ? 'Comercio' : 'Turismo'}</span></>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(item.created_at)}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // ===================== MODAL DE PLANES =====================
+  const renderPlansModal = () => {
+    if (!showPlansModal) return null
+    const esTurismo = user?.tipo_cuenta === 'turismo'
+    return (
+      <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10001 }} onClick={() => setShowPlansModal(false)}>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto ${esTurismo ? 'max-w-xl' : 'max-w-4xl'}`} onClick={e => e.stopPropagation()}>
+          <button onClick={() => setShowPlansModal(false)} className="absolute top-3 right-3 z-10 h-7 w-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors">
+            <span className="material-symbols-outlined text-slate-600 text-base">close</span>
+          </button>
+          <div className="p-4 pt-5 pb-5">
+            {esTurismo ? <TurismoPlans hideRecommended /> : <GeneralPlans hideRecommended />}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }} onClick={() => { if (!showPlansModal) onClose() }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="bg-primary px-6 py-5 text-center relative">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header compacto */}
+        <div className="bg-primary px-6 py-4 text-center relative shrink-0">
           <button onClick={onClose} className="absolute top-3 right-3 h-6 w-6 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
             <span className="material-symbols-outlined text-white text-sm">close</span>
           </button>
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-            <span className="material-symbols-outlined text-4xl text-white">person</span>
-          </div>
           {loading ? (
             <p className="text-white/70 text-sm">Cargando...</p>
           ) : user ? (
-            <>
-              <h3 className="text-lg font-bold text-white">{user.nombre}</h3>
-              <span className={`text-xs font-bold ${planColor}`}>Plan {planLabel(user.plan_id)}</span>
-            </>
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl text-white">person</span>
+              </div>
+              <div className="text-left">
+                <h3 className="text-base font-bold text-white leading-tight">{user.nombre}</h3>
+                <span className={`text-xs font-bold ${planColor(user.plan_id)}`}>Plan {planLabel(user.plan_id)}</span>
+              </div>
+            </div>
           ) : (
             <p className="text-white/70 text-sm">Sin datos</p>
           )}
         </div>
 
-        {/* Datos */}
+        {/* Tabs */}
         {user && (
-          <div className="px-6 py-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">mail</span>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Correo</p>
-                <p className="text-sm text-slate-700">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">call</span>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Teléfono</p>
-                <p className="text-sm text-slate-700">{user.telefono || '—'}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">location_on</span>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</p>
-                <p className="text-sm text-slate-700">{ubicacion}</p>
-              </div>
-            </div>
-
-            {/* Tipo de cuenta - editable */}
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">storefront</span>
-              <div className="flex-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Tipo de cuenta</p>
-                {!editing ? (
-                  <p className="text-sm text-slate-700">{tipoCuentaLabel()}</p>
-                ) : (
-                  <div className="mt-1 space-y-2">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setTipoCuenta('general')}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${tipoCuenta === 'general' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                      >Comercio</button>
-                      <button
-                        onClick={() => { setTipoCuenta('turismo'); if (planId === 2) setPlanId(1) }}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${tipoCuenta === 'turismo' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                      >Turismo</button>
-                    </div>
-                    {tipoCuenta === 'general' && (
-                      <div className="flex flex-col gap-1.5 ml-1">
-                        <label className="flex items-center gap-2 cursor-pointer" onClick={() => setVendeProductos(!vendeProductos)}>
-                          <div className={checkboxClass(vendeProductos)}>
-                            {vendeProductos && <span className="material-symbols-outlined text-white text-xs">check</span>}
-                          </div>
-                          <span className="text-xs text-slate-600">Productos</span>
-                          {counts?.productos > 0 && <span className="text-[10px] text-slate-400">({counts.productos})</span>}
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer" onClick={() => setOfreceServicios(!ofreceServicios)}>
-                          <div className={checkboxClass(ofreceServicios)}>
-                            {ofreceServicios && <span className="material-symbols-outlined text-white text-xs">check</span>}
-                          </div>
-                          <span className="text-xs text-slate-600">Servicios</span>
-                          {counts?.servicios > 0 && <span className="text-[10px] text-slate-400">({counts.servicios})</span>}
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer" onClick={() => setOfreceArriendos(!ofreceArriendos)}>
-                          <div className={checkboxClass(ofreceArriendos)}>
-                            {ofreceArriendos && <span className="material-symbols-outlined text-white text-xs">check</span>}
-                          </div>
-                          <span className="text-xs text-slate-600">Arriendos</span>
-                          {counts?.arriendos > 0 && <span className="text-[10px] text-slate-400">({counts.arriendos})</span>}
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Plan - editable */}
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">star</span>
-              <div className="flex-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Plan</p>
-                {!editing ? (
-                  <p className="text-sm text-slate-700">Plan {planLabel(user.plan_id)}</p>
-                ) : (
-                  <div className="flex gap-2 mt-1">
-                    {(tipoCuenta === 'turismo' ? [1, 3] : [1, 2, 3]).map(p => (
-                      <button
-                        key={p}
-                        onClick={() => setPlanId(p)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${planId === p
-                          ? (p === 3 ? 'bg-amber-400 text-amber-900' : p === 2 ? 'bg-blue-500 text-white' : 'bg-slate-500 text-white')
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                      >{planLabel(p)}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-lg text-primary/60 mt-0.5">calendar_today</span>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Miembro desde</p>
-                <p className="text-sm text-slate-700">{user.created_at ? new Date(user.created_at).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</p>
-              </div>
-            </div>
-
-            {/* Botones */}
-            <div className="pt-2 border-t border-slate-100">
-              {!editing ? (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-sm">edit</span>
-                  Editar cuenta
+          <>
+            <div className="flex border-b border-slate-100 shrink-0">
+              {tabs.map(tab => (
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); if (editing) cancelEditing() }}
+                  className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-xs font-bold transition-all relative ${activeTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
+                  <span className="material-symbols-outlined text-sm">{tab.icon}</span>
+                  {tab.label}
+                  {activeTab === tab.id && <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full"></div>}
                 </button>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditing(false)
-                      setTipoCuenta(user.tipo_cuenta || 'general')
-                      setVendeProductos(!!user.vende_productos)
-                      setOfreceServicios(!!user.ofrece_servicios)
-                      setOfreceArriendos(!!user.ofrece_arriendos)
-                      setPlanId(user.plan_id || 1)
-                    }}
-                    className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all"
-                  >Cancelar</button>
-                  <button
-                    onClick={handleSaveClick}
-                    disabled={saving}
-                    className="flex-1 py-2 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  >
-                    {saving ? 'Guardando...' : <><span className="material-symbols-outlined text-sm">save</span>Guardar</>}
-                  </button>
-                </div>
-              )}
+              ))}
             </div>
-          </div>
+
+            {/* Contenido de la pestaña */}
+            <div className="px-5 py-4 overflow-y-auto flex-1">
+              {activeTab === 'datos' && renderDatosTab()}
+              {activeTab === 'plan' && renderPlanTab()}
+              {activeTab === 'historial' && renderHistorialTab()}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Popup de confirmación de eliminación */}
-      {confirmPopup && (
-        <ConfirmDeletePopup
-          message={confirmPopup.message}
-          details={confirmPopup.details}
-          onCancel={() => setConfirmPopup(null)}
-          onConfirm={() => {
-            setConfirmPopup(null)
-            handleSave(confirmPopup.deleteTipos || [])
-          }}
-        />
-      )}
+      {/* Modal de planes disponibles */}
+      {renderPlansModal()}
 
-      {/* Popup de confirmación de downgrade */}
+      {/* Popups de confirmación */}
+      {confirmPopup && (
+        <ConfirmDeletePopup message={confirmPopup.message} details={confirmPopup.details}
+          onCancel={() => setConfirmPopup(null)}
+          onConfirm={() => { setConfirmPopup(null); handleSave(confirmPopup.deleteTipos || []) }} />
+      )}
       {downgradePopup && (
-        <ConfirmDowngradePopup
-          message={downgradePopup.message}
-          items={downgradePopup.items}
+        <ConfirmDowngradePopup message={downgradePopup.message} items={downgradePopup.items}
           onCancel={() => setDowngradePopup(null)}
-          onConfirm={() => {
-            setDowngradePopup(null)
-            handleSave()
-          }}
-        />
+          onConfirm={() => { setDowngradePopup(null); handleSave() }} />
       )}
     </div>
   )

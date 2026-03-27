@@ -195,7 +195,7 @@ function ValueOrBool({ value }) {
   return <span className="text-[11px] font-bold text-primary">{value}</span>
 }
 
-function GeneralPlans() {
+function GeneralPlans({ hideRecommended } = {}) {
   return (
     <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
       {plans.map((plan) => (
@@ -207,7 +207,7 @@ function GeneralPlans() {
               : 'border-slate-200 hover:border-primary/30'
           }`}
         >
-          {plan.highlight && (
+          {plan.highlight && !hideRecommended && (
             <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-primary text-[8px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full">
               Recomendado
             </span>
@@ -342,7 +342,7 @@ function GeneralPlans() {
   )
 }
 
-function TurismoPlans() {
+function TurismoPlans({ hideRecommended } = {}) {
   return (
     <div className="flex sm:grid sm:grid-cols-2 gap-3 max-w-lg mx-auto overflow-x-auto pb-2 snap-x snap-mandatory">
       {plansTurismo.map((plan) => (
@@ -354,7 +354,7 @@ function TurismoPlans() {
               : 'border-slate-200 hover:border-primary/30'
           }`}
         >
-          {plan.highlight && (
+          {plan.highlight && !hideRecommended && (
             <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-primary text-[8px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full">
               Recomendado
             </span>
@@ -462,6 +462,8 @@ function TurismoPlans() {
     </div>
   )
 }
+
+export { GeneralPlans, TurismoPlans }
 
 export default function PlansModal({ onClose }) {
   const [tipo, setTipo] = useState(null)
