@@ -1,5 +1,34 @@
 # Registro de Cambios - Solo a un Click
 
+## 27 de Marzo 2026 (sesión 18) - Modal sesión con 3 pestañas + endpoints perfil
+
+### Modal de sesión reestructurado con pestañas
+- **Pestaña Datos Personales:** nombre (solo lectura), correo, teléfono, dirección y fecha de inscripción
+  - Correo, teléfono y dirección son editables con botón "Editar datos"
+  - Validación de email duplicado en backend al cambiar correo
+- **Pestaña Plan:** plan actual, tipo de cuenta (Comercio/Turismo), selección de plan
+  - Botón "Ver planes disponibles" abre popup con los mismos planes de la página principal
+  - Popup usa componentes GeneralPlans/TurismoPlans según tipo de cuenta del usuario
+  - Sin etiqueta "Recomendado" en el popup del admin (solo aparece en la página pública)
+  - Click fuera del popup de planes solo cierra el popup, no el modal de sesión
+- **Pestaña Historial:** fecha de registro, plan actual, y timeline visual de cambios
+  - Muestra cambios de plan (upgrade/downgrade) y cambios de tipo de cuenta con fechas
+  - Datos obtenidos desde activity_log en la BD
+
+### Backend: nuevos endpoints
+- `GET /api/auth/profile/plans-info?tipo=` — planes disponibles según tipo de cuenta
+- `GET /api/auth/profile/history` — historial de cambios de plan y tipo de cuenta
+- `PUT /api/auth/profile` — ahora acepta email, telefono y direccion con validación
+
+### Componentes actualizados
+- PlansModal.jsx: exporta GeneralPlans y TurismoPlans con prop `hideRecommended`
+- AdminHeader.jsx: ProfileModal completamente reestructurado con sistema de pestañas
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña** (único pendiente crítico)
+
+---
+
 ## 25 de Marzo 2026 (sesión 17) - Sección Turismo en home + rotación de secciones
 
 ### Nueva sección "Turismo" en página principal
