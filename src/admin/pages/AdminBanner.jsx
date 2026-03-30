@@ -181,7 +181,7 @@ export default function AdminBanner() {
   }
 
   const fetchItems = () => {
-    fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
         if (data.listings) {
@@ -210,7 +210,7 @@ export default function AdminBanner() {
     if (!esPremium) { setLoading(false); return }
     // Cargar categorías en paralelo
     if (tiposUsuario.length > 0) {
-      fetch(`${API}/api/categorias?tipo=${tiposUsuario.join(',')}`)
+      fetch(`${API}/api/v1/categorias?tipo=${tiposUsuario.join(',')}`)
         .then(r => r.json())
         .then(data => { if (data.categorias) setCategoriasDB(data.categorias) })
         .catch(err => console.error('Error cargando categorías:', err))
@@ -260,7 +260,7 @@ export default function AdminBanner() {
         const blob = await generateCroppedBlob(formData.imagenPreview, formData.imagenPos, formData.imagenScale, formData.imagenNaturalW, formData.imagenNaturalH)
         const fd = new FormData()
         fd.append('imagen', blob, 'banner.jpg')
-        const upRes = await fetch(`${API}/api/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+        const upRes = await fetch(`${API}/api/v1/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
         const upData = await upRes.json()
         if (upData.url) imagenUrl = upData.url
       }
@@ -283,8 +283,8 @@ export default function AdminBanner() {
       }
 
       const res = editingId
-        ? await fetch(`${API}/api/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
-        : await fetch(`${API}/api/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+        ? await fetch(`${API}/api/v1/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+        : await fetch(`${API}/api/v1/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
 
       if (res.ok) {
         fetchItems()
@@ -300,7 +300,7 @@ export default function AdminBanner() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API}/api/v1/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) { setItems(prev => prev.filter(p => p.id !== id)); showToast('Eliminado') }
       else showToast('Error al eliminar', 'error')
     } catch (err) { showToast('Error de conexión', 'error') }
@@ -328,8 +328,8 @@ export default function AdminBanner() {
 
     // Guardar en BD
     Promise.all([
-      fetch(`${API}/api/listings/${prod.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(prod), banner_orden: principalOrden }) }),
-      fetch(`${API}/api/listings/${currentPrincipal.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(currentPrincipal), banner_orden: prod.orden }) }),
+      fetch(`${API}/api/v1/listings/${prod.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(prod), banner_orden: principalOrden }) }),
+      fetch(`${API}/api/v1/listings/${currentPrincipal.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(currentPrincipal), banner_orden: prod.orden }) }),
     ]).catch(err => console.error('Error reordenando:', err))
   }
 

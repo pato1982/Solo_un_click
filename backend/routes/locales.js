@@ -5,6 +5,7 @@ const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware, programadorMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -45,7 +46,7 @@ router.get('/categorias', async (req, res) => {
     )
     res.json({ categorias: rows })
   } catch (err) {
-    console.error('Error al obtener categorías de barrio:', err)
+    logger.error('Error al obtener categorías de barrio', { error: err.message })
     res.status(500).json({ error: 'Error al obtener categorías' })
   }
 })
@@ -58,11 +59,12 @@ router.get('/', async (req, res) => {
        FROM locales_barrio l
        LEFT JOIN categorias_barrio cb ON l.categoria_barrio_id = cb.id
        WHERE l.activo = 1
-       ORDER BY RAND()`
+       ORDER BY RAND()
+       LIMIT 200`
     )
     res.json({ locales: rows })
   } catch (err) {
-    console.error('Error al obtener locales:', err)
+    logger.error('Error al obtener locales', { error: err.message })
     res.status(500).json({ error: 'Error al obtener locales' })
   }
 })
@@ -78,7 +80,7 @@ router.get('/admin', authMiddleware, programadorMiddleware, async (req, res) => 
     )
     res.json({ locales: rows })
   } catch (err) {
-    console.error('Error al obtener locales (admin):', err)
+    logger.error('Error al obtener locales (admin)', { error: err.message })
     res.status(500).json({ error: 'Error al obtener locales' })
   }
 })
@@ -100,7 +102,7 @@ router.post('/', authMiddleware, programadorMiddleware, upload.single('imagen'),
     await logActivity(req.userId, 'crear', 'local_barrio', result.insertId, { nombre })
     res.status(201).json({ message: 'Local creado', id: result.insertId })
   } catch (err) {
-    console.error('Error al crear local:', err)
+    logger.error('Error al crear local', { error: err.message })
     res.status(500).json({ error: 'Error al crear local' })
   }
 })
@@ -134,7 +136,7 @@ router.put('/:id', authMiddleware, programadorMiddleware, upload.single('imagen'
     await logActivity(req.userId, 'editar', 'local_barrio', parseInt(req.params.id), { nombre })
     res.json({ message: 'Local actualizado' })
   } catch (err) {
-    console.error('Error al actualizar local:', err)
+    logger.error('Error al actualizar local', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar local' })
   }
 })
@@ -146,7 +148,7 @@ router.patch('/:id/crop', authMiddleware, programadorMiddleware, async (req, res
     await pool.query('UPDATE locales_barrio SET imagen_crop = ?, updated_at = NOW() WHERE id = ?', [JSON.stringify(imagen_crop), req.params.id])
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
-    console.error('Error al guardar encuadre:', err)
+    logger.error('Error al guardar encuadre', { error: err.message })
     res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
@@ -160,7 +162,7 @@ router.patch('/:id/toggle', authMiddleware, programadorMiddleware, async (req, r
     await pool.query('UPDATE locales_barrio SET activo = ?, updated_at = NOW() WHERE id = ?', [newState, req.params.id])
     res.json({ message: newState ? 'Local activado' : 'Local desactivado', activo: newState })
   } catch (err) {
-    console.error('Error al cambiar estado:', err)
+    logger.error('Error al cambiar estado', { error: err.message })
     res.status(500).json({ error: 'Error al cambiar estado' })
   }
 })
@@ -179,7 +181,7 @@ router.delete('/:id', authMiddleware, programadorMiddleware, async (req, res) =>
     await logActivity(req.userId, 'eliminar', 'local_barrio', parseInt(req.params.id))
     res.json({ message: 'Local eliminado' })
   } catch (err) {
-    console.error('Error al eliminar local:', err)
+    logger.error('Error al eliminar local', { error: err.message })
     res.status(500).json({ error: 'Error al eliminar local' })
   }
 })

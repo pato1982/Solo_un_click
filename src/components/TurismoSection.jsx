@@ -62,7 +62,7 @@ export default function TurismoSection({ onViewAll, onOpenTour }) {
   const intervalRef = useRef(null)
 
   useEffect(() => {
-    fetch(`${API}/api/tours/public`)
+    fetch(`${API}/api/v1/tours/public`)
       .then(r => r.json())
       .then(data => setTours(data.tours || []))
       .catch(() => setTours([]))

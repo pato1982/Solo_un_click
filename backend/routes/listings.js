@@ -4,6 +4,7 @@ const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
+const logger = require('../logger')
 
 const router = express.Router()
 const uploadsDir = path.join(__dirname, '..', 'uploads')
@@ -17,7 +18,9 @@ function sanitize(str) {
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
-    const { tipo, badge, user_id, carousel, banner } = req.query
+    const { tipo, badge, user_id, carousel, banner, page, limit: queryLimit } = req.query
+    const pageNum = Math.max(1, parseInt(page) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(queryLimit) || 50))
 
     let query = `
       SELECT l.*, li.url as imagen,
@@ -79,6 +82,9 @@ router.get('/', async (req, res) => {
       query += ' ORDER BY l.banner_orden ASC'
     } else {
       query += ' ORDER BY l.created_at DESC'
+      // Paginación solo para listados generales (no carousel/banner)
+      query += ' LIMIT ? OFFSET ?'
+      params.push(pageSize, (pageNum - 1) * pageSize)
     }
 
     let [rows] = await pool.query(query, params)
@@ -121,9 +127,9 @@ router.get('/', async (req, res) => {
       }
     }
 
-    res.json({ listings: rows })
+    res.json({ listings: rows, page: pageNum, limit: pageSize })
   } catch (err) {
-    console.error('Error al obtener listings:', err)
+    logger.error('Error al obtener listings', { error: err.message })
     res.status(500).json({ error: 'Error al obtener publicaciones' })
   }
 })
@@ -169,7 +175,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
 
     res.json({ listings: rows })
   } catch (err) {
-    console.error('Error al obtener mis listings:', err)
+    logger.error('Error al obtener mis listings', { error: err.message })
     res.status(500).json({ error: 'Error al obtener publicaciones' })
   }
 })
@@ -197,38 +203,47 @@ router.post('/', authMiddleware, async (req, res) => {
     // Validar que badge solo se use con productos
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
-    // Insertar listing
-    const [result] = await pool.query(
-      `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, carousel_posicion, carousel_orden, banner_orden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
-    )
+    // Transacción: insertar listing + imagen + tallas + medidas
+    const conn = await pool.getConnection()
+    let listingId
+    try {
+      await conn.beginTransaction()
 
-    const listingId = result.insertId
-
-    // Guardar imagen
-    if (imagen) {
-      await pool.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [listingId, imagen])
-    }
-
-    // Guardar tallas
-    if (tallas && tallas.tipo && tallas.seleccion && tallas.seleccion.length > 0) {
-      const sizeValues = tallas.seleccion.map(v => [listingId, tallas.tipo, v])
-      await pool.query('INSERT INTO listing_sizes (listing_id, tipo_talla, valor) VALUES ?', [sizeValues])
-    }
-
-    // Guardar medidas
-    if (medidas && (medidas.alto || medidas.ancho || medidas.profundidad)) {
-      await pool.query(
-        'INSERT INTO listing_dimensions (listing_id, alto, ancho, profundidad) VALUES (?, ?, ?, ?)',
-        [listingId, medidas.alto || null, medidas.ancho || null, medidas.profundidad || null]
+      const [result] = await conn.query(
+        `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, carousel_posicion, carousel_orden, banner_orden)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
       )
+      listingId = result.insertId
+
+      if (imagen) {
+        await conn.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [listingId, imagen])
+      }
+
+      if (tallas && tallas.tipo && tallas.seleccion && tallas.seleccion.length > 0) {
+        const sizeValues = tallas.seleccion.map(v => [listingId, tallas.tipo, v])
+        await conn.query('INSERT INTO listing_sizes (listing_id, tipo_talla, valor) VALUES ?', [sizeValues])
+      }
+
+      if (medidas && (medidas.alto || medidas.ancho || medidas.profundidad)) {
+        await conn.query(
+          'INSERT INTO listing_dimensions (listing_id, alto, ancho, profundidad) VALUES (?, ?, ?, ?)',
+          [listingId, medidas.alto || null, medidas.ancho || null, medidas.profundidad || null]
+        )
+      }
+
+      await conn.commit()
+    } catch (err) {
+      await conn.rollback()
+      throw err
+    } finally {
+      conn.release()
     }
 
     await logActivity(req.userId, 'crear', 'listing', listingId, { tipo, nombre, seccion })
     res.status(201).json({ message: 'Publicación creada', id: listingId })
   } catch (err) {
-    console.error('Error al crear listing:', err)
+    logger.error('Error al crear listing', { error: err.message })
     res.status(500).json({ error: 'Error al crear publicación' })
   }
 })
@@ -246,39 +261,48 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
-    // Actualizar listing
-    await pool.query(
-      `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
-       WHERE id=?`,
-      [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
-    )
+    // Transacción: actualizar listing + imagen + tallas + medidas
+    const conn = await pool.getConnection()
+    try {
+      await conn.beginTransaction()
 
-    // Actualizar imagen
-    if (imagen) {
-      await pool.query('DELETE FROM listing_images WHERE listing_id = ?', [id])
-      await pool.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [id, imagen])
-    }
-
-    // Actualizar tallas
-    await pool.query('DELETE FROM listing_sizes WHERE listing_id = ?', [id])
-    if (tallas && tallas.tipo && tallas.seleccion && tallas.seleccion.length > 0) {
-      const sizeValues = tallas.seleccion.map(v => [id, tallas.tipo, v])
-      await pool.query('INSERT INTO listing_sizes (listing_id, tipo_talla, valor) VALUES ?', [sizeValues])
-    }
-
-    // Actualizar medidas
-    await pool.query('DELETE FROM listing_dimensions WHERE listing_id = ?', [id])
-    if (medidas && (medidas.alto || medidas.ancho || medidas.profundidad)) {
-      await pool.query(
-        'INSERT INTO listing_dimensions (listing_id, alto, ancho, profundidad) VALUES (?, ?, ?, ?)',
-        [id, medidas.alto || null, medidas.ancho || null, medidas.profundidad || null]
+      await conn.query(
+        `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
+         WHERE id=?`,
+        [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
       )
+
+      if (imagen) {
+        await conn.query('DELETE FROM listing_images WHERE listing_id = ?', [id])
+        await conn.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [id, imagen])
+      }
+
+      await conn.query('DELETE FROM listing_sizes WHERE listing_id = ?', [id])
+      if (tallas && tallas.tipo && tallas.seleccion && tallas.seleccion.length > 0) {
+        const sizeValues = tallas.seleccion.map(v => [id, tallas.tipo, v])
+        await conn.query('INSERT INTO listing_sizes (listing_id, tipo_talla, valor) VALUES ?', [sizeValues])
+      }
+
+      await conn.query('DELETE FROM listing_dimensions WHERE listing_id = ?', [id])
+      if (medidas && (medidas.alto || medidas.ancho || medidas.profundidad)) {
+        await conn.query(
+          'INSERT INTO listing_dimensions (listing_id, alto, ancho, profundidad) VALUES (?, ?, ?, ?)',
+          [id, medidas.alto || null, medidas.ancho || null, medidas.profundidad || null]
+        )
+      }
+
+      await conn.commit()
+    } catch (err) {
+      await conn.rollback()
+      throw err
+    } finally {
+      conn.release()
     }
 
     await logActivity(req.userId, 'editar', 'listing', parseInt(id), { tipo, nombre, seccion })
     res.json({ message: 'Publicación actualizada' })
   } catch (err) {
-    console.error('Error al editar listing:', err)
+    logger.error('Error al editar listing', { error: err.message })
     res.status(500).json({ error: 'Error al editar publicación' })
   }
 })
@@ -306,7 +330,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'eliminar', 'listing', parseInt(id))
     res.json({ message: 'Publicación eliminada' })
   } catch (err) {
-    console.error('Error al eliminar listing:', err)
+    logger.error('Error al eliminar listing', { error: err.message })
     res.status(500).json({ error: 'Error al eliminar publicación' })
   }
 })
@@ -329,7 +353,7 @@ router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
     ])
     res.json({ message: 'Posición actualizada' })
   } catch (err) {
-    console.error('Error actualizando posición banner:', err)
+    logger.error('Error actualizando posición banner', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar' })
   }
 })

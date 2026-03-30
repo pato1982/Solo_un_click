@@ -139,7 +139,7 @@ export default function StoresPage({ sidebarOpen, onBack, activeFilter, mapMode,
   const [currentPage, setCurrentPage] = useState(0)
 
   useEffect(() => {
-    fetch(`${API}/api/locales`)
+    fetch(`${API}/api/v1/locales`)
       .then(r => r.json())
       .then(data => {
         const mapped = (data.locales || []).map(l => ({

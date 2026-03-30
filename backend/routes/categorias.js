@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../db')
+const logger = require('../logger')
 
 // GET /api/categorias?tipo=turismo — categorías con subcategorías
 router.get('/', async (req, res) => {
@@ -49,7 +50,7 @@ router.get('/', async (req, res) => {
 
     res.json({ categorias: [...catMap.values()] })
   } catch (err) {
-    console.error('Error obteniendo categorías:', err)
+    logger.error('Error obteniendo categorías', { error: err.message })
     res.status(500).json({ error: 'Error interno' })
   }
 })
@@ -89,7 +90,7 @@ router.get('/sidebar', async (req, res) => {
 
     res.json({ categorias: [...catMap.values()] })
   } catch (err) {
-    console.error('Error obteniendo categorías sidebar:', err)
+    logger.error('Error obteniendo categorías sidebar', { error: err.message })
     res.status(500).json({ error: 'Error interno' })
   }
 })

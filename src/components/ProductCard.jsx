@@ -4,7 +4,7 @@ const API = import.meta.env.VITE_API || ''
 function trackProductClick(product) {
   const userId = product.user_id
   if (!userId) return
-  fetch(`${API}/api/analytics/track`, {
+  fetch(`${API}/api/v1/analytics/track`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: product.id }),
   }).catch(() => {})

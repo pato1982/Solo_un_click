@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -19,7 +20,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     res.json({ negocios: rows })
   } catch (err) {
-    console.error('Error al obtener turismo:', err)
+    logger.error('Error al obtener turismo', { error: err.message })
     res.status(500).json({ error: 'Error al obtener negocios de turismo' })
   }
 })
@@ -38,7 +39,7 @@ router.get('/public', async (req, res) => {
 
     res.json({ negocios: rows })
   } catch (err) {
-    console.error('Error al obtener turismo público:', err)
+    logger.error('Error al obtener turismo público', { error: err.message })
     res.status(500).json({ error: 'Error al obtener negocios de turismo' })
   }
 })
@@ -68,7 +69,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     res.status(201).json({ message: 'Negocio creado', id: result.insertId })
   } catch (err) {
-    console.error('Error al crear turismo:', err)
+    logger.error('Error al crear turismo', { error: err.message })
     res.status(500).json({ error: 'Error al crear negocio de turismo' })
   }
 })
@@ -96,7 +97,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Negocio actualizado' })
   } catch (err) {
-    console.error('Error al actualizar turismo:', err)
+    logger.error('Error al actualizar turismo', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar negocio de turismo' })
   }
 })
@@ -115,7 +116,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Negocio eliminado' })
   } catch (err) {
-    console.error('Error al eliminar turismo:', err)
+    logger.error('Error al eliminar turismo', { error: err.message })
     res.status(500).json({ error: 'Error al eliminar negocio de turismo' })
   }
 })
@@ -134,7 +135,7 @@ router.patch('/:id/toggle', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Estado del negocio actualizado' })
   } catch (err) {
-    console.error('Error al cambiar estado del negocio:', err)
+    logger.error('Error al cambiar estado del negocio', { error: err.message })
     res.status(500).json({ error: 'Error al cambiar estado del negocio' })
   }
 })

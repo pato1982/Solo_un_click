@@ -35,7 +35,7 @@ export default function AdminTurismo() {
   const token = localStorage.getItem('token')
 
   const fetchNegocios = () => {
-    fetch(`${API}/api/turismo`, {
+    fetch(`${API}/api/v1/turismo`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -91,8 +91,8 @@ export default function AdminTurismo() {
     setSaving(true)
     try {
       const url = selected
-        ? `${API}/api/turismo/${selected}`
-        : `${API}/api/turismo`
+        ? `${API}/api/v1/turismo/${selected}`
+        : `${API}/api/v1/turismo`
       const method = selected ? 'PUT' : 'POST'
       const res = await fetch(url, {
         method,
@@ -118,7 +118,7 @@ export default function AdminTurismo() {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este negocio de turismo?')) return
     try {
-      await fetch(`${API}/api/turismo/${id}`, {
+      await fetch(`${API}/api/v1/turismo/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })

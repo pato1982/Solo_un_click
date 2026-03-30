@@ -207,11 +207,11 @@ export default function AdminProductos() {
   // Cargar productos y categorías desde API
   useEffect(() => {
     const catUrl = tiposUsuario.length > 0
-      ? `${API}/api/categorias?tipo=${tiposUsuario.join(',')}`
+      ? `${API}/api/v1/categorias?tipo=${tiposUsuario.join(',')}`
       : null
 
     Promise.all([
-      fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
     ])
       .then(([data, catsData]) => {
@@ -312,7 +312,7 @@ export default function AdminProductos() {
         )
         const fd = new FormData()
         fd.append('imagen', blob, 'producto.jpg')
-        const uploadRes = await fetch(`${API}/api/upload`, {
+        const uploadRes = await fetch(`${API}/api/v1/upload`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: fd
@@ -347,13 +347,13 @@ export default function AdminProductos() {
 
       let res
       if (editingId) {
-        res = await fetch(`${API}/api/listings/${editingId}`, {
+        res = await fetch(`${API}/api/v1/listings/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body)
         })
       } else {
-        res = await fetch(`${API}/api/listings`, {
+        res = await fetch(`${API}/api/v1/listings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body)
@@ -362,7 +362,7 @@ export default function AdminProductos() {
 
       if (res.ok) {
         // Recargar lista
-        const listRes = await fetch(`${API}/api/listings/mine`, {
+        const listRes = await fetch(`${API}/api/v1/listings/mine`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const listData = await listRes.json()
@@ -402,7 +402,7 @@ export default function AdminProductos() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/listings/${id}`, {
+      const res = await fetch(`${API}/api/v1/listings/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })

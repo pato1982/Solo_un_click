@@ -36,7 +36,7 @@ export default function EventsSection({ onViewAll }) {
   const [events, setEvents] = useState([])
 
   useEffect(() => {
-    fetch(`${API}/api/eventos`)
+    fetch(`${API}/api/v1/eventos`)
       .then(r => r.json())
       .then(data => {
         const mapped = (data.eventos || []).slice(0, 8).map(e => ({

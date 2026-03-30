@@ -1,5 +1,6 @@
 const express = require('express')
 const pool = require('../db')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -65,7 +66,7 @@ router.get('/public', async (req, res) => {
 
     res.json({ servicios: conImagenes })
   } catch (err) {
-    console.error('Error al obtener servicios públicos:', err)
+    logger.error('Error al obtener servicios públicos', { error: err.message })
     res.status(500).json({ error: 'Error al obtener servicios' })
   }
 })

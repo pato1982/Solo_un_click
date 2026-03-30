@@ -44,7 +44,7 @@ export default function AdminPagina() {
   // Cargar datos existentes
   useEffect(() => {
     const headers = { Authorization: `Bearer ${token}` }
-    fetch(`${API}/api/pagina`, { headers })
+    fetch(`${API}/api/v1/pagina`, { headers })
       .then(r => {
         if (r.status === 401 && token !== 'dev-token') {
           localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'
@@ -113,7 +113,7 @@ export default function AdminPagina() {
     if (typeof imagen === 'string') return imagen
     const fd = new FormData()
     fd.append('imagen', imagen)
-    const res = await fetch(`${API}/api/upload`, {
+    const res = await fetch(`${API}/api/v1/upload`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: fd,
@@ -169,13 +169,13 @@ export default function AdminPagina() {
 
       let res
       if (paginaId) {
-        res = await fetch(`${API}/api/pagina/${paginaId}`, {
+        res = await fetch(`${API}/api/v1/pagina/${paginaId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body),
         })
       } else {
-        res = await fetch(`${API}/api/pagina`, {
+        res = await fetch(`${API}/api/v1/pagina`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(body),
@@ -269,7 +269,7 @@ export default function AdminPagina() {
                     const body = activeTab === 'superior'
                       ? { crop_superior: cropData, crop_inferior: infCrop }
                       : { crop_superior: supCrop, crop_inferior: cropData }
-                    fetch(`${API}/api/pagina/${paginaId}/crop`, {
+                    fetch(`${API}/api/v1/pagina/${paginaId}/crop`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify(body),

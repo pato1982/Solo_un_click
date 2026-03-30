@@ -5,3 +5,4 @@ dist
 .DS_Store
 CREDENCIALES.md
 backend/uploads
+backend/logs/*.log

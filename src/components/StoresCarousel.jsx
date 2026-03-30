@@ -38,7 +38,7 @@ export default function StoresCarousel({ onViewAll }) {
   const posRef = useRef(0)
 
   useEffect(() => {
-    fetch(`${API}/api/locales`)
+    fetch(`${API}/api/v1/locales`)
       .then(r => r.json())
       .then(data => {
         const mapped = (data.locales || []).map(l => ({

@@ -38,7 +38,7 @@ export default function AdminNegocio() {
   const tieneSlogan = !esTurismo && user.plan_id && user.plan_id >= 2
 
   useEffect(() => {
-    fetch(`${API}/api/business`, {
+    fetch(`${API}/api/v1/business`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => {
@@ -94,7 +94,7 @@ export default function AdminNegocio() {
     setSaving(true)
     setError('')
     try {
-      const res = await fetch(`${API}/api/business`, {
+      const res = await fetch(`${API}/api/v1/business`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

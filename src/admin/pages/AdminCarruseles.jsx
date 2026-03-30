@@ -148,10 +148,10 @@ export default function AdminCarruseles() {
   // Cargar items desde API
   useEffect(() => {
     if (!esNormal) { setLoading(false); return }
-    const catUrl = tiposUsuario.length > 0 ? `${API}/api/categorias?tipo=${tiposUsuario.join(',')}` : null
+    const catUrl = tiposUsuario.length > 0 ? `${API}/api/v1/categorias?tipo=${tiposUsuario.join(',')}` : null
     Promise.all([
-      fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${API}/api/carousels`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/carousels`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
     ]).then(([listData, carData, catsData]) => {
       if (catsData.categorias) setCategoriasDB(catsData.categorias)
@@ -209,7 +209,7 @@ export default function AdminCarruseles() {
         const blob = await generateCroppedBlob(formData.imagenPreview, formData.imagenPos, formData.imagenScale, formData.imagenNaturalW, formData.imagenNaturalH)
         const fd = new FormData()
         fd.append('imagen', blob, 'carrusel.jpg')
-        const upRes = await fetch(`${API}/api/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+        const upRes = await fetch(`${API}/api/v1/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
         const upData = await upRes.json()
         if (upData.url) imagenUrl = upData.url
       }
@@ -233,12 +233,12 @@ export default function AdminCarruseles() {
       }
 
       const res = editingId
-        ? await fetch(`${API}/api/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
-        : await fetch(`${API}/api/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+        ? await fetch(`${API}/api/v1/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+        : await fetch(`${API}/api/v1/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
 
       if (res.ok) {
         // Recargar
-        const listRes = await fetch(`${API}/api/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
+        const listRes = await fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
         const listData = await listRes.json()
         if (listData.listings) {
           setItems(listData.listings.filter(l => l.carousel_posicion).map(l => ({
@@ -261,7 +261,7 @@ export default function AdminCarruseles() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API}/api/v1/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) { setItems(prev => prev.filter(p => p.id !== id)); showToast('Eliminado') }
       else showToast('Error al eliminar', 'error')
     } catch (err) { showToast('Error de conexión', 'error') }
@@ -294,7 +294,7 @@ export default function AdminCarruseles() {
     try {
       const fd = new FormData()
       fd.append('nombre', carouselNames[activeTab - 1])
-      await fetch(`${API}/api/carousels/${activeTab}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+      await fetch(`${API}/api/v1/carousels/${activeTab}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
       setSaved(true); setTimeout(() => setSaved(false), 3000)
     } catch (err) { console.error('Error:', err) }
     setSaving(false)

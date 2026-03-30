@@ -29,7 +29,7 @@ function ForgotPasswordView({ onBack }) {
     setError('')
     setLoading(true)
     try {
-      const res = await fetch(`${API}/api/password-reset/request`, {
+      const res = await fetch(`${API}/api/v1/password-reset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -61,7 +61,7 @@ function ForgotPasswordView({ onBack }) {
 
     setLoading(true)
     try {
-      const res = await fetch(`${API}/api/password-reset/reset`, {
+      const res = await fetch(`${API}/api/v1/password-reset/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
@@ -213,7 +213,7 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
     setLoading(true)
 
     try {
-      const res = await fetch(`${API}/api/auth/login`, {
+      const res = await fetch(`${API}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)

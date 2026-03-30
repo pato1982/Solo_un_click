@@ -45,7 +45,7 @@ export default function AdminSidebar({ open, onClose }) {
     if (!token || token === 'dev-token') return
     const hasLocked = menuItems.some(item => item.minPlan && item.countKey && planId < item.minPlan)
     if (!hasLocked) return
-    fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => setCounts(data))
       .catch(() => {})

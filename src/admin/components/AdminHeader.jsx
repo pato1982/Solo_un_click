@@ -119,8 +119,8 @@ function ProfileModal({ onClose }) {
   useEffect(() => {
     if (!token || token === 'dev-token') { setLoading(false); return }
     Promise.all([
-      fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
     ]).then(([meData, countsData]) => {
       const u = meData.user || null
       setUser(u)
@@ -142,7 +142,7 @@ function ProfileModal({ onClose }) {
   // Cargar historial cuando se abre la pestaña
   useEffect(() => {
     if (activeTab === 'historial' && !history && token) {
-      fetch(`${API}/api/auth/profile/history`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API}/api/v1/auth/profile/history`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
         .then(data => setHistory(data.history || []))
         .catch(() => setHistory([]))
@@ -237,7 +237,7 @@ function ProfileModal({ onClose }) {
         telefono: editTelefono.trim(),
         direccion: editDireccion.trim(),
       }
-      const res = await fetch(`${API}/api/auth/profile`, {
+      const res = await fetch(`${API}/api/v1/auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -262,7 +262,7 @@ function ProfileModal({ onClose }) {
           ofrece_arriendos: data.user.ofrece_arriendos,
         })
         localStorage.setItem('user', JSON.stringify(stored))
-        const countsRes = await fetch(`${API}/api/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
+        const countsRes = await fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
         setCounts(await countsRes.json())
         // Invalidar historial para que recargue
         setHistory(null)

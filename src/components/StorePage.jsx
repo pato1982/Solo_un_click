@@ -5,7 +5,7 @@ const API = import.meta.env.VITE_API || ''
 
 function trackClick(userId, listingId) {
   if (!userId) return
-  fetch(`${API}/api/analytics/track`, {
+  fetch(`${API}/api/v1/analytics/track`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: listingId || null }),
   }).catch(() => {})
@@ -533,7 +533,7 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
   // Registrar visita a la página
   useEffect(() => {
     if (!store.userId) return
-    fetch(`${API}/api/analytics/track`, {
+    fetch(`${API}/api/v1/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: store.userId, event_type: 'page_view', pagina: 'tienda' }),
     }).catch(() => {})
@@ -543,10 +543,10 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
   useEffect(() => {
     if (!store.userId) return
     Promise.all([
-      fetch(`${API}/api/listings?user_id=${store.userId}`).then(r => r.json()),
-      fetch(`${API}/api/listings?user_id=${store.userId}&carousel=1`).then(r => r.json()),
-      fetch(`${API}/api/listings?user_id=${store.userId}&banner=1`).then(r => r.json()),
-      fetch(`${API}/api/business/${store.userId}`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?user_id=${store.userId}`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?user_id=${store.userId}&carousel=1`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?user_id=${store.userId}&banner=1`).then(r => r.json()),
+      fetch(`${API}/api/v1/business/${store.userId}`).then(r => r.json()),
     ]).then(([listData, carData, banData, bizData]) => {
       if (listData.listings) {
         setApiProducts(listData.listings.map(mapListing))

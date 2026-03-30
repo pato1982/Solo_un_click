@@ -117,12 +117,12 @@ export default function Sidebar({ activeNav, onClose, onGoHome, showInicio, onFi
 
   useEffect(() => {
     if (activeNav === 'locales') {
-      fetch(`${API}/api/locales/categorias`)
+      fetch(`${API}/api/v1/locales/categorias`)
         .then(r => r.json())
         .then(data => setLocaleCategorias(data.categorias || []))
         .catch(() => {})
     } else if (activeNav === 'eventos') {
-      fetch(`${API}/api/eventos/categorias`)
+      fetch(`${API}/api/v1/eventos/categorias`)
         .then(r => r.json())
         .then(data => setEventoCategorias(data.categorias || []))
         .catch(() => {})

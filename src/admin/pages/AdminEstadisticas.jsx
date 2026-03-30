@@ -116,9 +116,9 @@ export default function AdminEstadisticas() {
 
     if (esTurismo) {
       Promise.all([
-        fetch(`${API}/api/tours`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/portada`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/analytics/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/tours`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/portada`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/analytics/stats`, { headers }).then(r => r.json()),
       ])
         .then(([toursData, portadaData, statsData]) => {
           if (toursData.tours) setTours(toursData.tours)
@@ -132,8 +132,8 @@ export default function AdminEstadisticas() {
         .finally(() => setLoading(false))
     } else {
       Promise.all([
-        fetch(`${API}/api/listings/mine`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/analytics/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/listings/mine`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/analytics/stats`, { headers }).then(r => r.json()),
       ])
         .then(([listData, statsData]) => {
           if (listData.listings) setListings(listData.listings)

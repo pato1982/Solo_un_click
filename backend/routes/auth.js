@@ -4,9 +4,14 @@ const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator')
 const pool = require('../db')
 const logActivity = require('../logActivity')
+const logger = require('../logger')
 
 const router = express.Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'soloaunclick_secret_2026'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  logger.error('FATAL: JWT_SECRET no está configurado en variables de entorno')
+  process.exit(1)
+}
 
 // Sanitización: elimina tags HTML de un string
 function sanitize(str) {
@@ -60,7 +65,7 @@ router.post('/register', [
     )
 
     // Generar token
-    const token = jwt.sign({ id: result.insertId, email }, JWT_SECRET, { expiresIn: '7d' })
+    const token = jwt.sign({ id: result.insertId, email }, JWT_SECRET, { expiresIn: '24h' })
 
     // Registrar primera sesión
     try {
@@ -71,7 +76,7 @@ router.post('/register', [
         [result.insertId, ip, userAgent]
       )
     } catch (sessErr) {
-      console.error('Error registrando sesión:', sessErr)
+      logger.error('Error registrando sesión', { error: sessErr.message })
     }
 
     res.status(201).json({
@@ -80,7 +85,7 @@ router.post('/register', [
       user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, rol: null, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
     })
   } catch (err) {
-    console.error('Error en registro:', err)
+    logger.error('Error en registro', { error: err.message })
     res.status(500).json({ error: 'Error al registrar usuario' })
   }
 })
@@ -118,7 +123,7 @@ router.post('/login', [
     }
 
     // Generar token
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' })
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' })
 
     // Registrar sesión en user_sessions
     try {
@@ -129,7 +134,7 @@ router.post('/login', [
         [user.id, ip, userAgent]
       )
     } catch (sessErr) {
-      console.error('Error registrando sesión:', sessErr)
+      logger.error('Error registrando sesión', { error: sessErr.message })
     }
 
     res.json({
@@ -148,7 +153,7 @@ router.post('/login', [
       }
     })
   } catch (err) {
-    console.error('Error en login:', err)
+    logger.error('Error en login', { error: err.message })
     res.status(500).json({ error: 'Error al iniciar sesión' })
   }
 })
@@ -178,7 +183,7 @@ async function programadorMiddleware(req, res, next) {
     }
     next()
   } catch (err) {
-    console.error('Error verificando rol programador:', err)
+    logger.error('Error verificando rol programador', { error: err.message })
     res.status(500).json({ error: 'Error al verificar permisos' })
   }
 }
@@ -204,7 +209,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 
     res.json({ user: rows[0] })
   } catch (err) {
-    console.error('Error en /me:', err)
+    logger.error('Error en /me', { error: err.message })
     res.status(500).json({ error: 'Error al obtener usuario' })
   }
 })
@@ -233,7 +238,7 @@ router.get('/profile/counts', authMiddleware, async (req, res) => {
       carousels: carousels[0].c,
     })
   } catch (err) {
-    console.error('Error contando registros:', err)
+    logger.error('Error contando registros', { error: err.message })
     res.status(500).json({ error: 'Error al contar registros' })
   }
 })
@@ -244,106 +249,147 @@ const path = require('path')
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
 
 async function deleteListingsByType(userId, tipo) {
-  // Obtener IDs de listings a eliminar
-  const [listings] = await pool.query('SELECT id FROM listings WHERE user_id = ? AND tipo = ?', [userId, tipo])
-  if (listings.length === 0) return 0
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
 
-  const ids = listings.map(l => l.id)
+    const [listings] = await conn.query('SELECT id FROM listings WHERE user_id = ? AND tipo = ?', [userId, tipo])
+    if (listings.length === 0) { await conn.rollback(); conn.release(); return 0 }
 
-  // Obtener URLs de imágenes para borrar archivos
-  const [images] = await pool.query(`SELECT url FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-  for (const img of images) {
-    const filePath = path.join(UPLOAD_DIR, path.basename(img.url))
-    try { fs.unlinkSync(filePath) } catch (e) { /* archivo ya no existe */ }
-  }
-
-  // Eliminar registros relacionados
-  await pool.query(`DELETE FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-  await pool.query(`DELETE FROM listing_sizes WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-  await pool.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-  await pool.query(`DELETE FROM listings WHERE id IN (${ids.map(() => '?').join(',')})`, ids)
-
-  return ids.length
-}
-
-async function deleteAllCommerceData(userId) {
-  // Eliminar todos los listings (productos, servicios, arriendos)
-  const [listings] = await pool.query('SELECT id FROM listings WHERE user_id = ?', [userId])
-  if (listings.length > 0) {
     const ids = listings.map(l => l.id)
-    const [images] = await pool.query(`SELECT url FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
+    const placeholders = ids.map(() => '?').join(',')
+
+    // Obtener URLs de imágenes para borrar archivos después del commit
+    const [images] = await conn.query(`SELECT url FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
+
+    await conn.query(`DELETE FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
+    await conn.query(`DELETE FROM listing_sizes WHERE listing_id IN (${placeholders})`, ids)
+    await conn.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${placeholders})`, ids)
+    await conn.query(`DELETE FROM listings WHERE id IN (${placeholders})`, ids)
+
+    await conn.commit()
+
+    // Borrar archivos físicos DESPUÉS del commit exitoso
     for (const img of images) {
       const filePath = path.join(UPLOAD_DIR, path.basename(img.url))
       try { fs.unlinkSync(filePath) } catch (e) {}
     }
-    await pool.query(`DELETE FROM listing_images WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-    await pool.query(`DELETE FROM listing_sizes WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-    await pool.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${ids.map(() => '?').join(',')})`, ids)
-    await pool.query('DELETE FROM listings WHERE user_id = ?', [userId])
-  }
 
-  // Eliminar carruseles e imágenes de carrusel
-  const [carousels] = await pool.query('SELECT id FROM carousels WHERE user_id = ?', [userId])
-  if (carousels.length > 0) {
-    const cIds = carousels.map(c => c.id)
-    const [cImages] = await pool.query(`SELECT imagen_url FROM carousel_images WHERE carousel_id IN (${cIds.map(() => '?').join(',')})`, cIds)
-    for (const img of cImages) {
-      const filePath = path.join(UPLOAD_DIR, path.basename(img.imagen_url))
-      try { fs.unlinkSync(filePath) } catch (e) {}
+    return ids.length
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
+}
+
+async function deleteAllCommerceData(userId) {
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    // Recopilar archivos a borrar
+    const filesToDelete = []
+
+    // Listings e imágenes
+    const [listings] = await conn.query('SELECT id FROM listings WHERE user_id = ?', [userId])
+    if (listings.length > 0) {
+      const ids = listings.map(l => l.id)
+      const placeholders = ids.map(() => '?').join(',')
+      const [images] = await conn.query(`SELECT url FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
+      filesToDelete.push(...images.map(img => path.join(UPLOAD_DIR, path.basename(img.url))))
+
+      await conn.query(`DELETE FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
+      await conn.query(`DELETE FROM listing_sizes WHERE listing_id IN (${placeholders})`, ids)
+      await conn.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${placeholders})`, ids)
+      await conn.query('DELETE FROM listings WHERE user_id = ?', [userId])
     }
-    await pool.query(`DELETE FROM carousel_images WHERE carousel_id IN (${cIds.map(() => '?').join(',')})`, cIds)
-    await pool.query('DELETE FROM carousels WHERE user_id = ?', [userId])
-  }
 
-  // Eliminar negocio
-  await pool.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+    // Carruseles e imágenes
+    const [carousels] = await conn.query('SELECT id FROM carousels WHERE user_id = ?', [userId])
+    if (carousels.length > 0) {
+      const cIds = carousels.map(c => c.id)
+      const cPlaceholders = cIds.map(() => '?').join(',')
+      const [cImages] = await conn.query(`SELECT imagen_url FROM carousel_images WHERE carousel_id IN (${cPlaceholders})`, cIds)
+      filesToDelete.push(...cImages.map(img => path.join(UPLOAD_DIR, path.basename(img.imagen_url))))
+
+      await conn.query(`DELETE FROM carousel_images WHERE carousel_id IN (${cPlaceholders})`, cIds)
+      await conn.query('DELETE FROM carousels WHERE user_id = ?', [userId])
+    }
+
+    // Negocio
+    await conn.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+
+    await conn.commit()
+
+    // Borrar archivos físicos DESPUÉS del commit
+    for (const f of filesToDelete) {
+      try { fs.unlinkSync(f) } catch (e) {}
+    }
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
 }
 
 async function deleteAllTurismData(userId) {
-  // Eliminar tours e imágenes
-  const [tours] = await pool.query('SELECT imagenes FROM turismo_tours WHERE user_id = ?', [userId])
-  for (const t of tours) {
-    if (t.imagenes) {
-      try {
-        const imgs = JSON.parse(t.imagenes)
-        for (const img of imgs) {
-          const filePath = path.join(UPLOAD_DIR, path.basename(img))
-          try { fs.unlinkSync(filePath) } catch (e) {}
-        }
-      } catch (e) {}
-    }
-  }
-  await pool.query('DELETE FROM turismo_tours WHERE user_id = ?', [userId])
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
 
-  // Eliminar portada e imágenes
-  const [portadas] = await pool.query('SELECT imagenes FROM turismo_portada WHERE user_id = ?', [userId])
-  for (const p of portadas) {
-    if (p.imagenes) {
-      try {
-        const imgs = JSON.parse(p.imagenes)
-        for (const img of imgs) {
-          const filePath = path.join(UPLOAD_DIR, path.basename(img))
-          try { fs.unlinkSync(filePath) } catch (e) {}
-        }
-      } catch (e) {}
-    }
-  }
-  await pool.query('DELETE FROM turismo_portada WHERE user_id = ?', [userId])
+    const filesToDelete = []
 
-  // Eliminar página e imágenes
-  const [paginas] = await pool.query('SELECT imagen_superior, imagen_inferior FROM turismo_pagina WHERE user_id = ?', [userId])
-  for (const p of paginas) {
-    for (const img of [p.imagen_superior, p.imagen_inferior]) {
-      if (img) {
-        const filePath = path.join(UPLOAD_DIR, path.basename(img))
-        try { fs.unlinkSync(filePath) } catch (e) {}
+    // Tours e imágenes
+    const [tours] = await conn.query('SELECT imagenes FROM turismo_tours WHERE user_id = ?', [userId])
+    for (const t of tours) {
+      if (t.imagenes) {
+        try {
+          const imgs = JSON.parse(t.imagenes)
+          filesToDelete.push(...imgs.map(img => path.join(UPLOAD_DIR, path.basename(img))))
+        } catch (e) {}
       }
     }
-  }
-  await pool.query('DELETE FROM turismo_pagina WHERE user_id = ?', [userId])
+    await conn.query('DELETE FROM turismo_tours WHERE user_id = ?', [userId])
 
-  // Eliminar negocio
-  await pool.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+    // Portada e imágenes
+    const [portadas] = await conn.query('SELECT imagenes FROM turismo_portada WHERE user_id = ?', [userId])
+    for (const p of portadas) {
+      if (p.imagenes) {
+        try {
+          const imgs = JSON.parse(p.imagenes)
+          filesToDelete.push(...imgs.map(img => path.join(UPLOAD_DIR, path.basename(img))))
+        } catch (e) {}
+      }
+    }
+    await conn.query('DELETE FROM turismo_portada WHERE user_id = ?', [userId])
+
+    // Página e imágenes
+    const [paginas] = await conn.query('SELECT imagen_superior, imagen_inferior FROM turismo_pagina WHERE user_id = ?', [userId])
+    for (const p of paginas) {
+      for (const img of [p.imagen_superior, p.imagen_inferior]) {
+        if (img) filesToDelete.push(path.join(UPLOAD_DIR, path.basename(img)))
+      }
+    }
+    await conn.query('DELETE FROM turismo_pagina WHERE user_id = ?', [userId])
+
+    // Negocio
+    await conn.query('DELETE FROM businesses WHERE user_id = ?', [userId])
+
+    await conn.commit()
+
+    // Borrar archivos físicos DESPUÉS del commit
+    for (const f of filesToDelete) {
+      try { fs.unlinkSync(f) } catch (e) {}
+    }
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
 }
 
 // PUT /api/auth/profile — actualizar tipo de cuenta y plan, con eliminación de datos
@@ -439,7 +485,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Perfil actualizado', user: rows[0] })
   } catch (err) {
-    console.error('Error actualizando perfil:', err)
+    logger.error('Error actualizando perfil', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar perfil' })
   }
 })
@@ -456,7 +502,7 @@ router.get('/profile/plans-info', authMiddleware, async (req, res) => {
     }
     res.json({ plans: rows })
   } catch (err) {
-    console.error('Error obteniendo planes:', err)
+    logger.error('Error obteniendo planes', { error: err.message })
     res.status(500).json({ error: 'Error al obtener planes' })
   }
 })
@@ -477,7 +523,7 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
     }))
     res.json({ history })
   } catch (err) {
-    console.error('Error obteniendo historial:', err)
+    logger.error('Error obteniendo historial', { error: err.message })
     res.status(500).json({ error: 'Error al obtener historial' })
   }
 })

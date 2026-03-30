@@ -31,14 +31,14 @@ export default function ProgramadorLocales() {
   }
 
   const fetchLocales = () => {
-    fetch(`${API}/api/locales/admin`, { headers })
+    fetch(`${API}/api/v1/locales/admin`, { headers })
       .then(r => r.json())
       .then(data => { setLocales(data.locales || []); setLoading(false) })
       .catch(() => setLoading(false))
   }
 
   const fetchCategorias = () => {
-    fetch(`${API}/api/locales/categorias`)
+    fetch(`${API}/api/v1/locales/categorias`)
       .then(r => r.json())
       .then(data => setCategorias(data.categorias || []))
       .catch(() => {})
@@ -81,7 +81,7 @@ export default function ProgramadorLocales() {
     if (imageFile) fd.append('imagen', imageFile)
 
     const isNew = modal === 'new'
-    const url = isNew ? `${API}/api/locales` : `${API}/api/locales/${modal.id}`
+    const url = isNew ? `${API}/api/v1/locales` : `${API}/api/v1/locales/${modal.id}`
     const method = isNew ? 'POST' : 'PUT'
 
     try {
@@ -102,7 +102,7 @@ export default function ProgramadorLocales() {
 
   const handleToggle = async (local) => {
     try {
-      const res = await fetch(`${API}/api/locales/${local.id}/toggle`, { method: 'PATCH', headers })
+      const res = await fetch(`${API}/api/v1/locales/${local.id}/toggle`, { method: 'PATCH', headers })
       const data = await res.json()
       fetchLocales()
       showToast(data.message || (local.activo ? 'Local desactivado' : 'Local activado'))
@@ -113,7 +113,7 @@ export default function ProgramadorLocales() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/locales/${id}`, { method: 'DELETE', headers })
+      const res = await fetch(`${API}/api/v1/locales/${id}`, { method: 'DELETE', headers })
       if (!res.ok) {
         const data = await res.json()
         showToast(data.error || 'Error al eliminar', 'error')
@@ -129,7 +129,7 @@ export default function ProgramadorLocales() {
 
   const handleSaveCrop = async (localId, cropData) => {
     try {
-      const res = await fetch(`${API}/api/locales/${localId}/crop`, {
+      const res = await fetch(`${API}/api/v1/locales/${localId}/crop`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagen_crop: cropData }),

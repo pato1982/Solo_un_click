@@ -44,7 +44,7 @@ export default function AdminTour() {
   const token = localStorage.getItem('token')
 
   const fetchTours = () => {
-    fetch(`${API}/api/tours`, {
+    fetch(`${API}/api/v1/tours`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => {
@@ -60,7 +60,7 @@ export default function AdminTour() {
   useEffect(() => {
     fetchTours()
     // Cargar categorías desde la portada del usuario
-    fetch(`${API}/api/portada`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/portada`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : { portada: null })
       .then(data => {
         if (data.portada && data.portada.categorias) {
@@ -145,7 +145,7 @@ export default function AdminTour() {
         if (img instanceof File) {
           const fd = new FormData()
           fd.append('imagen', img)
-          const upRes = await fetch(`${API}/api/upload`, {
+          const upRes = await fetch(`${API}/api/v1/upload`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: fd
@@ -170,7 +170,7 @@ export default function AdminTour() {
         imagenes: finalUrls.filter(Boolean),
       }
 
-      const url = editingId ? `${API}/api/tours/${editingId}` : `${API}/api/tours`
+      const url = editingId ? `${API}/api/v1/tours/${editingId}` : `${API}/api/v1/tours`
       const method = editingId ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
@@ -197,7 +197,7 @@ export default function AdminTour() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/tours/${id}`, {
+      const res = await fetch(`${API}/api/v1/tours/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -371,7 +371,7 @@ export default function AdminTour() {
                       newCrops[activeTab] = cropData
                       setForm(prev => ({ ...prev, imagenesCrop: newCrops }))
                       if (editingId) {
-                        fetch(`${API}/api/tours/${editingId}/crop`, {
+                        fetch(`${API}/api/v1/tours/${editingId}/crop`, {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                           body: JSON.stringify({ imagenes_crop: newCrops }),

@@ -275,7 +275,7 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
   // Registrar visita a la página de turismo
   useEffect(() => {
     if (!company.userId) return
-    fetch(`${API}/api/analytics/track`, {
+    fetch(`${API}/api/v1/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: company.userId, event_type: 'page_view', pagina: 'turismo' }),
     }).catch(() => {})
@@ -290,8 +290,8 @@ function CompanyDetail({ company, onBack, activeFilter, onClearFilter }) {
     }
     // Cargar tours y datos de página en paralelo, filtrados por userId
     Promise.all([
-      fetch(`${API}/api/tours/public/${company.userId}`).then(r => r.json()),
-      fetch(`${API}/api/pagina/public/${company.userId}`).then(r => r.json()),
+      fetch(`${API}/api/v1/tours/public/${company.userId}`).then(r => r.json()),
+      fetch(`${API}/api/v1/pagina/public/${company.userId}`).then(r => r.json()),
     ])
       .then(([toursData, paginaData]) => {
         setTours(toursData.tours || [])
@@ -528,7 +528,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
 
 
   useEffect(() => {
-    fetch(`${API}/api/portada/public`)
+    fetch(`${API}/api/v1/portada/public`)
       .then(r => r.json())
       .then(data => {
         if (data.portadas && data.portadas.length > 0) {
@@ -573,8 +573,8 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
     } else {
       // Si no está en el listado público, cargar directamente desde la API
       Promise.all([
-        fetch(`${API}/api/portada/public`).then(r => r.json()),
-        fetch(`${API}/api/business/public/${initialUserId}`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API}/api/v1/portada/public`).then(r => r.json()),
+        fetch(`${API}/api/v1/business/public/${initialUserId}`).then(r => r.ok ? r.json() : null).catch(() => null),
       ]).then(([portadasData, bizData]) => {
         const portada = (portadasData.portadas || []).find(p => p.user_id === initialUserId)
         if (portada) {
@@ -652,7 +652,7 @@ export default function TourismPage({ activeFilter, onClearFilter, onEmpresaCate
   }, [scrollToUserId, loading, empresas])
 
   const trackCardClick = (userId) => {
-    fetch(`${API}/api/analytics/track`, {
+    fetch(`${API}/api/v1/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, event_type: 'card_click' }),
     }).catch(() => {})

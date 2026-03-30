@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs')
 const { body, validationResult } = require('express-validator')
 const pool = require('../db')
 const { sendPasswordResetEmail } = require('../mailer')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -51,7 +52,7 @@ router.post('/request', [
 
     res.json({ message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña' })
   } catch (err) {
-    console.error('Error en solicitud de reset:', err)
+    logger.error('Error en solicitud de reset', { error: err.message })
     res.status(500).json({ error: 'Error al procesar solicitud' })
   }
 })
@@ -73,7 +74,7 @@ router.post('/validate', async (req, res) => {
 
     res.json({ valid: true })
   } catch (err) {
-    console.error('Error validando token:', err)
+    logger.error('Error validando token', { error: err.message })
     res.status(500).json({ error: 'Error al validar token' })
   }
 })
@@ -109,7 +110,7 @@ router.post('/reset', async (req, res) => {
 
     res.json({ message: 'Contraseña actualizada correctamente' })
   } catch (err) {
-    console.error('Error al cambiar contraseña:', err)
+    logger.error('Error al cambiar contraseña', { error: err.message })
     res.status(500).json({ error: 'Error al cambiar contraseña' })
   }
 })

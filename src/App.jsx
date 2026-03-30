@@ -263,7 +263,7 @@ export default function App() {
 
   // Registrar visita al sitio
   useEffect(() => {
-    fetch(`${API}/api/servidor/visita`, {
+    fetch(`${API}/api/v1/servidor/visita`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pagina: 'home' }),
@@ -272,7 +272,7 @@ export default function App() {
 
   // Cargar listings desde API
   useEffect(() => {
-    fetch(`${API}/api/listings`)
+    fetch(`${API}/api/v1/listings`)
       .then(r => r.json())
       .then(data => {
         {
@@ -291,7 +291,7 @@ export default function App() {
       .catch(err => console.error('Error cargando listings:', err))
 
     // Cargar categorías de turismo desde portadas activas
-    fetch(`${API}/api/portada/public`)
+    fetch(`${API}/api/v1/portada/public`)
       .then(r => r.json())
       .then(data => {
         if (data.portadas && data.portadas.length > 0) {
@@ -315,7 +315,7 @@ export default function App() {
       })
 
     // Cargar categorías del sidebar: solo las que tienen productos publicados
-    fetch(`${API}/api/categorias/sidebar`)
+    fetch(`${API}/api/v1/categorias/sidebar`)
       .then(r => r.json())
       .then(data => {
         if (data.categorias) setSidebarCategorias(data.categorias)
@@ -445,7 +445,7 @@ export default function App() {
 
     // Si la tienda tiene userId, cargar datos completos del negocio
     if (store.userId) {
-      fetch(`${API}/api/business/${store.userId}`)
+      fetch(`${API}/api/v1/business/${store.userId}`)
         .then(r => r.json())
         .then(data => {
           if (data.business) {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+const API = import.meta.env.VITE_API || ''
 const IVA = 0.19
 
 const formatCLP = (n) => '$' + n.toLocaleString('es-CL')
@@ -110,7 +111,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin, onRegisterSucc
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

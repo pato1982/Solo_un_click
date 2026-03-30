@@ -2,6 +2,7 @@ const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -34,7 +35,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     res.json({ portada })
   } catch (err) {
-    console.error('Error al obtener portada:', err)
+    logger.error('Error al obtener portada', { error: err.message })
     res.status(500).json({ error: 'Error al obtener portada' })
   }
 })
@@ -50,7 +51,8 @@ router.get('/public', async (req, res) => {
        LEFT JOIN businesses b ON b.user_id = p.user_id
        LEFT JOIN users u ON u.id = p.user_id
        WHERE p.activo = 1
-       ORDER BY b.nombre_negocio ASC`
+       ORDER BY b.nombre_negocio ASC
+       LIMIT 200`
     )
 
     for (const row of rows) {
@@ -70,7 +72,7 @@ router.get('/public', async (req, res) => {
 
     res.json({ portadas: rows })
   } catch (err) {
-    console.error('Error al obtener portadas públicas:', err)
+    logger.error('Error al obtener portadas públicas', { error: err.message })
     res.status(500).json({ error: 'Error al obtener portadas' })
   }
 })
@@ -94,7 +96,7 @@ router.post('/', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'crear', 'portada', result.insertId, { nombre })
     res.status(201).json({ message: 'Portada creada', id: result.insertId })
   } catch (err) {
-    console.error('Error al crear portada:', err)
+    logger.error('Error al crear portada', { error: err.message })
     res.status(500).json({ error: 'Error al crear portada' })
   }
 })
@@ -120,7 +122,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'editar', 'portada', parseInt(req.params.id), { nombre })
     res.json({ message: 'Portada actualizada' })
   } catch (err) {
-    console.error('Error al actualizar portada:', err)
+    logger.error('Error al actualizar portada', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar portada' })
   }
 })
@@ -140,7 +142,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'eliminar', 'portada', parseInt(req.params.id))
     res.json({ message: 'Portada eliminada' })
   } catch (err) {
-    console.error('Error al eliminar portada:', err)
+    logger.error('Error al eliminar portada', { error: err.message })
     res.status(500).json({ error: 'Error al eliminar portada' })
   }
 })
@@ -155,7 +157,7 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
-    console.error('Error al guardar encuadre:', err)
+    logger.error('Error al guardar encuadre', { error: err.message })
     res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
@@ -174,7 +176,7 @@ router.patch('/:id/toggle', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Estado de la portada actualizado' })
   } catch (err) {
-    console.error('Error al cambiar estado de la portada:', err)
+    logger.error('Error al cambiar estado de la portada', { error: err.message })
     res.status(500).json({ error: 'Error al cambiar estado de la portada' })
   }
 })

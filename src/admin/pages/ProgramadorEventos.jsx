@@ -31,14 +31,14 @@ export default function ProgramadorEventos() {
   }
 
   const fetchEventos = () => {
-    fetch(`${API}/api/eventos/admin`, { headers })
+    fetch(`${API}/api/v1/eventos/admin`, { headers })
       .then(r => r.json())
       .then(data => { setEventos(data.eventos || []); setLoading(false) })
       .catch(() => setLoading(false))
   }
 
   const fetchCategorias = () => {
-    fetch(`${API}/api/eventos/categorias`)
+    fetch(`${API}/api/v1/eventos/categorias`)
       .then(r => r.json())
       .then(data => setCategorias(data.categorias || []))
       .catch(() => {})
@@ -85,7 +85,7 @@ export default function ProgramadorEventos() {
     if (imageFile) fd.append('imagen', imageFile)
 
     const isNew = modal === 'new'
-    const url = isNew ? `${API}/api/eventos` : `${API}/api/eventos/${modal.id}`
+    const url = isNew ? `${API}/api/v1/eventos` : `${API}/api/v1/eventos/${modal.id}`
     const method = isNew ? 'POST' : 'PUT'
 
     try {
@@ -106,7 +106,7 @@ export default function ProgramadorEventos() {
 
   const handleToggle = async (evento) => {
     try {
-      const res = await fetch(`${API}/api/eventos/${evento.id}/toggle`, { method: 'PATCH', headers })
+      const res = await fetch(`${API}/api/v1/eventos/${evento.id}/toggle`, { method: 'PATCH', headers })
       const data = await res.json()
       fetchEventos()
       showToast(data.message || (evento.activo ? 'Evento desactivado' : 'Evento activado'))
@@ -117,7 +117,7 @@ export default function ProgramadorEventos() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/eventos/${id}`, { method: 'DELETE', headers })
+      const res = await fetch(`${API}/api/v1/eventos/${id}`, { method: 'DELETE', headers })
       if (!res.ok) {
         const data = await res.json()
         showToast(data.error || 'Error al eliminar', 'error')
@@ -133,7 +133,7 @@ export default function ProgramadorEventos() {
 
   const handleSaveCrop = async (eventoId, cropData) => {
     try {
-      const res = await fetch(`${API}/api/eventos/${eventoId}/crop`, {
+      const res = await fetch(`${API}/api/v1/eventos/${eventoId}/crop`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagen_crop: cropData }),

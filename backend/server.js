@@ -3,6 +3,7 @@ const cors = require('cors')
 const path = require('path')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
+const logger = require('./logger')
 
 const authRoutes = require('./routes/auth')
 const listingsRoutes = require('./routes/listings')
@@ -30,7 +31,16 @@ app.set('trust proxy', 1)
 // --- Seguridad: Helmet (headers seguros) ---
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false, // Vite/React maneja CSP
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://soloaunclick.cl", "https://www.soloaunclick.cl"],
+    },
+  },
 }))
 
 // --- Seguridad: CORS restringido ---
@@ -86,31 +96,39 @@ const resetLimiter = rateLimit({
 app.use(express.json({ limit: '2mb' }))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Rutas API (con rate limiters en endpoints sensibles)
+// Rate limiters en endpoints sensibles (ambos prefijos)
+app.use('/api/v1/auth/login', authLimiter)
+app.use('/api/v1/auth/register', authLimiter)
+app.use('/api/v1/password-reset', resetLimiter)
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/password-reset', resetLimiter)
 
-app.use('/api/auth', authRoutes)
-app.use('/api/listings', listingsRoutes)
-app.use('/api/upload', uploadRoutes)
-app.use('/api/business', businessRoutes)
-app.use('/api/carousels', carouselsRoutes)
-app.use('/api/analytics', analyticsRoutes)
-app.use('/api/turismo', turismoRoutes)
-app.use('/api/tours', toursRoutes)
-app.use('/api/portada', portadaRoutes)
-app.use('/api/pagina', paginaRoutes)
-app.use('/api/categorias', categoriasRoutes)
-app.use('/api/password-reset', passwordResetRoutes)
-app.use('/api/locales', localesRoutes)
-app.use('/api/eventos', eventosRoutes)
-app.use('/api/servidor', servidorRoutes)
-app.use('/api/servicios', serviciosRoutes)
+const v1Routes = express.Router()
+v1Routes.use('/auth', authRoutes)
+v1Routes.use('/listings', listingsRoutes)
+v1Routes.use('/upload', uploadRoutes)
+v1Routes.use('/business', businessRoutes)
+v1Routes.use('/carousels', carouselsRoutes)
+v1Routes.use('/analytics', analyticsRoutes)
+v1Routes.use('/turismo', turismoRoutes)
+v1Routes.use('/tours', toursRoutes)
+v1Routes.use('/portada', portadaRoutes)
+v1Routes.use('/pagina', paginaRoutes)
+v1Routes.use('/categorias', categoriasRoutes)
+v1Routes.use('/password-reset', passwordResetRoutes)
+v1Routes.use('/locales', localesRoutes)
+v1Routes.use('/eventos', eventosRoutes)
+v1Routes.use('/servidor', servidorRoutes)
+v1Routes.use('/servicios', serviciosRoutes)
+
+// Montar v1 y mantener /api/ como alias para compatibilidad
+app.use('/api/v1', v1Routes)
+app.use('/api', v1Routes)
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json({ status: 'ok', version: 'v1', timestamp: new Date().toISOString() })
 })
 
 // --- Middleware centralizado de errores ---
@@ -128,10 +146,10 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ error: err.message })
   }
   // Error genérico
-  console.error('Error no manejado:', err)
+  logger.error('Error no manejado', { error: err.message, stack: err.stack })
   res.status(500).json({ error: 'Error interno del servidor' })
 })
 
 app.listen(PORT, () => {
-  console.log(`API corriendo en puerto ${PORT}`)
+  logger.info(`API corriendo en puerto ${PORT}`)
 })

@@ -19,7 +19,7 @@ export default function ProgramadorEstadisticas() {
 
   const fetchData = () => {
     setLoading(true)
-    fetch(`${API}/api/servidor/estadisticas`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/servidor/estadisticas`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))

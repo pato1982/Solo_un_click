@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -35,7 +36,7 @@ router.post('/track', async (req, res) => {
 
     res.json({ ok: true })
   } catch (err) {
-    console.error('Error tracking:', err)
+    logger.error('Error tracking', { error: err.message })
     res.status(500).json({ error: 'Error al registrar evento' })
   }
 })
@@ -152,7 +153,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       },
     })
   } catch (err) {
-    console.error('Error stats:', err)
+    logger.error('Error stats', { error: err.message })
     res.status(500).json({ error: 'Error al obtener estadísticas' })
   }
 })

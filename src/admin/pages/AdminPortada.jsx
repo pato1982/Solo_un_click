@@ -44,9 +44,9 @@ export default function AdminPortada() {
     })
 
     Promise.all([
-      safeFetch(`${API}/api/portada`),
-      safeFetch(`${API}/api/business`),
-      safeFetch(`${API}/api/categorias?tipo=turismo`),
+      safeFetch(`${API}/api/v1/portada`),
+      safeFetch(`${API}/api/v1/business`),
+      safeFetch(`${API}/api/v1/categorias?tipo=turismo`),
     ])
       .then(([portadaData, businessData, catsData]) => {
         if (businessData.business) {
@@ -140,7 +140,7 @@ export default function AdminPortada() {
         if (img instanceof File) {
           const fd = new FormData()
           fd.append('imagen', img)
-          const upRes = await fetch(`${API}/api/upload`, {
+          const upRes = await fetch(`${API}/api/v1/upload`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: fd
@@ -166,7 +166,7 @@ export default function AdminPortada() {
         categorias,
       }
 
-      const url = portadaId ? `${API}/api/portada/${portadaId}` : `${API}/api/portada`
+      const url = portadaId ? `${API}/api/v1/portada/${portadaId}` : `${API}/api/v1/portada`
       const method = portadaId ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
@@ -258,7 +258,7 @@ export default function AdminPortada() {
                   newCrops[activeTab] = cropData
                   setForm(prev => ({ ...prev, imagenesCrop: newCrops }))
                   if (portadaId) {
-                    fetch(`${API}/api/portada/${portadaId}/crop`, {
+                    fetch(`${API}/api/v1/portada/${portadaId}/crop`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ imagenes_crop: newCrops }),

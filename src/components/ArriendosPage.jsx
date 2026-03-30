@@ -9,7 +9,7 @@ export default function ArriendosPage({ sidebarOpen, onBack, activeFilter, onOpe
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${API}/api/listings`)
+    fetch(`${API}/api/v1/listings`)
       .then(r => r.json())
       .then(data => {
         const arriendos = (data.listings || [])

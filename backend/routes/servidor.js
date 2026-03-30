@@ -3,6 +3,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const pool = require('../db')
 const { authMiddleware, programadorMiddleware } = require('./auth')
+const logger = require('../logger')
 
 const router = express.Router()
 const uploadsDir = path.join(__dirname, '..', 'uploads')
@@ -82,7 +83,7 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
       },
     })
   } catch (err) {
-    console.error('Error obteniendo stats del servidor:', err)
+    logger.error('Error obteniendo stats del servidor', { error: err.message })
     res.status(500).json({ error: 'Error al obtener estadísticas' })
   }
 })
@@ -146,7 +147,7 @@ router.get('/estadisticas', authMiddleware, programadorMiddleware, async (req, r
       },
     })
   } catch (err) {
-    console.error('Error obteniendo estadísticas:', err)
+    logger.error('Error obteniendo estadísticas', { error: err.message })
     res.status(500).json({ error: 'Error al obtener estadísticas' })
   }
 })

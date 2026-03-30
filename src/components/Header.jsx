@@ -23,9 +23,9 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
     async function loadSearchIndex() {
       try {
         const [catRes, locRes, evRes] = await Promise.all([
-          fetch(`${API}/api/categorias`).then(r => r.json()),
-          fetch(`${API}/api/locales/categorias`).then(r => r.json()),
-          fetch(`${API}/api/eventos/categorias`).then(r => r.json()),
+          fetch(`${API}/api/v1/categorias`).then(r => r.json()),
+          fetch(`${API}/api/v1/locales/categorias`).then(r => r.json()),
+          fetch(`${API}/api/v1/eventos/categorias`).then(r => r.json()),
         ])
         const tipoNav = { producto: 'productos', servicio: 'servicios', arriendo: 'arriendos', turismo: 'turismo' }
         const tipoLabel = { producto: 'Productos', servicio: 'Servicios', arriendo: 'Arriendos', turismo: 'Turismo' }

@@ -2,6 +2,7 @@ const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const logActivity = require('../logActivity')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -28,7 +29,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     res.json({ tours: rows })
   } catch (err) {
-    console.error('Error al obtener tours:', err)
+    logger.error('Error al obtener tours', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
   }
 })
@@ -37,7 +38,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/public', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_tours WHERE activo = 1 ORDER BY nombre ASC'
+      'SELECT * FROM turismo_tours WHERE activo = 1 ORDER BY nombre ASC LIMIT 200'
     )
 
     for (const row of rows) {
@@ -49,7 +50,7 @@ router.get('/public', async (req, res) => {
 
     res.json({ tours: rows })
   } catch (err) {
-    console.error('Error al obtener tours públicos:', err)
+    logger.error('Error al obtener tours públicos', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
   }
 })
@@ -71,7 +72,7 @@ router.get('/public/:userId', async (req, res) => {
 
     res.json({ tours: rows })
   } catch (err) {
-    console.error('Error al obtener tours del usuario:', err)
+    logger.error('Error al obtener tours del usuario', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
   }
 })
@@ -107,7 +108,7 @@ router.post('/', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'crear', 'tour', result.insertId, { nombre })
     res.status(201).json({ message: 'Tour creado', id: result.insertId })
   } catch (err) {
-    console.error('Error al crear tour:', err)
+    logger.error('Error al crear tour', { error: err.message })
     res.status(500).json({ error: 'Error al crear tour' })
   }
 })
@@ -141,7 +142,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'editar', 'tour', parseInt(req.params.id), { nombre })
     res.json({ message: 'Tour actualizado' })
   } catch (err) {
-    console.error('Error al actualizar tour:', err)
+    logger.error('Error al actualizar tour', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar tour' })
   }
 })
@@ -161,7 +162,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await logActivity(req.userId, 'eliminar', 'tour', parseInt(req.params.id))
     res.json({ message: 'Tour eliminado' })
   } catch (err) {
-    console.error('Error al eliminar tour:', err)
+    logger.error('Error al eliminar tour', { error: err.message })
     res.status(500).json({ error: 'Error al eliminar tour' })
   }
 })
@@ -176,7 +177,7 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
-    console.error('Error al guardar encuadre:', err)
+    logger.error('Error al guardar encuadre', { error: err.message })
     res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
@@ -195,7 +196,7 @@ router.patch('/:id/toggle', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Estado del tour actualizado' })
   } catch (err) {
-    console.error('Error al cambiar estado del tour:', err)
+    logger.error('Error al cambiar estado del tour', { error: err.message })
     res.status(500).json({ error: 'Error al cambiar estado del tour' })
   }
 })

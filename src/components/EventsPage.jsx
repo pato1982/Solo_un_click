@@ -70,7 +70,7 @@ export default function EventsPage({ sidebarOpen, onBack, activeFilter }) {
   const [currentPage, setCurrentPage] = useState(0)
 
   useEffect(() => {
-    fetch(`${API}/api/eventos`)
+    fetch(`${API}/api/v1/eventos`)
       .then(r => r.json())
       .then(data => {
         const mapped = (data.eventos || []).map(e => ({

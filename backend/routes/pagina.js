@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const logger = require('../logger')
 
 const router = express.Router()
 
@@ -24,7 +25,7 @@ router.get('/', authMiddleware, async (req, res) => {
     }
     res.json({ pagina })
   } catch (err) {
-    console.error('Error al obtener página:', err)
+    logger.error('Error al obtener página', { error: err.message })
     res.status(500).json({ error: 'Error al obtener página' })
   }
 })
@@ -43,7 +44,7 @@ router.get('/public/:userId', async (req, res) => {
     }
     res.json({ pagina })
   } catch (err) {
-    console.error('Error al obtener página pública:', err)
+    logger.error('Error al obtener página pública', { error: err.message })
     res.status(500).json({ error: 'Error al obtener página' })
   }
 })
@@ -68,7 +69,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     res.status(201).json({ message: 'Página guardada', id: result.insertId })
   } catch (err) {
-    console.error('Error al guardar página:', err)
+    logger.error('Error al guardar página', { error: err.message })
     res.status(500).json({ error: 'Error al guardar página' })
   }
 })
@@ -95,7 +96,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Página actualizada' })
   } catch (err) {
-    console.error('Error al actualizar página:', err)
+    logger.error('Error al actualizar página', { error: err.message })
     res.status(500).json({ error: 'Error al actualizar página' })
   }
 })
@@ -110,7 +111,7 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
-    console.error('Error al guardar encuadre:', err)
+    logger.error('Error al guardar encuadre', { error: err.message })
     res.status(500).json({ error: 'Error al guardar encuadre' })
   }
 })
