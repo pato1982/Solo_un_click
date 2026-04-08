@@ -30,6 +30,10 @@ function ConfirmDeletePopup({ message, details, onConfirm, onCancel }) {
             </div>
           )}
           <p className="text-[10px] text-red-500 font-bold text-center mt-3">Esta acción no se puede deshacer.</p>
+          <p className="text-[10px] text-slate-500 text-center mt-2 flex items-center justify-center gap-1">
+            <span className="material-symbols-outlined text-sm">logout</span>
+            Se cerrará tu sesión para aplicar los cambios. Solo debes volver a iniciar sesión.
+          </p>
         </div>
         <div className="px-6 pb-4 flex gap-2">
           <button onClick={onCancel} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">
@@ -75,6 +79,10 @@ function ConfirmDowngradePopup({ message, items, onConfirm, onCancel }) {
             <span className="material-symbols-outlined text-sm">check_circle</span>
             Tu contenido se conservará y podrás recuperarlo subiendo de plan.
           </p>
+          <p className="text-[10px] text-slate-500 text-center mt-2 flex items-center justify-center gap-1">
+            <span className="material-symbols-outlined text-sm">logout</span>
+            Se cerrará tu sesión para aplicar los cambios. Solo debes volver a iniciar sesión.
+          </p>
         </div>
         <div className="px-6 pb-4 flex gap-2">
           <button onClick={onCancel} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">
@@ -98,6 +106,7 @@ function ProfileModal({ onClose }) {
   const [counts, setCounts] = useState(null)
   const [confirmPopup, setConfirmPopup] = useState(null)
   const [downgradePopup, setDowngradePopup] = useState(null)
+  const [planChangePopup, setPlanChangePopup] = useState(false)
   const [activeTab, setActiveTab] = useState('datos')
   const [showPlansModal, setShowPlansModal] = useState(false)
   const [history, setHistory] = useState(null)
@@ -225,6 +234,7 @@ function ProfileModal({ onClose }) {
   const handleSave = async (deleteTipos = []) => {
     if (!token) return
     setSaving(true)
+    const prevPlanId = Number(JSON.parse(localStorage.getItem('user') || '{}').plan_id || 1)
     try {
       const body = {
         tipo_cuenta: tipoCuenta,
@@ -249,10 +259,14 @@ function ProfileModal({ onClose }) {
         return
       }
       if (data.user) {
-        setUser(data.user)
-        setEditEmail(data.user.email || '')
-        setEditTelefono(data.user.telefono || '')
-        setEditDireccion(data.user.direccion || '')
+        // Si el plan cambió, cerrar sesión para aplicar cambios
+        if (Number(data.user.plan_id) !== prevPlanId) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          window.location.href = '/'
+          return
+        }
+
         const stored = JSON.parse(localStorage.getItem('user') || '{}')
         Object.assign(stored, {
           tipo_cuenta: data.user.tipo_cuenta,
@@ -262,9 +276,13 @@ function ProfileModal({ onClose }) {
           ofrece_arriendos: data.user.ofrece_arriendos,
         })
         localStorage.setItem('user', JSON.stringify(stored))
+
+        setUser(data.user)
+        setEditEmail(data.user.email || '')
+        setEditTelefono(data.user.telefono || '')
+        setEditDireccion(data.user.direccion || '')
         const countsRes = await fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
         setCounts(await countsRes.json())
-        // Invalidar historial para que recargue
         setHistory(null)
       }
       setEditing(false)
@@ -279,6 +297,12 @@ function ProfileModal({ onClose }) {
     if (warning) { setConfirmPopup(warning); return }
     const downgrade = buildDowngradeWarning()
     if (downgrade) { setDowngradePopup(downgrade); return }
+    // Si el plan cambió (upgrade sin warnings), mostrar confirmación
+    const currentPlanId = Number(JSON.parse(localStorage.getItem('user') || '{}').plan_id || 1)
+    if (Number(planId) !== currentPlanId) {
+      setPlanChangePopup(true)
+      return
+    }
     handleSave()
   }
 
@@ -670,6 +694,40 @@ function ProfileModal({ onClose }) {
         <ConfirmDowngradePopup message={downgradePopup.message} items={downgradePopup.items}
           onCancel={() => setDowngradePopup(null)}
           onConfirm={() => { setDowngradePopup(null); handleSave() }} />
+      )}
+      {planChangePopup && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10001 }} onClick={() => setPlanChangePopup(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-primary px-6 py-4 text-center">
+              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="material-symbols-outlined text-3xl text-white">swap_vert</span>
+              </div>
+              <h3 className="text-base font-bold text-white">Cambio de plan</h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-sm text-slate-700 text-center leading-relaxed">
+                Para aplicar el cambio de plan, se cerrará tu sesión actual.
+              </p>
+              <p className="text-sm text-slate-700 text-center leading-relaxed mt-2 font-semibold">
+                Tu cuenta y todo tu contenido se mantienen intactos. Solo necesitas volver a iniciar sesión.
+              </p>
+              <p className="text-[10px] text-slate-500 text-center mt-3 flex items-center justify-center gap-1">
+                <span className="material-symbols-outlined text-sm">logout</span>
+                Serás redirigido a la pantalla de inicio de sesión.
+              </p>
+            </div>
+            <div className="px-6 pb-4 flex gap-2">
+              <button onClick={() => setPlanChangePopup(false)} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all">
+                Cancelar
+              </button>
+              <button onClick={() => { setPlanChangePopup(false); handleSave() }} className="flex-1 py-2.5 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                Confirmar cambio
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

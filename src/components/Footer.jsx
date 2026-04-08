@@ -1,4 +1,13 @@
-export default function Footer({ onNavigate }) {
+import { useState } from 'react'
+import LoginModal from './LoginModal'
+import RegisterModal from './RegisterModal'
+import PlansModal from './PlansModal'
+
+export default function Footer({ onNavigate, onLoginSuccess }) {
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showPlans, setShowPlans] = useState(false)
+
   return (
     <footer id="main-footer" className="bg-primary text-white pt-6 sm:pt-8 pb-3 px-3 sm:px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
@@ -50,9 +59,9 @@ export default function Footer({ onNavigate }) {
               <div>
                 <h4 className="font-black tracking-widest text-accent text-[10px] mb-2">Mi cuenta</h4>
                 <ul className="space-y-1 text-[9px] font-normal text-white/50">
-                  <li><a className="hover:text-accent transition-colors" href="#">Ingresar</a></li>
-                  <li><a className="hover:text-accent transition-colors" href="#">Registrarse</a></li>
-                  <li><a className="hover:text-accent transition-colors" href="#">Planes</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowLogin(true) }} href="#">Ingresar</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowRegister(true) }} href="#">Registrarse</a></li>
+                  <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowPlans(true) }} href="#">Planes</a></li>
                 </ul>
               </div>
             </div>
@@ -132,9 +141,9 @@ export default function Footer({ onNavigate }) {
             <div>
               <h4 className="font-black tracking-widest text-accent text-[10px] mb-2">Mi cuenta</h4>
               <ul className="space-y-1 text-[10px] font-normal text-white/50">
-                <li><a className="hover:text-accent transition-colors" href="#">Ingresar</a></li>
-                <li><a className="hover:text-accent transition-colors" href="#">Registrarse</a></li>
-                <li><a className="hover:text-accent transition-colors" href="#">Planes</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowLogin(true) }} href="#">Ingresar</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowRegister(true) }} href="#">Registrarse</a></li>
+                <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowPlans(true) }} href="#">Planes</a></li>
               </ul>
             </div>
             <div>
@@ -202,9 +211,9 @@ export default function Footer({ onNavigate }) {
           <div className="md:px-10">
             <h4 className="font-black tracking-widest text-accent text-sm mb-6">Mi cuenta</h4>
             <ul className="space-y-2 text-xs font-normal text-white/50">
-              <li><a className="hover:text-accent transition-colors" href="#">Ingresar</a></li>
-              <li><a className="hover:text-accent transition-colors" href="#">Registrarse</a></li>
-              <li><a className="hover:text-accent transition-colors" href="#">Planes</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowLogin(true) }} href="#">Ingresar</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowRegister(true) }} href="#">Registrarse</a></li>
+              <li><a className="hover:text-accent transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setShowPlans(true) }} href="#">Planes</a></li>
             </ul>
           </div>
           <div>
@@ -240,6 +249,21 @@ export default function Footer({ onNavigate }) {
           Desarrollado por <span className="text-accent">CH</span>system
         </p>
       </div>
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} />}
+      {showLogin && (
+        <LoginModal
+          onClose={() => setShowLogin(false)}
+          onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true) }}
+          onLoginSuccess={(userData) => { setShowLogin(false); onLoginSuccess?.(userData) }}
+        />
+      )}
+      {showRegister && (
+        <RegisterModal
+          onClose={() => setShowRegister(false)}
+          onSwitchToLogin={() => { setShowRegister(false); setShowLogin(true) }}
+          onRegisterSuccess={(userData) => { setShowRegister(false); onLoginSuccess?.(userData) }}
+        />
+      )}
     </footer>
   )
 }

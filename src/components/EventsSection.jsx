@@ -31,15 +31,41 @@ function isGratis(precio) {
   return lower === 'entrada libre' || lower === 'gratis' || lower === '' || lower === '$0' || lower === '0'
 }
 
+const PLACEHOLDER_EVENTS = [
+  { id: 'ph-e1', title: 'Festival de Verano Villarrica', image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=300&q=80', date: '15 Abril', location: 'Plaza de Armas', price: 'Entrada libre', badge: 'Música', badgeColor: 'bg-primary-light text-white' },
+  { id: 'ph-e2', title: 'Feria Gastronómica del Lago', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&q=80', date: '20 Abril', location: 'Costanera', price: '$5.000', badge: 'Gastronomía', badgeColor: 'bg-accent text-primary font-black' },
+  { id: 'ph-e3', title: 'Carrera Trail Volcán 2026', image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300&q=80', date: '3 Mayo', location: 'Volcán Villarrica', price: '$15.000', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
+  { id: 'ph-e4', title: 'Expo Arte Mapuche Local', image: 'https://images.unsplash.com/photo-1541417904950-b855846fe074?w=300&q=80', date: '8 Mayo', location: 'Centro Cultural', price: 'Gratis', badge: 'Cultura', badgeColor: 'bg-primary text-white' },
+  { id: 'ph-e5', title: 'Feria Artesanal de Otoño', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=300&q=80', date: '10 Mayo', location: 'Mercado Local', price: 'Gratis', badge: 'Artesanía', badgeColor: 'bg-amber-500 text-white' },
+  { id: 'ph-e6', title: 'Concierto de Folclore', image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&q=80', date: '15 Mayo', location: 'Anfiteatro', price: '$8.000', badge: 'Música', badgeColor: 'bg-primary-light text-white' },
+  { id: 'ph-e7', title: 'Torneo de Pesca Deportiva', image: 'https://images.unsplash.com/photo-1504309092620-4d0ec726efa4?w=300&q=80', date: '18 Mayo', location: 'Lago Villarrica', price: '$10.000', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
+  { id: 'ph-e8', title: 'Noche de Cine al Aire Libre', image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=300&q=80', date: '22 Mayo', location: 'Parque Municipal', price: 'Gratis', badge: 'Familiar', badgeColor: 'bg-blue-400 text-white' },
+  { id: 'ph-e9', title: 'Taller de Cerámica Mapuche', image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=300&q=80', date: '25 Mayo', location: 'Casa de la Cultura', price: '$3.000', badge: 'Cultura', badgeColor: 'bg-primary text-white' },
+  { id: 'ph-e10', title: 'Festival Cerveza Artesanal', image: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=300&q=80', date: '1 Junio', location: 'Recinto Ferial', price: '$7.000', badge: 'Gastronomía', badgeColor: 'bg-accent text-primary font-black' },
+  { id: 'ph-e11', title: 'Yoga al Amanecer', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&q=80', date: '5 Junio', location: 'Playa Grande', price: 'Gratis', badge: 'Deporte', badgeColor: 'bg-red-500 text-white' },
+  { id: 'ph-e12', title: 'Mercado Navideño Anticipado', image: 'https://images.unsplash.com/photo-1543589077-47d81606c1bf?w=300&q=80', date: '8 Junio', location: 'Plaza Cívica', price: 'Entrada libre', badge: 'Ferias', badgeColor: 'bg-teal-500 text-white' },
+]
+
+function shuffle(arr) {
+  const result = [...arr]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
 
 export default function EventsSection({ onViewAll }) {
-  const [events, setEvents] = useState([])
+  const [allEvents, setAllEvents] = useState([])
+  const [displayEvents, setDisplayEvents] = useState([])
+  const [fading, setFading] = useState(false)
+  const rotationRef = useRef(null)
 
   useEffect(() => {
     fetch(`${API}/api/v1/eventos`)
       .then(r => r.json())
       .then(data => {
-        const mapped = (data.eventos || []).slice(0, 8).map(e => ({
+        const mapped = (data.eventos || []).map(e => ({
           id: e.id,
           title: e.titulo,
           image: e.imagen ? `${API}${e.imagen}` : '',
@@ -49,20 +75,40 @@ export default function EventsSection({ onViewAll }) {
           badge: isGratis(e.precio) ? 'Gratis' : (e.categoria_nombre || ''),
           badgeColor: isGratis(e.precio) ? 'bg-green-500 text-white' : getBadgeColor(e.categoria_nombre),
         }))
-        setEvents(mapped)
+        setAllEvents(mapped)
+        const source = mapped.length > 0 ? mapped : PLACEHOLDER_EVENTS
+        setDisplayEvents(shuffle(source).slice(0, 6))
       })
-      .catch(() => setEvents([]))
+      .catch(() => {
+        setAllEvents([])
+        setDisplayEvents(shuffle(PLACEHOLDER_EVENTS).slice(0, 6))
+      })
   }, [])
 
-  // Mobile carousel: 2 rows, scroll horizontally
-  const scrollRef = useRef(null)
-  const intervalRef = useRef(null)
+  // Rotar cada 10 segundos
+  const rotate = useCallback(() => {
+    const source = allEvents.length > 0 ? allEvents : PLACEHOLDER_EVENTS
+    setFading(true)
+    setTimeout(() => {
+      setDisplayEvents(shuffle(source).slice(0, 6))
+      setFading(false)
+    }, 700)
+  }, [allEvents])
 
-  // Agrupar eventos en pares (columnas de 2 filas)
+  useEffect(() => {
+    rotationRef.current = setInterval(rotate, 10000)
+    return () => clearInterval(rotationRef.current)
+  }, [rotate])
+
+  // Mobile: pares para 2 filas
   const eventPairs = []
-  for (let i = 0; i < events.length; i += 2) {
-    eventPairs.push(events.slice(i, i + 2))
+  for (let i = 0; i < displayEvents.length; i += 2) {
+    eventPairs.push(displayEvents.slice(i, i + 2))
   }
+
+  // Mobile auto-scroll
+  const scrollRef = useRef(null)
+  const scrollIntervalRef = useRef(null)
 
   const scrollOneMobile = useCallback(() => {
     if (!scrollRef.current) return
@@ -78,19 +124,20 @@ export default function EventsSection({ onViewAll }) {
   }, [])
 
   useEffect(() => {
-    if (events.length > 0) {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      intervalRef.current = setInterval(scrollOneMobile, 4000)
+    if (displayEvents.length > 0) {
+      if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current)
+      scrollIntervalRef.current = setInterval(scrollOneMobile, 4000)
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [scrollOneMobile, events.length])
+    return () => { if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current) }
+  }, [scrollOneMobile, displayEvents.length])
 
   const renderCard = (event) => (
     <div
       key={event.id}
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-200 group w-full"
+      className={`rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-white/10 group w-full duration-700 ${fading ? 'opacity-0' : 'opacity-100'}`}
+      style={{ background: 'rgba(255,255,255,0.06)' }}
     >
-      <div className="relative h-32 sm:h-28 md:h-28 overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
         <img
           src={event.image}
           alt={event.title}
@@ -102,52 +149,48 @@ export default function EventsSection({ onViewAll }) {
       </div>
       <div className="px-1.5 sm:p-2.5 py-1.5">
         <div className="min-h-[24px] sm:min-h-0 flex items-start">
-          <h3 className="font-bold text-xs sm:text-[10px] text-slate-900 leading-tight line-clamp-2 sm:line-clamp-1 mb-0.5 sm:mb-1">{event.title}</h3>
+          <h3 className="font-bold text-xs sm:text-[10px] text-white leading-tight line-clamp-2 sm:line-clamp-1 mb-0.5 sm:mb-1">{event.title}</h3>
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5">
-          <span className="material-symbols-outlined text-accent text-[10px] sm:text-[10px]">calendar_month</span>
-          <span className="text-[10px] sm:text-[9px] font-bold text-slate-600">{event.date}</span>
+          <span className="material-symbols-outlined text-accent text-[10px]">calendar_month</span>
+          <span className="text-[10px] sm:text-[9px] font-bold text-white/60">{event.date}</span>
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5 sm:mb-1.5">
-          <span className="material-symbols-outlined text-slate-400 text-[10px] sm:text-[10px]">location_on</span>
-          <span className="text-[10px] sm:text-[9px] text-slate-500 line-clamp-1">{event.location}</span>
+          <span className="material-symbols-outlined text-white/40 text-[10px]">location_on</span>
+          <span className="text-[10px] sm:text-[9px] text-white/40 line-clamp-1">{event.location}</span>
         </div>
         <div className="text-center">
-          <span className="text-[10px] sm:text-[10px] font-black text-primary">{event.price}</span>
+          <span className="text-[10px] font-black text-accent">{event.price}</span>
         </div>
       </div>
     </div>
   )
 
   return (
-    <div className="border-2 border-accent rounded-2xl p-3 sm:p-4 md:p-6 mx-0 sm:mx-2 md:mx-6 bg-white">
+    <div className="rounded-2xl p-3 sm:p-4" style={{ background: '#1a1220' }}>
       <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
-        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">Próximos Eventos</h2>
-        <div className="flex-1 h-px bg-slate-200"></div>
-        <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
+        <h2 className="text-xs sm:text-sm font-black text-white tracking-wide">Próximos Eventos</h2>
+        <div className="flex-1 h-px bg-white/10"></div>
+        <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-accent hover:text-white transition-colors uppercase tracking-wider">Ver todo</button>
       </div>
-      {events.length === 0 ? (
-        <p className="text-center text-slate-400 text-xs py-4">No hay eventos próximos aún.</p>
-      ) : (
       <>
         {/* MOBILE: carrusel 2 filas */}
         <div className="sm:hidden overflow-x-hidden" ref={scrollRef}>
           <div className="flex gap-1.5" style={{ scrollBehavior: 'smooth' }}>
             {eventPairs.map((pair, i) => (
-              <div key={i} className="shrink-0 w-[calc(50%-3px)] flex flex-col gap-1.5">
+              <div key={i} className="shrink-0 w-[calc(33%-4px)] flex flex-col gap-1.5">
                 {pair.map(event => renderCard(event))}
               </div>
             ))}
           </div>
         </div>
 
-        {/* TABLET/DESKTOP: grid original */}
-        <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {events.map(event => renderCard(event))}
+        {/* TABLET/DESKTOP: grid */}
+        <div className="hidden sm:grid sm:grid-cols-4 md:grid-cols-6 gap-2">
+          {displayEvents.map(event => renderCard(event))}
         </div>
       </>
-      )}
     </div>
   )
 }

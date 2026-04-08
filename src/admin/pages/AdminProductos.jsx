@@ -701,7 +701,27 @@ export default function AdminProductos() {
 
                 <div>
                   <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Descripción *</label>
-                  <textarea name="descripcion" value={formData.descripcion} onChange={handleInputChange} required rows={2} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary resize-none" placeholder="Describe el producto..." />
+                  <textarea
+                    name="descripcion"
+                    value={formData.descripcion}
+                    onChange={(e) => {
+                      const words = e.target.value.trim() ? e.target.value.trim().split(/\s+/) : []
+                      if (words.length <= 40) handleInputChange(e)
+                    }}
+                    required
+                    rows={3}
+                    className={`w-full rounded-md text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary resize-none ${(formData.descripcion.trim() ? formData.descripcion.trim().split(/\s+/).length : 0) >= 35 ? 'border-amber-400 bg-amber-50/50' : 'border-gray-300'} ${(formData.descripcion.trim() ? formData.descripcion.trim().split(/\s+/).length : 0) >= 40 ? 'border-red-400 bg-red-50/50' : ''}`}
+                    placeholder="Describe el producto (máx. 40 palabras)..."
+                  />
+                  {(() => {
+                    const count = formData.descripcion.trim() ? formData.descripcion.trim().split(/\s+/).length : 0
+                    const remaining = 40 - count
+                    return (
+                      <p className={`text-[9px] sm:text-[10px] mt-0.5 font-semibold ${count >= 40 ? 'text-red-500' : count >= 35 ? 'text-amber-500' : 'text-gray-400'}`}>
+                        {count}/40 palabras{remaining > 0 ? ` · Quedan ${remaining}` : ' · Límite alcanzado'}
+                      </p>
+                    )
+                  })()}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

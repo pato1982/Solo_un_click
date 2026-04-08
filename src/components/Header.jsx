@@ -161,9 +161,8 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
         </div>
       </header>
 
-      {/* === NAV BAR Mobile: siempre visible, scroll touch === */}
-      <nav className="sm:hidden bg-[#4A2070] px-2 py-1 border-y-2 border-accent shadow-md">
-        {/* Nav items en una fila con scroll */}
+      {/* === NAV BAR Mobile: siempre visible === */}
+      <nav className="sm:hidden bg-[#4A2070] px-2 py-2 border-y-2 border-accent shadow-md min-h-[36px]">
         <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar">
           {showInicio && (
             <button
@@ -174,20 +173,6 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
               Inicio
             </button>
           )}
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => toggleNav(item.label.toLowerCase(), false)}
-              className={`shrink-0 flex items-center gap-0.5 py-1 px-1.5 rounded-full text-[10px] font-normal tracking-wide transition-colors whitespace-nowrap ${
-                activeNav === item.label.toLowerCase() || (item.label === 'Negocios' && activeNav === 'locales')
-                  ? 'bg-accent/20 text-accent font-medium'
-                  : 'text-white/60 hover:text-accent'
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
         </div>
         {/* Segunda fila: Hamburguesa + Buscador + Sesión + Planes */}
         <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-white/10">
@@ -266,8 +251,8 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
       </nav>
 
       {/* === NAV BAR - Tablet y Desktop === */}
-      <nav className="hidden sm:block bg-[#4A2070] px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 border-y-2 border-accent shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-4 md:gap-8 relative">
+      <nav className="hidden sm:block bg-[#4A2070] px-3 sm:px-4 md:px-6 border-y-2 border-accent shadow-md min-h-[40px]">
+        <div className="max-w-7xl mx-auto flex items-center justify-end gap-3 sm:gap-4 md:gap-8 min-h-[40px]">
           {showInicio && (
             <button
               onClick={onGoHome}
@@ -277,23 +262,9 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
               Inicio
             </button>
           )}
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => toggleNav(item.label.toLowerCase())}
-              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold capitalize tracking-wide transition-colors ${
-                activeNav === item.label.toLowerCase() || (item.label === 'Negocios' && activeNav === 'locales')
-                  ? 'text-accent'
-                  : 'text-white/90 hover:text-accent'
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm sm:text-base">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
 
-          {/* Registrarse, Ingresar y Planes - Desktop */}
-          <div className="absolute right-0 hidden md:flex items-center gap-4">
+          {/* Desktop: Registrarse, Ingresar y Planes */}
+          <div className="hidden md:flex items-center gap-4">
             {user ? (
               <>
                 {user.rol !== 'programador' && (
@@ -333,7 +304,7 @@ export default function Header({ activeNav, toggleNav, onGoHome, showInicio, onS
           </div>
 
           {/* Tablet: solo iconos de sesión compactos */}
-          <div className="absolute right-0 flex sm:flex md:hidden items-center gap-2">
+          <div className="flex sm:flex md:hidden items-center gap-2">
             {user ? (
               <>
                 <Link to="/admin" className="flex items-center text-white/90 hover:text-accent transition-colors" title="Panel">

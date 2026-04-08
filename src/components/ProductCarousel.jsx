@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import ProductCard from './ProductCard'
 
-export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, onViewAll, onOpenStore }) {
+export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, onViewAll, onOpenStore, hideHeader }) {
   const mobileScrollRef = useRef(null)
   const desktopScrollRef = useRef(null)
   const intervalRef = useRef(null)
@@ -49,28 +49,25 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [resetAutoScroll, restItems.length])
+  }, [resetAutoScroll, items.length])
 
   // Ancho de la tarjeta destacada (fija)
-  const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(16.66%-14px)]'
+  const featuredWidth = 'w-[calc(33.33%-6px)] sm:w-[calc(25%-12px)] md:w-[calc(20%-14px)]'
   // Ancho de tarjetas del carrusel: compensado para que se vean del mismo tamaño que la destacada
   const carouselCardTablet = sidebarOpen ? 'sm:w-[calc(33.33%-11px)]' : 'sm:w-[calc(33.33%-12px)]'
-  const carouselCardDesktop = sidebarOpen ? 'md:w-[calc(20%-13px)]' : 'md:w-[calc(20%-14px)]'
+  const carouselCardDesktop = sidebarOpen ? 'md:w-[calc(25%-13px)]' : 'md:w-[calc(25%-14px)]'
   const carouselCardWidth = `w-[calc(50%-4px)] ${carouselCardTablet} ${carouselCardDesktop}`
 
   return (
     <div>
-      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
-        <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
-        <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
-        <div className="flex-1 h-px bg-slate-200"></div>
-        <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
-      </div>
-      {items.length === 0 ? (
-        <div className="flex items-center justify-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-xl">
-          <p className="text-xs text-gray-400">Próximamente</p>
+      {!hideHeader && (
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+          <div className="w-1 h-4 sm:h-5 bg-accent rounded-full"></div>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-700 tracking-wide">{title}</h2>
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <button onClick={onViewAll} className="text-[9px] sm:text-[10px] font-bold text-primary hover:text-accent transition-colors uppercase tracking-wider">Ver todo</button>
         </div>
-      ) : (
+      )}
       <>
       {/* ===== MOBILE: todas las tarjetas en carrusel, 2 por fila, sin destacada fija ===== */}
       <div className="sm:hidden relative group/carousel">
@@ -140,7 +137,6 @@ export default function ProductCarousel({ title, items, sidebarOpen, hidePrice, 
         )}
       </div>
       </>
-      )}
     </div>
   )
 }

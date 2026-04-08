@@ -1,5 +1,54 @@
 # Registro de Cambios - Solo a un Click
 
+## 7 de Abril 2026 (sesión 19) - Rediseño tarjetas, popup productos, locales y cambio de plan
+
+### Correcciones
+- **EventsSection.jsx:** corregido template literal roto (doble backtick) que causaba error 500 en Vite
+- **activity_log:** renombrada columna `detalle` → `detalles` (TEXT) en BD producción para que el historial de cambios funcione
+
+### Banner eliminado
+- Eliminado componente `Banner.jsx` ("Compra con seguridad") y todas sus referencias en App.jsx
+- Removida fila especial `banner` del sistema de rotación de secciones
+- Eliminada lógica de separación Banner/Locales que ya no era necesaria
+
+### Locales Inscritos - rediseño completo
+- Círculos → tarjetas rectangulares con imagen (aspect ratio 4:3), nombre y dirección debajo
+- Flechas de navegación izquierda/derecha al hacer hover
+- Auto-scroll cada 4 segundos con carrusel horizontal
+- Modal al hacer clic ahora es más grande (max-w-lg) con layout imagen + info lado a lado en desktop
+
+### Tarjetas de productos - mejoras
+- Imagen más alta en desktop: `md:h-44` → `md:h-52`
+- Tarjetas más anchas en desktop: de 5 por fila (20%) a 4 por fila (25%)
+- Toda la tarjeta es clickeable y abre el popup (antes requería botón del ojo)
+- Eliminado botón de ojo (visibility) de las tarjetas
+- Botón storefront usa `stopPropagation` para no conflictar con el click de la tarjeta
+
+### Popup de producto - rediseño completo
+- Layout vertical: imagen grande arriba (aspect ratio 4:3), info debajo
+- Nombre, descripción (4 líneas fijas con line-clamp-4), tallas/medidas centrados
+- Precios centrados: precio actual + precio anterior al lado si corresponde, sin línea separadora
+- Redes sociales y contacto al final
+- Tamaño compacto (max-w-sm)
+
+### Descripción de productos - límite de 40 palabras
+- Textarea en AdminProductos.jsx con conteo de palabras en tiempo real
+- Muestra "X/40 palabras · Quedan Y" debajo del campo
+- Bloquea escritura al llegar a 40 palabras
+- Colores de alerta: gris (normal), amarillo (35-39), rojo (40 = límite)
+- Aplica para productos, servicios y arriendos
+
+### Cambio de plan - cierre de sesión automático
+- Al cambiar de plan, se cierra la sesión y redirige al home para volver a iniciar sesión
+- Popup de confirmación para upgrades: avisa que se cerrará la sesión (no la cuenta)
+- Popups de downgrade y cambio de tipo: ahora incluyen aviso de cierre de sesión
+- Mensaje claro: "Tu cuenta y contenido se mantienen intactos. Solo necesitas volver a iniciar sesión"
+
+### Pendientes
+- **SMTP Gmail para emails de recuperación de contraseña** (único pendiente crítico)
+
+---
+
 ## 27 de Marzo 2026 (sesión 18) - Modal sesión con 3 pestañas + endpoints perfil
 
 ### Modal de sesión reestructurado con pestañas

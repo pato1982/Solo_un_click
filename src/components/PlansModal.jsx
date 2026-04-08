@@ -197,7 +197,7 @@ function ValueOrBool({ value }) {
 
 function GeneralPlans({ hideRecommended } = {}) {
   return (
-    <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+    <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-2 pt-3 snap-x snap-mandatory">
       {plans.map((plan) => (
         <div
           key={plan.name}
@@ -344,7 +344,7 @@ function GeneralPlans({ hideRecommended } = {}) {
 
 function TurismoPlans({ hideRecommended } = {}) {
   return (
-    <div className="flex sm:grid sm:grid-cols-2 gap-3 max-w-lg mx-auto overflow-x-auto pb-2 snap-x snap-mandatory">
+    <div className="flex sm:grid sm:grid-cols-2 gap-3 max-w-lg mx-auto overflow-x-auto pb-2 pt-3 snap-x snap-mandatory">
       {plansTurismo.map((plan) => (
         <div
           key={plan.name}
