@@ -1,5 +1,37 @@
 # Registro de Cambios - Solo a un Click
 
+## 13 de Abril 2026 (sesión 21) - Reparación BD, índices de rendimiento y compresión de imágenes
+
+### Reparación crítica de base de datos
+- **Contraseña MySQL rota desde el 9/04:** la app llevaba 4 días online pero devolviendo errores en todos los endpoints de BD
+- Password corregida en usuario MySQL `soloaunclick`, `backend/.env` y `ecosystem.config.js` → `SoloUnClick2026`
+- PM2 reiniciado limpio con `pm2 delete` + `pm2 start ecosystem.config.js --env production`
+- `pm2 save` ejecutado para persistir configuración en reinicios del servidor
+
+### Índices de rendimiento en MySQL
+- Agregados 15 índices nuevos en las tablas más consultadas:
+  - `listings`: `(tipo, activo)`, `(created_at)` — mejora filtros y ORDER BY
+  - `turismo_tours`: `(activo)`, `(user_id, activo)` — mejora mosaico home
+  - `turismo_portada`: `(activo)` — mejora consultas públicas
+- Tablas ya tenían índices previos en `user_id`, `banner_orden`, `carousel_posicion` que se conservaron
+
+### Compresión automática de imágenes con Sharp
+- Instalado `sharp v0.34.5` en backend del VPS
+- Reescrito `backend/routes/upload.js`: multer ahora almacena en memoria (no en disco), Sharp procesa antes de guardar
+- Toda imagen subida se redimensiona a máx 1200×1200px (respetando proporción) y se convierte a WebP calidad 82
+- Corrección automática de orientación EXIF (fotos tomadas con celular giradas)
+- Límite de entrada aumentado de 5MB a 10MB (Sharp reduce el tamaño final de todas formas)
+- Ahorro promedio: **~90% del peso original** (ej: JPEG 4MB → WebP 150KB)
+- Los logs del servidor registran el ahorro de cada subida
+
+### Análisis y documentación
+- Mapeado el flujo completo Turismo: frontend → backend → BD (4 tablas: `turismo_negocios`, `turismo_tours`, `turismo_portada`, `turismo_pagina`)
+- Confirmado que Turismo es módulo independiente de Listings (productos/servicios/arriendos)
+- Explicación de por qué NO conviene consolidar tablas (tablas separadas = mejor rendimiento)
+- CREDENCIALES.md actualizado: password MySQL corregida, PM2 nombre corregido, comando de deploy agregado
+
+---
+
 ## 7 de Abril 2026 (sesión 19) - Rediseño tarjetas, popup productos, locales y cambio de plan
 
 ### Correcciones
