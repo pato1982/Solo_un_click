@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { requirePlan } = require('../middlewares/planMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -89,14 +90,8 @@ router.get('/public/:userId', async (req, res) => {
 })
 
 // POST /api/tours — crear tour (solo Premium)
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
   try {
-    // Validar plan Premium y límite de 12 tours
-    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
-    if (!userRows.length || userRows[0].plan_id < 3) {
-      return res.status(403).json({ error: 'Se requiere Plan Premium para crear tours' })
-    }
-
     const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ?', [req.userId])
     if (countRows[0].total >= 12) {
       return res.status(400).json({ error: 'Máximo 12 tours permitidos' })
@@ -133,13 +128,8 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/tours/:id — actualizar tour (solo Premium)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
   try {
-    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
-    if (!userRows.length || userRows[0].plan_id < 3) {
-      return res.status(403).json({ error: 'Se requiere Plan Premium para editar tours' })
-    }
-
     const { nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
     if (!nombre || !nombre.trim()) {
