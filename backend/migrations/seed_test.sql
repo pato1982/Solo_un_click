@@ -5,7 +5,7 @@
 -- Uso: Solo para entorno de testing (soloaunclick_test)
 -- ============================================================
 -- CONTRASEÑAS: todas usan hash bcrypt de "Test1234!"
--- Hash: $2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6
+-- Hash: $2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O (generado con Node.js bcryptjs)
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -50,18 +50,18 @@ INSERT INTO plans (id, nombre, max_listings, tiene_pagina, tiene_destacados, tie
 -- Contraseña para todos: Test1234!
 INSERT INTO users (id, plan_id, tipo_cuenta, nombre, email, password, telefono, comuna, vende_productos, ofrece_servicios, ofrece_arriendos, rol, activo) VALUES
 -- Usuarios generales (comercio)
-(1, 3, 'general', 'María López',    'maria@test.com',    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345001', 'Santiago',  1, 0, 0, 'user',  1),
-(2, 2, 'general', 'Carlos Ruiz',    'carlos@test.com',   '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345002', 'Providencia',0, 1, 0, 'user',  1),
-(3, 1, 'general', 'Ana Martínez',   'ana@test.com',      '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345003', 'Las Condes',  1, 1, 1, 'user',  1),
-(4, 3, 'general', 'Pedro González', 'pedro@test.com',    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345004', 'Maipú',       1, 0, 1, 'user',  1),
+(1, 3, 'general', 'María López',    'maria@test.com',    '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345001', 'Santiago',  1, 0, 0, 'user',  1),
+(2, 2, 'general', 'Carlos Ruiz',    'carlos@test.com',   '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345002', 'Providencia',0, 1, 0, 'user',  1),
+(3, 1, 'general', 'Ana Martínez',   'ana@test.com',      '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345003', 'Las Condes',  1, 1, 1, 'user',  1),
+(4, 3, 'general', 'Pedro González', 'pedro@test.com',    '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345004', 'Maipú',       1, 0, 1, 'user',  1),
 -- Usuarios turismo
-(5, 3, 'turismo', 'Hotel Patagonia','hotel@test.com',    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345005', 'Puerto Natales',0, 0, 0,'user',  1),
-(6, 2, 'turismo', 'Expediciones Sur','exp@test.com',     '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345006', 'Punta Arenas', 0, 0, 0,'user',  1),
-(7, 1, 'turismo', 'Cabaña Austral', 'cabana@test.com',   '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345007', 'Puerto Montt', 0, 0, 0,'user',  1),
+(5, 3, 'turismo', 'Hotel Patagonia','hotel@test.com',    '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345005', 'Puerto Natales',0, 0, 0,'user',  1),
+(6, 2, 'turismo', 'Expediciones Sur','exp@test.com',     '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345006', 'Punta Arenas', 0, 0, 0,'user',  1),
+(7, 1, 'turismo', 'Cabaña Austral', 'cabana@test.com',   '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345007', 'Puerto Montt', 0, 0, 0,'user',  1),
 -- Admin
-(8, 3, 'general', 'Admin Sistema',  'admin@test.com',    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', '+56912345008', 'Santiago',    0, 0, 0, 'admin', 1),
+(8, 3, 'general', 'Admin Sistema',  'admin@test.com',    '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345008', 'Santiago',    0, 0, 0, 'admin', 1),
 -- Usuario inactivo
-(9, 1, 'general', 'Usuario Inactivo','inactivo@test.com','$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHwA8zl6', NULL,           NULL,          0, 0, 0, 'user',  0);
+(9, 1, 'general', 'Usuario Inactivo','inactivo@test.com','$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', NULL,           NULL,          0, 0, 0, 'user',  0);
 
 -- =====================
 -- BUSINESSES (tabla unificada — incluye turismo)
