@@ -20,8 +20,8 @@ let authTokenTurismo // usuario turismo para probar portada/tours
 
 beforeAll(async () => {
   const [r1, r2] = await Promise.all([
-    request(app).post('/api/v1/auth/login').send({ email: 'maria@test.com', password: 'password' }),
-    request(app).post('/api/v1/auth/login').send({ email: 'hotel@test.com', password: 'password' })
+    request(app).post('/api/v1/auth/login').send({ email: 'maria@test.com', password: 'Test1234!' }),
+    request(app).post('/api/v1/auth/login').send({ email: 'hotel@test.com', password: 'Test1234!' })
   ])
   authToken = r1.body.token
   authTokenTurismo = r2.body.token

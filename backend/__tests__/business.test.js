@@ -24,13 +24,13 @@ beforeAll(async () => {
   // Login usuario general
   const resG = await request(app)
     .post('/api/v1/auth/login')
-    .send({ email: 'maria@test.com', password: 'password' })
+    .send({ email: 'maria@test.com', password: 'Test1234!' })
   authTokenGeneral = resG.body.token
 
   // Login usuario turismo
   const resT = await request(app)
     .post('/api/v1/auth/login')
-    .send({ email: 'hotel@test.com', password: 'password' })
+    .send({ email: 'hotel@test.com', password: 'Test1234!' })
   authTokenTurismo = resT.body.token
 })
 

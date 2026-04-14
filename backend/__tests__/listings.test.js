@@ -21,7 +21,7 @@ let authToken  // usuario 1 (María - plan 3, tiene listings)
 beforeAll(async () => {
   const res = await request(app)
     .post('/api/v1/auth/login')
-    .send({ email: 'maria@test.com', password: 'password' })
+    .send({ email: 'maria@test.com', password: 'Test1234!' })
   authToken = res.body.token
 })
 
