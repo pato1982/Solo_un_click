@@ -59,7 +59,7 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
         ROUND(data_length + index_length) AS total_bytes,
         table_rows AS filas
       FROM information_schema.tables
-      WHERE table_schema = 'soloaunclick'
+      WHERE table_schema = DATABASE()
       ORDER BY (data_length + index_length) DESC
     `)
 
