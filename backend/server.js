@@ -150,6 +150,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor' })
 })
 
-app.listen(PORT, () => {
-  logger.info(`API corriendo en puerto ${PORT}`)
-})
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info(`API corriendo en puerto ${PORT}`)
+  })
+}
+
+module.exports = app
