@@ -26,7 +26,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await pool.end()
+  // pool se cierra en globalTeardown (__tests__/teardown.js)
 })
 
 // =====================

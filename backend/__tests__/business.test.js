@@ -15,8 +15,6 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env.test') })
 
 const request = require('supertest')
 const app = require('../server')
-const pool = require('../db')
-
 // JWT de usuario de prueba (generado con JWT_SECRET del .env.test)
 // En un entorno real se haría login; aquí usamos un token pre-generado para el seed
 let authTokenGeneral  // usuario 1 (María - general, plan 3)
@@ -37,7 +35,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await pool.end()
+  // pool se cierra en globalTeardown (__tests__/teardown.js)
 })
 
 // =====================
