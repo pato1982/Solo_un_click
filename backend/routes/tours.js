@@ -12,6 +12,23 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// ============================================================
+// FASE 2 — imagenes e imagenes_crop son ahora tipo JSON nativo.
+// MySQL los retorna ya como objetos/arrays — no se necesita JSON.parse().
+// parseJson() mantiene compatibilidad con filas legado (TEXT) si las hubiera.
+// ============================================================
+function parseJson(val, fallback = []) {
+  if (val === null || val === undefined) return fallback
+  if (typeof val === 'object') return val   // JSON nativo de MySQL 8
+  try { return JSON.parse(val) } catch { return fallback }
+}
+
+function normalizarTour(row) {
+  row.imagenes      = parseJson(row.imagenes, [])
+  row.imagenes_crop = parseJson(row.imagenes_crop, [])
+  return row
+}
+
 // GET /api/tours — listar tours del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -19,15 +36,7 @@ router.get('/', authMiddleware, async (req, res) => {
       'SELECT * FROM turismo_tours WHERE user_id = ? ORDER BY created_at DESC',
       [req.userId]
     )
-
-    for (const row of rows) {
-      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
-      catch { row.imagenes = [] }
-      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
-      catch { row.imagenes_crop = [] }
-    }
-
-    res.json({ tours: rows })
+    res.json({ tours: rows.map(normalizarTour) })
   } catch (err) {
     logger.error('Error al obtener tours', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
@@ -40,37 +49,21 @@ router.get('/public', async (req, res) => {
     const [rows] = await pool.query(
       'SELECT * FROM turismo_tours WHERE activo = 1 ORDER BY nombre ASC LIMIT 200'
     )
-
-    for (const row of rows) {
-      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
-      catch { row.imagenes = [] }
-      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
-      catch { row.imagenes_crop = [] }
-    }
-
-    res.json({ tours: rows })
+    res.json({ tours: rows.map(normalizarTour) })
   } catch (err) {
     logger.error('Error al obtener tours públicos', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
   }
 })
 
-// GET /api/tours/public/:userId — listar tours activos de un usuario específico (público)
+// GET /api/tours/public/:userId — listar tours activos de un usuario (público)
 router.get('/public/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query(
       'SELECT * FROM turismo_tours WHERE user_id = ? AND activo = 1 ORDER BY nombre ASC',
       [req.params.userId]
     )
-
-    for (const row of rows) {
-      try { if (row.imagenes && typeof row.imagenes === 'string') row.imagenes = JSON.parse(row.imagenes) }
-      catch { row.imagenes = [] }
-      try { if (row.imagenes_crop && typeof row.imagenes_crop === 'string') row.imagenes_crop = JSON.parse(row.imagenes_crop) }
-      catch { row.imagenes_crop = [] }
-    }
-
-    res.json({ tours: rows })
+    res.json({ tours: rows.map(normalizarTour) })
   } catch (err) {
     logger.error('Error al obtener tours del usuario', { error: err.message })
     res.status(500).json({ error: 'Error al obtener tours' })
@@ -80,13 +73,14 @@ router.get('/public/:userId', async (req, res) => {
 // POST /api/tours — crear tour (solo Premium)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    // Validar plan Premium y límite de 12 tours
     const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
     if (!userRows.length || userRows[0].plan_id < 3) {
       return res.status(403).json({ error: 'Se requiere Plan Premium para crear tours' })
     }
 
-    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ?', [req.userId])
+    const [countRows] = await pool.query(
+      'SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ?', [req.userId]
+    )
     if (countRows[0].total >= 12) {
       return res.status(400).json({ error: 'Máximo 12 tours permitidos' })
     }
@@ -97,12 +91,15 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
+    // JSON nativo en Fase 2: MySQL acepta el objeto directamente o como string
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
       `INSERT INTO turismo_tours (user_id, nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null, sanitize(detalle) || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson]
+      [req.userId, sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null,
+       sanitize(detalle) || null, precio || null, precio_antes || null,
+       imagen_principal || 0, imagenesJson]
     )
 
     await logActivity(req.userId, 'crear', 'tour', result.insertId, { nombre })
@@ -130,9 +127,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
-      `UPDATE turismo_tours SET nombre=?, categoria=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
+      `UPDATE turismo_tours
+       SET nombre=?, categoria=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
        WHERE id=? AND user_id=?`,
-      [sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null, sanitize(detalle) || null, precio || null, precio_antes || null, imagen_principal || 0, imagenesJson, req.params.id, req.userId]
+      [sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null,
+       sanitize(detalle) || null, precio || null, precio_antes || null,
+       imagen_principal || 0, imagenesJson, req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

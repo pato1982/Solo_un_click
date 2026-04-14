@@ -180,6 +180,29 @@ router.get('/mine', authMiddleware, async (req, res) => {
   }
 })
 
+// Resuelve categoria_id y subcategoria_id desde texto libre
+async function resolverCategoriaIds(categoria, subcategoria, tipo) {
+  let categoriaId = null
+  let subcategoriaId = null
+  if (categoria) {
+    const [catRows] = await pool.query(
+      'SELECT id FROM categorias WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) AND tipo = ? LIMIT 1',
+      [categoria, tipo || 'general']
+    )
+    if (catRows.length > 0) {
+      categoriaId = catRows[0].id
+      if (subcategoria) {
+        const [subRows] = await pool.query(
+          'SELECT id FROM subcategorias WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) AND categoria_id = ? LIMIT 1',
+          [subcategoria, categoriaId]
+        )
+        if (subRows.length > 0) subcategoriaId = subRows[0].id
+      }
+    }
+  }
+  return { categoriaId, subcategoriaId }
+}
+
 // POST /api/listings — crear publicación
 router.post('/', authMiddleware, async (req, res) => {
   try {
@@ -203,6 +226,9 @@ router.post('/', authMiddleware, async (req, res) => {
     // Validar que badge solo se use con productos
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
+    // Fase 2: resolver categoria_id / subcategoria_id desde texto
+    const { categoriaId, subcategoriaId } = await resolverCategoriaIds(categoria, subcategoria, tipo)
+
     // Transacción: insertar listing + imagen + tallas + medidas
     const conn = await pool.getConnection()
     let listingId
@@ -210,9 +236,9 @@ router.post('/', authMiddleware, async (req, res) => {
       await conn.beginTransaction()
 
       const [result] = await conn.query(
-        `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, carousel_posicion, carousel_orden, banner_orden)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
+        `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
       )
       listingId = result.insertId
 
@@ -261,15 +287,18 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
+    // Fase 2: resolver categoria_id / subcategoria_id desde texto
+    const { categoriaId, subcategoriaId } = await resolverCategoriaIds(categoria, subcategoria, tipo)
+
     // Transacción: actualizar listing + imagen + tallas + medidas
     const conn = await pool.getConnection()
     try {
       await conn.beginTransaction()
 
       await conn.query(
-        `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
+        `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, categoria_id=?, subcategoria_id=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
          WHERE id=?`,
-        [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
+        [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
       )
 
       if (imagen) {

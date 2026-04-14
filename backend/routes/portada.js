@@ -12,6 +12,25 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// ============================================================
+// FASE 2 — imagenes, categorias e imagenes_crop son ahora tipo JSON nativo.
+// MySQL los retorna ya como objetos/arrays — no se necesita JSON.parse().
+// parseJson() mantiene compatibilidad con filas legado (TEXT) si las hubiera.
+// ============================================================
+function parseJson(val, fallback = []) {
+  if (val === null || val === undefined) return fallback
+  if (typeof val === 'object') return val   // JSON nativo de MySQL 8
+  try { return JSON.parse(val) } catch { return fallback }
+}
+
+function normalizarPortada(row) {
+  row.imagenes      = parseJson(row.imagenes, [])
+  row.categorias    = parseJson(row.categorias, [])
+  row.imagenes_crop = parseJson(row.imagenes_crop, [])
+  if (row.horarios !== undefined) row.horarios = parseJson(row.horarios, [])
+  return row
+}
+
 // GET /api/portada — obtener portada del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -20,19 +39,7 @@ router.get('/', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
-    const portada = rows[0] || null
-    if (portada) {
-      if (portada.imagenes && typeof portada.imagenes === 'string') {
-        try { portada.imagenes = JSON.parse(portada.imagenes) } catch { portada.imagenes = [] }
-      }
-      if (portada.categorias && typeof portada.categorias === 'string') {
-        try { portada.categorias = JSON.parse(portada.categorias) } catch { portada.categorias = [] }
-      }
-      if (portada.imagenes_crop && typeof portada.imagenes_crop === 'string') {
-        try { portada.imagenes_crop = JSON.parse(portada.imagenes_crop) } catch { portada.imagenes_crop = [] }
-      }
-    }
-
+    const portada = rows[0] ? normalizarPortada(rows[0]) : null
     res.json({ portada })
   } catch (err) {
     logger.error('Error al obtener portada', { error: err.message })
@@ -55,22 +62,7 @@ router.get('/public', async (req, res) => {
        LIMIT 200`
     )
 
-    for (const row of rows) {
-      if (row.imagenes && typeof row.imagenes === 'string') {
-        try { row.imagenes = JSON.parse(row.imagenes) } catch { row.imagenes = [] }
-      }
-      if (row.categorias && typeof row.categorias === 'string') {
-        try { row.categorias = JSON.parse(row.categorias) } catch { row.categorias = [] }
-      }
-      if (row.horarios && typeof row.horarios === 'string') {
-        try { row.horarios = JSON.parse(row.horarios) } catch { row.horarios = [] }
-      }
-      if (row.imagenes_crop && typeof row.imagenes_crop === 'string') {
-        try { row.imagenes_crop = JSON.parse(row.imagenes_crop) } catch { row.imagenes_crop = [] }
-      }
-    }
-
-    res.json({ portadas: rows })
+    res.json({ portadas: rows.map(normalizarPortada) })
   } catch (err) {
     logger.error('Error al obtener portadas públicas', { error: err.message })
     res.status(500).json({ error: 'Error al obtener portadas' })

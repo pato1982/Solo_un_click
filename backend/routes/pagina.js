@@ -11,6 +11,22 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// ============================================================
+// FASE 2 — crop_superior y crop_inferior son ahora tipo JSON nativo.
+// parseJson() mantiene compatibilidad con filas legado (TEXT) si las hubiera.
+// ============================================================
+function parseJson(val, fallback = null) {
+  if (val === null || val === undefined) return fallback
+  if (typeof val === 'object') return val   // JSON nativo de MySQL 8
+  try { return JSON.parse(val) } catch { return fallback }
+}
+
+function normalizarPagina(row) {
+  row.crop_superior = parseJson(row.crop_superior, null)
+  row.crop_inferior = parseJson(row.crop_inferior, null)
+  return row
+}
+
 // GET /api/pagina — obtener página premium del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -18,11 +34,7 @@ router.get('/', authMiddleware, async (req, res) => {
       'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
       [req.userId]
     )
-    const pagina = rows[0] || null
-    if (pagina) {
-      try { if (pagina.crop_superior && typeof pagina.crop_superior === 'string') pagina.crop_superior = JSON.parse(pagina.crop_superior) } catch {}
-      try { if (pagina.crop_inferior && typeof pagina.crop_inferior === 'string') pagina.crop_inferior = JSON.parse(pagina.crop_inferior) } catch {}
-    }
+    const pagina = rows[0] ? normalizarPagina(rows[0]) : null
     res.json({ pagina })
   } catch (err) {
     logger.error('Error al obtener página', { error: err.message })
@@ -37,11 +49,7 @@ router.get('/public/:userId', async (req, res) => {
       'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
       [req.params.userId]
     )
-    const pagina = rows[0] || null
-    if (pagina) {
-      try { if (pagina.crop_superior && typeof pagina.crop_superior === 'string') pagina.crop_superior = JSON.parse(pagina.crop_superior) } catch {}
-      try { if (pagina.crop_inferior && typeof pagina.crop_inferior === 'string') pagina.crop_inferior = JSON.parse(pagina.crop_inferior) } catch {}
-    }
+    const pagina = rows[0] ? normalizarPagina(rows[0]) : null
     res.json({ pagina })
   } catch (err) {
     logger.error('Error al obtener página pública', { error: err.message })
