@@ -12,6 +12,17 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// Validar que la categoría exista en la tabla maestra (case-insensitive)
+async function validateCategoria(nombre) {
+  if (!nombre) return { valid: true }
+  const [rows] = await pool.query(
+    'SELECT nombre FROM categorias WHERE tipo = "turismo" AND LOWER(nombre) = LOWER(?) AND activo = 1',
+    [nombre.trim()]
+  )
+  if (rows.length === 0) return { valid: false }
+  return { valid: true, nombre: rows[0].nombre }
+}
+
 // GET /api/tours — listar tours del usuario autenticado
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -97,6 +108,14 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para turismo` })
+      }
+    }
+
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
@@ -125,6 +144,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (!nombre || !nombre.trim()) {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
+    }
+
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para turismo` })
+      }
     }
 
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'

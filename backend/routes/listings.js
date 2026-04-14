@@ -15,6 +15,17 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// Validar que la categoría exista en la tabla maestra (case-insensitive)
+async function validateCategoria(nombre, tipo) {
+  if (!nombre) return { valid: true }
+  const [rows] = await pool.query(
+    'SELECT nombre FROM categorias WHERE tipo = ? AND LOWER(nombre) = LOWER(?) AND activo = 1',
+    [tipo, nombre.trim()]
+  )
+  if (rows.length === 0) return { valid: false, nombre }
+  return { valid: true, nombre: rows[0].nombre } // devuelve nombre normalizado
+}
+
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
@@ -200,6 +211,14 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: `Has alcanzado el límite de ${userRows[0].max_listings} publicaciones de tu plan` })
     }
 
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria, tipo)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para tipo "${tipo}"` })
+      }
+    }
+
     // Validar que badge solo se use con productos
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
@@ -258,6 +277,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria, tipo)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para tipo "${tipo}"` })
+      }
+    }
 
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
