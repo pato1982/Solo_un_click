@@ -249,147 +249,50 @@ const path = require('path')
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
 
 async function deleteListingsByType(userId, tipo) {
-  const conn = await pool.getConnection()
-  try {
-    await conn.beginTransaction()
-
-    const [listings] = await conn.query('SELECT id FROM listings WHERE user_id = ? AND tipo = ?', [userId, tipo])
-    if (listings.length === 0) { await conn.rollback(); conn.release(); return 0 }
-
-    const ids = listings.map(l => l.id)
-    const placeholders = ids.map(() => '?').join(',')
-
-    // Obtener URLs de imágenes para borrar archivos después del commit
-    const [images] = await conn.query(`SELECT url FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
-
-    await conn.query(`DELETE FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
-    await conn.query(`DELETE FROM listing_sizes WHERE listing_id IN (${placeholders})`, ids)
-    await conn.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${placeholders})`, ids)
-    await conn.query(`DELETE FROM listings WHERE id IN (${placeholders})`, ids)
-
-    await conn.commit()
-
-    // Borrar archivos físicos DESPUÉS del commit exitoso
-    for (const img of images) {
-      const filePath = path.join(UPLOAD_DIR, path.basename(img.url))
-      try { fs.unlinkSync(filePath) } catch (e) {}
-    }
-
-    return ids.length
-  } catch (err) {
-    await conn.rollback()
-    throw err
-  } finally {
-    conn.release()
-  }
+  // Soft delete: desactiva los listings sin borrarlos físicamente
+  const [result] = await pool.query(
+    'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND tipo = ? AND activo = 1',
+    [userId, tipo]
+  )
+  return result.affectedRows
 }
 
 async function deleteAllCommerceData(userId) {
-  const conn = await pool.getConnection()
-  try {
-    await conn.beginTransaction()
-
-    // Recopilar archivos a borrar
-    const filesToDelete = []
-
-    // Listings e imágenes
-    const [listings] = await conn.query('SELECT id FROM listings WHERE user_id = ?', [userId])
-    if (listings.length > 0) {
-      const ids = listings.map(l => l.id)
-      const placeholders = ids.map(() => '?').join(',')
-      const [images] = await conn.query(`SELECT url FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
-      filesToDelete.push(...images.map(img => path.join(UPLOAD_DIR, path.basename(img.url))))
-
-      await conn.query(`DELETE FROM listing_images WHERE listing_id IN (${placeholders})`, ids)
-      await conn.query(`DELETE FROM listing_sizes WHERE listing_id IN (${placeholders})`, ids)
-      await conn.query(`DELETE FROM listing_dimensions WHERE listing_id IN (${placeholders})`, ids)
-      await conn.query('DELETE FROM listings WHERE user_id = ?', [userId])
-    }
-
-    // Carruseles e imágenes
-    const [carousels] = await conn.query('SELECT id FROM carousels WHERE user_id = ?', [userId])
-    if (carousels.length > 0) {
-      const cIds = carousels.map(c => c.id)
-      const cPlaceholders = cIds.map(() => '?').join(',')
-      const [cImages] = await conn.query(`SELECT imagen_url FROM carousel_images WHERE carousel_id IN (${cPlaceholders})`, cIds)
-      filesToDelete.push(...cImages.map(img => path.join(UPLOAD_DIR, path.basename(img.imagen_url))))
-
-      await conn.query(`DELETE FROM carousel_images WHERE carousel_id IN (${cPlaceholders})`, cIds)
-      await conn.query('DELETE FROM carousels WHERE user_id = ?', [userId])
-    }
-
-    // Negocio
-    await conn.query('DELETE FROM businesses WHERE user_id = ?', [userId])
-
-    await conn.commit()
-
-    // Borrar archivos físicos DESPUÉS del commit
-    for (const f of filesToDelete) {
-      try { fs.unlinkSync(f) } catch (e) {}
-    }
-  } catch (err) {
-    await conn.rollback()
-    throw err
-  } finally {
-    conn.release()
-  }
+  // Soft delete: desactiva datos de comercio sin borrarlos físicamente
+  // Los archivos e imágenes se conservan para posible restauración
+  await pool.query(
+    'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    [userId]
+  )
+  await pool.query(
+    'UPDATE carousels SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    [userId]
+  )
+  await pool.query(
+    'UPDATE businesses SET activo = 0, deleted_at = NOW() WHERE user_id = ?',
+    [userId]
+  )
 }
 
 async function deleteAllTurismData(userId) {
-  const conn = await pool.getConnection()
-  try {
-    await conn.beginTransaction()
-
-    const filesToDelete = []
-
-    // Tours e imágenes
-    const [tours] = await conn.query('SELECT imagenes FROM turismo_tours WHERE user_id = ?', [userId])
-    for (const t of tours) {
-      if (t.imagenes) {
-        try {
-          const imgs = JSON.parse(t.imagenes)
-          filesToDelete.push(...imgs.map(img => path.join(UPLOAD_DIR, path.basename(img))))
-        } catch (e) {}
-      }
-    }
-    await conn.query('DELETE FROM turismo_tours WHERE user_id = ?', [userId])
-
-    // Portada e imágenes
-    const [portadas] = await conn.query('SELECT imagenes FROM turismo_portada WHERE user_id = ?', [userId])
-    for (const p of portadas) {
-      if (p.imagenes) {
-        try {
-          const imgs = JSON.parse(p.imagenes)
-          filesToDelete.push(...imgs.map(img => path.join(UPLOAD_DIR, path.basename(img))))
-        } catch (e) {}
-      }
-    }
-    await conn.query('DELETE FROM turismo_portada WHERE user_id = ?', [userId])
-
-    // Página e imágenes
-    const [paginas] = await conn.query('SELECT imagen_superior, imagen_inferior FROM turismo_pagina WHERE user_id = ?', [userId])
-    for (const p of paginas) {
-      for (const img of [p.imagen_superior, p.imagen_inferior]) {
-        if (img) filesToDelete.push(path.join(UPLOAD_DIR, path.basename(img)))
-      }
-    }
-    await conn.query('DELETE FROM turismo_pagina WHERE user_id = ?', [userId])
-
-    // Negocio
-    await conn.query('DELETE FROM businesses WHERE user_id = ?', [userId])
-
-    await conn.commit()
-
-    // Borrar archivos físicos DESPUÉS del commit
-    for (const f of filesToDelete) {
-      try { fs.unlinkSync(f) } catch (e) {}
-    }
-  } catch (err) {
-    await conn.rollback()
-    throw err
-  } finally {
-    conn.release()
-  }
+  // Soft delete: desactiva datos de turismo sin borrarlos físicamente
+  // Los archivos e imágenes se conservan para posible restauración
+  await pool.query(
+    'UPDATE turismo_tours SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    [userId]
+  )
+  await pool.query(
+    'UPDATE turismo_portada SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    [userId]
+  )
+  await pool.query(
+    'UPDATE turismo_pagina SET activo = 0, deleted_at = NOW() WHERE user_id = ?',
+    [userId]
+  )
+  await pool.query(
+    'UPDATE turismo_negocios SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    [userId]
+  )
 }
 
 // PUT /api/auth/profile — actualizar tipo de cuenta y plan, con eliminación de datos

@@ -15,7 +15,7 @@ function sanitize(str) {
 // GET /api/business/public/:userId — datos públicos de un negocio por user_id
 router.get('/public/:userId', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ?', [req.params.userId])
+    const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ? AND activo = 1', [req.params.userId])
     if (rows.length === 0) return res.json({ business: null })
     const business = rows[0]
     if (business.horarios && typeof business.horarios === 'string') {
@@ -53,7 +53,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ?`,
+      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ? AND b.activo = 1`,
       [req.params.userId]
     )
 
@@ -100,7 +100,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     if (existing.length > 0) {
       await pool.query(
-        `UPDATE businesses SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
+        `UPDATE businesses SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?, activo=1, deleted_at=NULL
          WHERE user_id=?`,
         [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson, req.userId]
       )
