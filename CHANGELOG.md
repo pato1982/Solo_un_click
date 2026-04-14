@@ -1911,3 +1911,40 @@ Intercalados: Banner (después de fila 2), Eventos (después de fila 3), Tiendas
 
 ### Turismo
 - Imagen de rafting removida del banner (solo quedan: Volcán, Canopy, Kayak)
+
+## 14 de Abril 2026 — Sesión 22
+
+### Auditoría Mediano Plazo — 3 tareas
+
+**Tarea 4: Fusionar businesses + turismo_negocios**
+- `turismo.js` ahora lee y escribe en la tabla `businesses` (ya no usa `turismo_negocios`)
+- JOIN con `users WHERE tipo_cuenta='turismo'` para identificar negocios turísticos
+- Se agrega campo `ubicacion` a `businesses` (solo existía en turismo_negocios)
+- `business.js` actualizado para incluir `ubicacion` en GET/POST/UPDATE
+- `auth.js`: `deleteAllTurismData` ahora hace soft delete en `businesses` en lugar de `turismo_negocios`
+- Datos migrados desde `turismo_negocios` → `businesses` en producción
+- Tabla `turismo_negocios` se conserva como legacy (no se elimina)
+
+**Tarea 5: Tabla `media` unificada**
+- Nueva tabla `media(entity_type, entity_id, url, orden)` reemplaza `listing_images` y `carousel_images`
+- `listings.js`: todos los JOINs, INSERTs y DELETEs de imágenes apuntan a `media` (`entity_type='listing'`)
+- `carousels.js`: todos los JOINs y CRUDs apuntan a `media` (`entity_type='carousel'`)
+- `servicios.js`: query de imágenes actualizada a tabla `media`
+- Datos migrados desde `listing_images` y `carousel_images` → `media` en producción
+- Tablas `listing_images` y `carousel_images` se conservan como legacy
+
+**Tarea 6: JSON nativo en MySQL**
+- Campos migrados de `TEXT` a tipo `JSON` nativo de MySQL en producción:
+  - `businesses.horarios`
+  - `turismo_negocios.horarios`
+  - `turismo_tours.imagenes`, `turismo_tours.imagenes_crop`
+  - `turismo_portada.imagenes`, `turismo_portada.categorias`
+- No requirió cambios en código Node.js (el check `typeof === 'string'` sigue funcionando con ambos tipos)
+
+**Archivos creados**
+- `backend/migrations/mediano_plazo.sql` — migración completa para producción
+- `backend/schema_local.sql` — esquema local actualizado con todos los cambios
+
+**Estado post-deploy**
+- Migración ejecutada exitosamente en producción
+- PM2 reiniciado, todos los endpoints respondiendo sin errores

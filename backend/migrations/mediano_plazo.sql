@@ -9,8 +9,18 @@
 -- TAREA 4: Fusionar businesses + turismo_negocios
 -- ============================================================
 
--- Agregar columna ubicacion a businesses (si no existe)
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ubicacion VARCHAR(255) AFTER direccion;
+-- Agregar columna ubicacion a businesses (sólo si no existe)
+SET @has_ubicacion = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'businesses' AND COLUMN_NAME = 'ubicacion'
+);
+SET @alter_sql = IF(@has_ubicacion = 0,
+  'ALTER TABLE businesses ADD COLUMN ubicacion VARCHAR(255) AFTER direccion',
+  'SELECT "ubicacion ya existe, sin cambios" AS info'
+);
+PREPARE _s FROM @alter_sql;
+EXECUTE _s;
+DEALLOCATE PREPARE _s;
 
 -- Migrar registros de turismo_negocios que no tienen entrada en businesses
 INSERT INTO businesses (user_id, nombre_negocio, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios, activo)
