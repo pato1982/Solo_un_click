@@ -61,7 +61,9 @@ INSERT INTO users (id, plan_id, tipo_cuenta, nombre, email, password, telefono, 
 -- Admin
 (8, 3, 'general', 'Admin Sistema',  'admin@test.com',    '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56912345008', 'Santiago',    0, 0, 0, 'admin', 1),
 -- Usuario inactivo
-(9, 1, 'general', 'Usuario Inactivo','inactivo@test.com','$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', NULL,           NULL,          0, 0, 0, 'user',  0);
+(9,  1, 'general', 'Usuario Inactivo','inactivo@test.com','$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', NULL,             NULL,         0, 0, 0, 'user',        0),
+-- Programador (para endpoints /servidor/estadisticas y /servidor/stats)
+(10, 3, 'general', 'Dev Test',        'dev@test.com',     '$2a$10$n0JLDH9Z0ISftnaHEw7QOO0l.cI73BmKP9N3BQJIATHobC/ye8w/O', '+56900000000', 'Santiago',   0, 0, 0, 'programador', 1);
 
 -- =====================
 -- BUSINESSES (tabla unificada — incluye turismo)

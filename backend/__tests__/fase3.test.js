@@ -19,15 +19,15 @@ const app = require('../server')
 const pool = require('../db')
 
 let authTokenTurismo
-let authTokenAdmin
+let authTokenDev  // usuario con rol='programador' para endpoints /servidor
 
 beforeAll(async () => {
   const [r1, r2] = await Promise.all([
     request(app).post('/api/v1/auth/login').send({ email: 'hotel@test.com', password: 'Test1234!' }),
-    request(app).post('/api/v1/auth/login').send({ email: 'admin@test.com', password: 'Test1234!' })
+    request(app).post('/api/v1/auth/login').send({ email: 'dev@test.com', password: 'Test1234!' })
   ])
   authTokenTurismo = r1.body.token
-  authTokenAdmin = r2.body.token
+  authTokenDev = r2.body.token
 })
 
 afterAll(async () => {
@@ -160,7 +160,7 @@ describe('servidor.js — estadísticas con DATABASE()', () => {
   test('GET /servidor/estadisticas retorna KPIs correctos', async () => {
     const res = await request(app)
       .get('/api/v1/servidor/estadisticas')
-      .set('Authorization', `Bearer ${authTokenAdmin}`)
+      .set('Authorization', `Bearer ${authTokenDev}`)
     expect(res.status).toBe(200)
     expect(res.body.kpis).toBeDefined()
     expect(typeof res.body.kpis.total).toBe('number')
