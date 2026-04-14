@@ -132,15 +132,6 @@ CREATE TABLE IF NOT EXISTS listings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- ==================== LISTING_IMAGES ====================
-CREATE TABLE IF NOT EXISTS listing_images (
-  id         INT AUTO_INCREMENT PRIMARY KEY,
-  listing_id INT NOT NULL,
-  url        VARCHAR(500) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
-);
-
 -- ==================== LISTING_SIZES ====================
 CREATE TABLE IF NOT EXISTS listing_sizes (
   id         INT AUTO_INCREMENT PRIMARY KEY,
@@ -179,15 +170,6 @@ CREATE TABLE IF NOT EXISTS carousels (
   posicion   INT          DEFAULT 0,
   created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- ==================== CAROUSEL_IMAGES ====================
-CREATE TABLE IF NOT EXISTS carousel_images (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  carousel_id INT          NOT NULL,
-  imagen_url  VARCHAR(500),
-  orden       INT          DEFAULT 0,
-  FOREIGN KEY (carousel_id) REFERENCES carousels(id) ON DELETE CASCADE
 );
 
 -- ==================== TURISMO ====================
@@ -232,27 +214,6 @@ CREATE TABLE IF NOT EXISTS turismo_pagina (
   imagen_inferior  VARCHAR(500),
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- turismo_negocios: tabla legacy (los datos se han migrado a businesses)
-CREATE TABLE IF NOT EXISTS turismo_negocios (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT  NOT NULL UNIQUE,
-  nombre      VARCHAR(255),
-  descripcion TEXT,
-  direccion   VARCHAR(255),
-  ubicacion   VARCHAR(255),
-  whatsapp    VARCHAR(30),
-  telefono    VARCHAR(30),
-  correo      VARCHAR(150),
-  facebook    VARCHAR(255),
-  instagram   VARCHAR(255),
-  horarios    JSON,
-  activo      TINYINT(1)  DEFAULT 1,
-  deleted_at  TIMESTAMP   NULL DEFAULT NULL,
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
