@@ -11,7 +11,7 @@ const pool = require('./db')
 async function logActivity(userId, accion, entidad, entidadId = null, detalles = null) {
   try {
     await pool.query(
-      'INSERT INTO activity_log (user_id, accion, entidad, entidad_id, detalles) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO activity_log (user_id, accion, entity_type, entity_id, detalles) VALUES (?, ?, ?, ?, ?)',
       [userId, accion, entidad, entidadId, detalles ? JSON.stringify(detalles) : null]
     )
   } catch (err) {
