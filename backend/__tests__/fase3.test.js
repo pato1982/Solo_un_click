@@ -163,9 +163,9 @@ describe('servidor.js — estadísticas con DATABASE()', () => {
       .set('Authorization', `Bearer ${authTokenDev}`)
     expect(res.status).toBe(200)
     expect(res.body.kpis).toBeDefined()
-    expect(typeof res.body.kpis.total).toBe('number')
-    // Con la BD de test debe haber usuarios turismo
-    expect(res.body.kpis.turismo_premium).toBeGreaterThan(0)
+    // MySQL puede devolver SUM() como string — castear a número para comparar
+    expect(Number(res.body.kpis.total)).toBeGreaterThan(0)
+    expect(Number(res.body.kpis.turismo_premium)).toBeGreaterThan(0)
   })
 })
 
