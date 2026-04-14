@@ -1,6 +1,6 @@
 # Registro de Cambios - Solo a un Click
 
-## 14 de Abril 2026 (sesión 22) - Auditoría mediano plazo + correcciones SQL
+## 14 de Abril 2026 (sesión 22) - Auditoría mediano plazo, limpieza BD y documentación
 
 ### Tareas de mediano plazo (auditoría BD)
 
@@ -8,21 +8,43 @@
 - `turismo.js` lee y escribe en tabla `businesses` (JOIN users WHERE tipo_cuenta='turismo')
 - `business.js` incluye campo `ubicacion` en GET/POST/UPDATE
 - `auth.js`: `deleteAllTurismData` hace soft delete en `businesses` en lugar de `turismo_negocios`
-- Tabla `turismo_negocios` se conserva como legacy
-- Migración ejecutada en producción
+- Migración ejecutada en producción — tabla `turismo_negocios` eliminada (estaba vacía)
 
 **Tarea 5: Tabla `media` unificada**
 - Nueva tabla `media(entity_type, entity_id, url, orden)` reemplaza `listing_images` y `carousel_images`
 - `listings.js`, `carousels.js`, `servicios.js` apuntan a `media`
-- Datos migrados desde tablas legacy a `media` en producción
+- Tablas `listing_images` y `carousel_images` eliminadas de producción (estaban vacías)
 
 **Tarea 6: JSON nativo en MySQL**
 - `businesses.horarios`, `turismo_tours.imagenes/imagenes_crop`, `turismo_portada.imagenes/categorias` migrados a tipo JSON nativo
 
 ### Correcciones SQL detectadas en logs
-- **locales.js**: `DISTINCT + ORDER BY cb.orden` fallaba porque `orden` no estaba en SELECT → agregado `cb.orden` al SELECT
+- **locales.js**: `DISTINCT + ORDER BY cb.orden` fallaba porque `orden` no estaba en SELECT → corregido
 - **eventos.js**: misma corrección para `ce.orden`
-- Estas queries causaban errores silenciosos cada vez que se cargaban categorías de barrio y evento
+- Estas queries causaban errores silenciosos desde el 9/04 cada vez que se cargaban categorías de barrio y evento
+
+### Limpieza de base de datos
+- Verificado que las 3 tablas legacy estaban vacías antes de eliminar
+- Eliminadas de producción: `turismo_negocios`, `listing_images`, `carousel_images`
+- Removidas de `schema_local.sql` para mantener el esquema limpio
+- BD queda con **24 tablas activas**, sin tablas huérfanas
+
+### Sincronización y deploy
+- Push a GitHub que estaba pendiente desde sesión anterior completado
+- Git del VPS sincronizado con `git fetch + reset --hard origin/main`
+- PM2 reiniciado con código actualizado — sin errores en logs
+
+### Documentación
+- Creado archivo `RESP_AUDITORIA.md` con informe completo de toda la auditoría:
+  - Lo que ya estaba bien desde el inicio (no aplicaba)
+  - Cada corrección implementada por fase y sesión
+  - Estado actual de la BD
+  - Historial de commits relacionados
+  - 2 pendientes finales (SMTP Gmail y CI/CD)
+
+### Estado de auditoría
+- **Completado:** todos los ítems urgentes, mediano plazo y correcciones adicionales
+- **Pendiente:** SMTP Gmail (recuperación de contraseña) y CI/CD pipeline (deploy automático)
 
 ---
 
