@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN listing_images li ON l.id = li.listing_id
       LEFT JOIN users u ON l.user_id = u.id
       LEFT JOIN businesses b ON l.user_id = b.user_id
-      WHERE l.activo = 1
+      WHERE l.activo = 1 AND l.deleted_at IS NULL
     `
     const params = []
 
@@ -324,8 +324,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       try { fs.unlinkSync(filePath) } catch (e) {}
     }
 
-    // Eliminar (CASCADE borra imágenes, tallas y medidas)
-    await pool.query('DELETE FROM listings WHERE id = ?', [id])
+    // Soft delete — marcar como eliminado sin borrar del disco (Fase 1)
+    await pool.query(
+      'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE id = ?',
+      [id]
+    )
 
     await logActivity(req.userId, 'eliminar', 'listing', parseInt(id))
     res.json({ message: 'Publicación eliminada' })

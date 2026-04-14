@@ -12,15 +12,20 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// Normalizar horarios: soporta JSON nativo (objeto) y TEXT legado (string)
+function parseHorarios(val) {
+  if (!val) return null
+  if (typeof val === 'object') return val  // JSON nativo de MySQL
+  try { return JSON.parse(val) } catch { return null }
+}
+
 // GET /api/business/public/:userId — datos públicos de un negocio por user_id
 router.get('/public/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ?', [req.params.userId])
     if (rows.length === 0) return res.json({ business: null })
     const business = rows[0]
-    if (business.horarios && typeof business.horarios === 'string') {
-      try { business.horarios = JSON.parse(business.horarios) } catch { business.horarios = [] }
-    }
+    business.horarios = parseHorarios(business.horarios)
     res.json({ business })
   } catch (err) {
     logger.error('Error al obtener negocio público', { error: err.message })
@@ -38,10 +43,7 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 
     const business = rows[0]
-    if (business.horarios && typeof business.horarios === 'string') {
-      business.horarios = JSON.parse(business.horarios)
-    }
-
+    business.horarios = parseHorarios(business.horarios)
     res.json({ business })
   } catch (err) {
     logger.error('Error al obtener negocio', { error: err.message })
@@ -62,10 +64,7 @@ router.get('/:userId', async (req, res) => {
     }
 
     const business = rows[0]
-    if (business.horarios && typeof business.horarios === 'string') {
-      business.horarios = JSON.parse(business.horarios)
-    }
-
+    business.horarios = parseHorarios(business.horarios)
     res.json({ business })
   } catch (err) {
     logger.error('Error al obtener negocio público', { error: err.message })
@@ -76,7 +75,7 @@ router.get('/:userId', async (req, res) => {
 // POST /api/business — crear o actualizar datos del negocio
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { nombre_negocio, slogan, descripcion, direccion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
+    const { nombre_negocio, slogan, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
 
     // Validar slogan: máximo 10 palabras
     if (slogan) {
@@ -94,21 +93,31 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Instagram debe ser una URL de instagram.com o un @usuario' })
     }
 
+    // horarios: JSON nativo en Fase 1 — almacenar como JSON string (MySQL convierte a JSON nativo)
     const horariosJson = horarios ? JSON.stringify(horarios) : null
 
     const [existing] = await pool.query('SELECT id FROM businesses WHERE user_id = ?', [req.userId])
 
     if (existing.length > 0) {
       await pool.query(
-        `UPDATE businesses SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
+        `UPDATE businesses
+         SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, ubicacion=?,
+             whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
          WHERE user_id=?`,
-        [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson, req.userId]
+        [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null,
+         sanitize(direccion) || null, sanitize(ubicacion) || null,
+         sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null,
+         facebook || null, instagram || null, horariosJson, req.userId]
       )
     } else {
       await pool.query(
-        `INSERT INTO businesses (user_id, nombre_negocio, slogan, descripcion, direccion, whatsapp, telefono, correo, facebook, instagram, horarios)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson]
+        `INSERT INTO businesses
+           (user_id, nombre_negocio, slogan, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios, tipo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'general')`,
+        [req.userId, sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null,
+         sanitize(direccion) || null, sanitize(ubicacion) || null,
+         sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null,
+         facebook || null, instagram || null, horariosJson]
       )
     }
 
