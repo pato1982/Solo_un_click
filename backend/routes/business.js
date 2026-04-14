@@ -76,7 +76,7 @@ router.get('/:userId', async (req, res) => {
 // POST /api/business — crear o actualizar datos del negocio
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { nombre_negocio, slogan, descripcion, direccion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
+    const { nombre_negocio, slogan, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
 
     // Validar slogan: máximo 10 palabras
     if (slogan) {
@@ -100,15 +100,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     if (existing.length > 0) {
       await pool.query(
-        `UPDATE businesses SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?, activo=1, deleted_at=NULL
+        `UPDATE businesses SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, ubicacion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?, activo=1, deleted_at=NULL
          WHERE user_id=?`,
-        [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson, req.userId]
+        [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, ubicacion || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson, req.userId]
       )
     } else {
       await pool.query(
-        `INSERT INTO businesses (user_id, nombre_negocio, slogan, descripcion, direccion, whatsapp, telefono, correo, facebook, instagram, horarios)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson]
+        `INSERT INTO businesses (user_id, nombre_negocio, slogan, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null, sanitize(direccion) || null, ubicacion || null, sanitize(whatsapp) || null, sanitize(telefono) || null, sanitize(correo) || null, facebook || null, instagram || null, horariosJson]
       )
     }
 

@@ -43,11 +43,12 @@ router.get('/', authMiddleware, async (req, res) => {
       [req.userId]
     )
 
-    // Obtener imágenes de cada carrusel
+    // Obtener imágenes de cada carrusel desde tabla media
     const result = []
     for (const c of carousels) {
       const [images] = await pool.query(
-        'SELECT id, imagen_url, orden FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+        `SELECT id, url AS imagen_url, orden FROM media
+         WHERE entity_type = 'carousel' AND entity_id = ? ORDER BY orden`,
         [c.id]
       )
       result.push({
@@ -99,7 +100,7 @@ router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (re
 
       if (req.files && req.files.length > 0) {
         const [countResult] = await conn.query(
-          'SELECT COUNT(*) as total FROM carousel_images WHERE carousel_id = ?',
+          `SELECT COUNT(*) as total FROM media WHERE entity_type = 'carousel' AND entity_id = ?`,
           [carouselId]
         )
         const currentCount = countResult[0].total
@@ -109,7 +110,7 @@ router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (re
         for (let i = 0; i < filesToAdd.length; i++) {
           const url = `/uploads/carousels/${filesToAdd[i].filename}`
           await conn.query(
-            'INSERT INTO carousel_images (carousel_id, imagen_url, orden) VALUES (?, ?, ?)',
+            `INSERT INTO media (entity_type, entity_id, url, orden) VALUES ('carousel', ?, ?, ?)`,
             [carouselId, url, currentCount + i + 1]
           )
         }
@@ -125,7 +126,8 @@ router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (re
 
     // Devolver carrusel actualizado
     const [images] = await pool.query(
-      'SELECT id, imagen_url, orden FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+      `SELECT id, url AS imagen_url, orden FROM media
+       WHERE entity_type = 'carousel' AND entity_id = ? ORDER BY orden`,
       [carouselId]
     )
 
@@ -160,7 +162,7 @@ router.put('/:posicion/reorder', authMiddleware, async (req, res) => {
       await conn.beginTransaction()
       for (let i = 0; i < imageIds.length; i++) {
         await conn.query(
-          'UPDATE carousel_images SET orden = ? WHERE id = ? AND carousel_id = ?',
+          `UPDATE media SET orden = ? WHERE id = ? AND entity_type = 'carousel' AND entity_id = ?`,
           [i + 1, imageIds[i], carousel[0].id]
         )
       }
@@ -194,28 +196,28 @@ router.delete('/:posicion/images/:imageId', authMiddleware, async (req, res) => 
       return res.status(404).json({ error: 'Carrusel no encontrado' })
     }
 
-    // Obtener URL para borrar archivo
+    // Obtener URL para borrar archivo físico
     const [img] = await pool.query(
-      'SELECT imagen_url FROM carousel_images WHERE id = ? AND carousel_id = ?',
+      `SELECT url FROM media WHERE id = ? AND entity_type = 'carousel' AND entity_id = ?`,
       [imageId, carousel[0].id]
     )
 
     if (img.length > 0) {
-      const fileToDelete = path.join(__dirname, '..', img[0].imagen_url)
+      const fileToDelete = path.join(__dirname, '..', img[0].url)
 
       // Transacción: borrar registro + reordenar restantes
       const conn = await pool.getConnection()
       try {
         await conn.beginTransaction()
 
-        await conn.query('DELETE FROM carousel_images WHERE id = ?', [imageId])
+        await conn.query('DELETE FROM media WHERE id = ?', [imageId])
 
         const [remaining] = await conn.query(
-          'SELECT id FROM carousel_images WHERE carousel_id = ? ORDER BY orden',
+          `SELECT id FROM media WHERE entity_type = 'carousel' AND entity_id = ? ORDER BY orden`,
           [carousel[0].id]
         )
         for (let i = 0; i < remaining.length; i++) {
-          await conn.query('UPDATE carousel_images SET orden = ? WHERE id = ?', [i + 1, remaining[i].id])
+          await conn.query('UPDATE media SET orden = ? WHERE id = ?', [i + 1, remaining[i].id])
         }
 
         await conn.commit()

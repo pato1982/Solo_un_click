@@ -290,7 +290,7 @@ async function deleteAllTurismData(userId) {
     [userId]
   )
   await pool.query(
-    'UPDATE turismo_negocios SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    'UPDATE businesses SET activo = 0, deleted_at = NOW() WHERE user_id = ?',
     [userId]
   )
 }

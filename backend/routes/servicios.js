@@ -34,9 +34,9 @@ router.get('/public', async (req, res) => {
     // Para cada negocio, obtener sus primeras 5 imágenes de listings tipo servicio
     const servicios = await Promise.all(rows.map(async (row) => {
       const [imgs] = await pool.query(`
-        SELECT li.url as imagen FROM listing_images li
-        JOIN listings l ON l.id = li.listing_id
-        WHERE l.user_id = ? AND l.tipo = 'servicio' AND l.activo = 1
+        SELECT m.url as imagen FROM media m
+        JOIN listings l ON l.id = m.entity_id
+        WHERE m.entity_type = 'listing' AND l.user_id = ? AND l.tipo = 'servicio' AND l.activo = 1
         ORDER BY l.id DESC LIMIT 5
       `, [row.user_id])
 

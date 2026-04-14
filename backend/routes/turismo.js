@@ -5,17 +5,21 @@ const logger = require('../logger')
 
 const router = express.Router()
 
-// GET /api/turismo — listar negocios de turismo del usuario autenticado
+// GET /api/turismo — negocio de turismo del usuario autenticado (lee de businesses)
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_negocios WHERE user_id = ? ORDER BY created_at DESC',
+      `SELECT b.*, b.nombre_negocio AS nombre
+       FROM businesses b
+       JOIN users u ON b.user_id = u.id
+       WHERE b.user_id = ? AND u.tipo_cuenta = 'turismo'`,
       [req.userId]
     )
 
     for (const row of rows) {
-      try { if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios) }
-      catch { row.horarios = [] }
+      try {
+        if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios)
+      } catch { row.horarios = [] }
     }
 
     res.json({ negocios: rows })
@@ -29,12 +33,17 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/public', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_negocios WHERE activo = 1 ORDER BY nombre ASC'
+      `SELECT b.*, b.nombre_negocio AS nombre
+       FROM businesses b
+       JOIN users u ON b.user_id = u.id
+       WHERE u.tipo_cuenta = 'turismo' AND b.activo = 1
+       ORDER BY b.nombre_negocio ASC`
     )
 
     for (const row of rows) {
-      try { if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios) }
-      catch { row.horarios = [] }
+      try {
+        if (row.horarios && typeof row.horarios === 'string') row.horarios = JSON.parse(row.horarios)
+      } catch { row.horarios = [] }
     }
 
     res.json({ negocios: rows })
@@ -44,7 +53,7 @@ router.get('/public', async (req, res) => {
   }
 })
 
-// POST /api/turismo — crear nuevo negocio de turismo
+// POST /api/turismo — crear negocio de turismo (guarda en businesses)
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { nombre, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
@@ -53,8 +62,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
-    // Verificar que el usuario no tenga ya un negocio
-    const [existing] = await pool.query('SELECT id FROM turismo_negocios WHERE user_id = ?', [req.userId])
+    const [existing] = await pool.query('SELECT id FROM businesses WHERE user_id = ?', [req.userId])
     if (existing.length > 0) {
       return res.status(400).json({ error: 'Ya existe un negocio, usa PUT para actualizar' })
     }
@@ -62,7 +70,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const horariosJson = horarios ? JSON.stringify(horarios) : null
 
     const [result] = await pool.query(
-      `INSERT INTO turismo_negocios (user_id, nombre, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios)
+      `INSERT INTO businesses (user_id, nombre_negocio, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [req.userId, nombre.trim(), descripcion || null, direccion || null, ubicacion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson]
     )
@@ -74,7 +82,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// PUT /api/turismo/:id — actualizar negocio de turismo
+// PUT /api/turismo/:id — actualizar negocio de turismo (actualiza en businesses)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { nombre, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
@@ -86,7 +94,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const horariosJson = horarios ? JSON.stringify(horarios) : null
 
     const [result] = await pool.query(
-      `UPDATE turismo_negocios SET nombre=?, descripcion=?, direccion=?, ubicacion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
+      `UPDATE businesses SET nombre_negocio=?, descripcion=?, direccion=?, ubicacion=?, whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
        WHERE id=? AND user_id=?`,
       [nombre.trim(), descripcion || null, direccion || null, ubicacion || null, whatsapp || null, telefono || null, correo || null, facebook || null, instagram || null, horariosJson, req.params.id, req.userId]
     )
@@ -102,11 +110,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 })
 
-// DELETE /api/turismo/:id — eliminar negocio de turismo
+// DELETE /api/turismo/:id — soft delete de negocio de turismo
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'DELETE FROM turismo_negocios WHERE id = ? AND user_id = ?',
+      'UPDATE businesses SET activo = 0, deleted_at = NOW() WHERE id = ? AND user_id = ?',
       [req.params.id, req.userId]
     )
 
@@ -125,7 +133,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 router.patch('/:id/toggle', authMiddleware, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_negocios SET activo = NOT activo WHERE id = ? AND user_id = ?',
+      'UPDATE businesses SET activo = NOT activo WHERE id = ? AND user_id = ?',
       [req.params.id, req.userId]
     )
 
