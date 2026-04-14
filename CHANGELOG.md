@@ -1,5 +1,31 @@
 # Registro de Cambios - Solo a un Click
 
+## 14 de Abril 2026 (sesión 22) - Auditoría mediano plazo + correcciones SQL
+
+### Tareas de mediano plazo (auditoría BD)
+
+**Tarea 4: Fusionar businesses + turismo_negocios**
+- `turismo.js` lee y escribe en tabla `businesses` (JOIN users WHERE tipo_cuenta='turismo')
+- `business.js` incluye campo `ubicacion` en GET/POST/UPDATE
+- `auth.js`: `deleteAllTurismData` hace soft delete en `businesses` en lugar de `turismo_negocios`
+- Tabla `turismo_negocios` se conserva como legacy
+- Migración ejecutada en producción
+
+**Tarea 5: Tabla `media` unificada**
+- Nueva tabla `media(entity_type, entity_id, url, orden)` reemplaza `listing_images` y `carousel_images`
+- `listings.js`, `carousels.js`, `servicios.js` apuntan a `media`
+- Datos migrados desde tablas legacy a `media` en producción
+
+**Tarea 6: JSON nativo en MySQL**
+- `businesses.horarios`, `turismo_tours.imagenes/imagenes_crop`, `turismo_portada.imagenes/categorias` migrados a tipo JSON nativo
+
+### Correcciones SQL detectadas en logs
+- **locales.js**: `DISTINCT + ORDER BY cb.orden` fallaba porque `orden` no estaba en SELECT → agregado `cb.orden` al SELECT
+- **eventos.js**: misma corrección para `ce.orden`
+- Estas queries causaban errores silenciosos cada vez que se cargaban categorías de barrio y evento
+
+---
+
 ## 13 de Abril 2026 (sesión 21) - Reparación BD, índices de rendimiento y compresión de imágenes
 
 ### Reparación crítica de base de datos
