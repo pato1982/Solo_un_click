@@ -12,6 +12,13 @@ router.post('/track', async (req, res) => {
     if (!user_id || !event_type) return res.status(400).json({ error: 'Faltan datos' })
     if (!['page_view', 'product_click', 'card_click'].includes(event_type)) return res.status(400).json({ error: 'Tipo inválido' })
 
+    // Verificar que el usuario exista y esté activo
+    const [userCheck] = await pool.query(
+      'SELECT id FROM users WHERE id = ? AND activo = 1 LIMIT 1',
+      [user_id]
+    )
+    if (userCheck.length === 0) return res.status(400).json({ error: 'Usuario no válido' })
+
     // Registrar en analytics (legacy)
     await pool.query(
       'INSERT INTO analytics (user_id, event_type, listing_id) VALUES (?, ?, ?)',
@@ -44,65 +51,63 @@ router.post('/track', async (req, res) => {
 // GET /api/analytics/stats — estadísticas mensuales del usuario autenticado
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
-    // Últimos 6 meses de visitas desde page_visits
-    const [views] = await pool.query(
-      `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
-       FROM page_visits
-       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY mes ORDER BY mes ASC`,
-      [req.userId]
-    )
-
-    // Últimos 6 meses de clicks en productos
-    const [clicks] = await pool.query(
-      `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
-       FROM analytics
-       WHERE user_id = ? AND event_type = 'product_click' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY mes ORDER BY mes ASC`,
-      [req.userId]
-    )
-
-    // Últimos 6 meses de clicks en tarjeta (turismo)
-    const [cardClicks] = await pool.query(
-      `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
-       FROM analytics
-       WHERE user_id = ? AND event_type = 'card_click' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY mes ORDER BY mes ASC`,
-      [req.userId]
-    )
-
-    // Visitantes únicos (por IP) del mes actual
-    const [uniqueVisitors] = await pool.query(
-      `SELECT COUNT(DISTINCT visitor_ip) as total
-       FROM page_visits
-       WHERE user_id = ? AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
-      [req.userId]
-    )
-
-    // Total visitas del mes actual
-    const [monthVisits] = await pool.query(
-      `SELECT COUNT(*) as total
-       FROM page_visits
-       WHERE user_id = ? AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
-      [req.userId]
-    )
-
-    // Total clicks en productos del mes actual
-    const [monthClicks] = await pool.query(
-      `SELECT COUNT(*) as total
-       FROM analytics
-       WHERE user_id = ? AND event_type = 'product_click' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
-      [req.userId]
-    )
-
-    // Visitas por tipo de página
-    const [visitsByPage] = await pool.query(
-      `SELECT pagina, COUNT(*) as total
-       FROM page_visits
-       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY pagina`,
-      [req.userId]
-    )
+    // Ejecutar todas las queries en paralelo (en lugar de secuencialmente)
+    const [
+      [views],
+      [clicks],
+      [cardClicks],
+      [uniqueVisitors],
+      [monthVisits],
+      [monthClicks],
+      [visitsByPage],
+    ] = await Promise.all([
+      pool.query(
+        `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
+         FROM page_visits
+         WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+         GROUP BY mes ORDER BY mes ASC`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
+         FROM analytics
+         WHERE user_id = ? AND event_type = 'product_click' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+         GROUP BY mes ORDER BY mes ASC`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total
+         FROM analytics
+         WHERE user_id = ? AND event_type = 'card_click' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+         GROUP BY mes ORDER BY mes ASC`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT COUNT(DISTINCT visitor_ip) as total
+         FROM page_visits
+         WHERE user_id = ? AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT COUNT(*) as total
+         FROM page_visits
+         WHERE user_id = ? AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT COUNT(*) as total
+         FROM analytics
+         WHERE user_id = ? AND event_type = 'product_click' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
+        [req.userId]
+      ),
+      pool.query(
+        `SELECT pagina, COUNT(*) as total
+         FROM page_visits
+         WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+         GROUP BY pagina`,
+        [req.userId]
+      ),
+    ])
 
     // Generar array de últimos 5 meses + mes actual + mes siguiente
     const meses = []

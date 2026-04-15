@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { requirePlan } = require('../middlewares/planMiddleware')
 const logger = require('../logger')
 
 const router = express.Router()
@@ -67,7 +68,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // POST /api/carousels/:posicion — guardar carrusel (nombre + imágenes nuevas)
-router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (req, res) => {
+router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes', 8), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion)
     if (![1, 2, 3].includes(posicion)) {
@@ -142,7 +143,7 @@ router.post('/:posicion', authMiddleware, upload.array('imagenes', 8), async (re
 })
 
 // PUT /api/carousels/:posicion/reorder — reordenar imágenes
-router.put('/:posicion/reorder', authMiddleware, async (req, res) => {
+router.put('/:posicion/reorder', authMiddleware, requirePlan(2), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion)
     const { imageIds } = req.body // Array de IDs en el nuevo orden
@@ -154,6 +155,17 @@ router.put('/:posicion/reorder', authMiddleware, async (req, res) => {
 
     if (carousel.length === 0) {
       return res.status(404).json({ error: 'Carrusel no encontrado' })
+    }
+
+    // Verificar que todos los imageIds pertenecen a este carousel
+    if (imageIds && imageIds.length > 0) {
+      const [check] = await pool.query(
+        `SELECT COUNT(*) as total FROM media WHERE id IN (?) AND entity_type = 'carousel' AND entity_id = ?`,
+        [imageIds, carousel[0].id]
+      )
+      if (check[0].total !== imageIds.length) {
+        return res.status(403).json({ error: 'Una o más imágenes no pertenecen a este carrusel' })
+      }
     }
 
     // Transacción: reordenar todas las imágenes atómicamente
@@ -182,7 +194,7 @@ router.put('/:posicion/reorder', authMiddleware, async (req, res) => {
 })
 
 // DELETE /api/carousels/:posicion/images/:imageId — eliminar imagen
-router.delete('/:posicion/images/:imageId', authMiddleware, async (req, res) => {
+router.delete('/:posicion/images/:imageId', authMiddleware, requirePlan(2), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion)
     const imageId = parseInt(req.params.imageId)

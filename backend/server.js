@@ -22,6 +22,11 @@ const eventosRoutes = require('./routes/eventos')
 const servidorRoutes = require('./routes/servidor')
 const serviciosRoutes = require('./routes/servicios')
 
+// --- Validación de variables de entorno críticas al arrancar ---
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET no configurado o inseguro: mínimo 32 caracteres requeridos')
+}
+
 const app = express()
 const PORT = 3001
 
@@ -34,13 +39,20 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "https://soloaunclick.cl", "https://www.soloaunclick.cl"],
     },
   },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }))
 
 // --- Seguridad: CORS restringido ---
@@ -93,6 +105,15 @@ const resetLimiter = rateLimit({
   message: { error: 'Demasiados intentos de recuperación, espera 1 hora' },
 })
 
+// --- Seguridad: Rate Limiting para uploads (evitar llenado de disco) ---
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 20, // máximo 20 uploads por IP por minuto
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas subidas de archivos, espera un momento' },
+})
+
 app.use(express.json({ limit: '2mb' }))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
@@ -100,9 +121,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use('/api/v1/auth/login', authLimiter)
 app.use('/api/v1/auth/register', authLimiter)
 app.use('/api/v1/password-reset', resetLimiter)
+app.use('/api/v1/upload', uploadLimiter)
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/password-reset', resetLimiter)
+app.use('/api/upload', uploadLimiter)
 
 const v1Routes = express.Router()
 v1Routes.use('/auth', authRoutes)

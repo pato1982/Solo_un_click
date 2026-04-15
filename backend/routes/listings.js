@@ -211,6 +211,11 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: `Has alcanzado el límite de ${userRows[0].max_listings} publicaciones de tu plan` })
     }
 
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
+    }
+
     // Validar categoría contra tabla maestra
     if (categoria) {
       const catCheck = await validateCategoria(categoria, tipo)
@@ -277,6 +282,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
+    }
 
     // Validar categoría contra tabla maestra
     if (categoria) {

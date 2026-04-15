@@ -35,7 +35,9 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/public/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
+      `SELECT p.* FROM turismo_pagina p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.user_id = ? AND u.activo = 1 LIMIT 1`,
       [req.params.userId]
     )
     const pagina = rows[0] || null
@@ -93,7 +95,7 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
 })
 
 // PATCH /api/pagina/:id/crop — guardar encuadre de imágenes
-router.patch('/:id/crop', authMiddleware, async (req, res) => {
+router.patch('/:id/crop', authMiddleware, requirePlan(3), async (req, res) => {
   try {
     const { crop_superior, crop_inferior } = req.body
     await pool.query(

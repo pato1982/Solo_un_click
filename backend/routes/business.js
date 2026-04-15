@@ -53,7 +53,9 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ? AND b.activo = 1`,
+      `SELECT b.id, b.user_id, b.nombre_negocio, b.slogan, b.descripcion, b.direccion, b.ubicacion,
+              b.whatsapp, b.telefono, b.correo, b.facebook, b.instagram, b.horarios, b.activo
+       FROM businesses b WHERE b.user_id = ? AND b.activo = 1`,
       [req.params.userId]
     )
 
@@ -77,6 +79,14 @@ router.get('/:userId', async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { nombre_negocio, slogan, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
+
+    // Validar nombre del negocio
+    if (!nombre_negocio || !nombre_negocio.trim()) {
+      return res.status(400).json({ error: 'El nombre del negocio es obligatorio' })
+    }
+    if (nombre_negocio.trim().length < 2) {
+      return res.status(400).json({ error: 'El nombre del negocio debe tener al menos 2 caracteres' })
+    }
 
     // Validar slogan: máximo 10 palabras
     if (slogan) {

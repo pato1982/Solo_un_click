@@ -103,6 +103,11 @@ router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
+    }
+
     // Validar categoría contra tabla maestra
     if (categoria) {
       const catCheck = await validateCategoria(categoria)
@@ -136,6 +141,11 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
+    }
+
     // Validar categoría contra tabla maestra
     if (categoria) {
       const catCheck = await validateCategoria(categoria)
@@ -164,11 +174,11 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
   }
 })
 
-// DELETE /api/tours/:id — eliminar tour
+// DELETE /api/tours/:id — eliminar tour (soft delete)
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'DELETE FROM turismo_tours WHERE id = ? AND user_id = ?',
+      'UPDATE turismo_tours SET activo = 0 WHERE id = ? AND user_id = ?',
       [req.params.id, req.userId]
     )
 
