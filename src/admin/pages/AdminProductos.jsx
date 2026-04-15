@@ -204,17 +204,38 @@ export default function AdminProductos() {
     user.ofrece_arriendos && 'arriendo',
   ].filter(Boolean)
 
-  // Cargar productos y categorías desde API
+  // Cargar categorías desde API (independiente de productos)
   useEffect(() => {
     const catUrl = tiposUsuario.length > 0
       ? `${API}/api/v1/categorias?tipo=${tiposUsuario.join(',')}`
-      : null
+      : `${API}/api/v1/categorias`
 
-    Promise.all([
-      fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
-    ])
-      .then(([data, catsData]) => {
+    fetch(catUrl)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then(data => {
+        if (data.categorias) {
+          setCategoriasDB(data.categorias)
+        }
+      })
+      .catch(err => console.error('Error cargando categorías:', err))
+  }, [])
+
+  // Cargar productos desde API
+  useEffect(() => {
+    if (!token) {
+      setLoading(false)
+      return
+    }
+
+    fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then(data => {
         if (data.listings) {
           setProductos(data.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(l => ({
             id: l.id,
@@ -233,9 +254,6 @@ export default function AdminProductos() {
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null,
             imagenUrl: l.imagen,
           })))
-        }
-        if (catsData.categorias) {
-          setCategoriasDB(catsData.categorias)
         }
       })
       .catch(err => console.error('Error cargando productos:', err))
@@ -727,7 +745,7 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -742,7 +760,7 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
-                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar categoría</option>
                       {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
                         <option key={c.id} value={c.nombre}>{c.nombre}</option>
@@ -751,7 +769,7 @@ export default function AdminProductos() {
                   </div>
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar subcategoría</option>
                       {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
                         <option key={s.id} value={s.nombre}>{s.nombre}</option>
@@ -765,7 +783,7 @@ export default function AdminProductos() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
-                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin tallas</option>
                         <option value="calzado">Calzado</option>
                         <option value="ropa">Ropa</option>
@@ -782,7 +800,7 @@ export default function AdminProductos() {
                     </div>
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Género</label>
-                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin definir</option>
                         <option value="Niño">Niño</option>
                         <option value="Niña">Niña</option>
