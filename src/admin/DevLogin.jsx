@@ -25,9 +25,10 @@ export default function DevLogin() {
       const { token, user } = await res.json()
 
       // Si se pide turismo, forzar tipo_cuenta
+      // Para 'general', siempre forzar todos los permisos en 1 para testing completo
       const finalUser = tipo === 'turismo'
         ? { ...user, tipo_cuenta: 'turismo', vende_productos: 0, ofrece_servicios: 0, ofrece_arriendos: 0 }
-        : user
+        : { ...user, vende_productos: 1, ofrece_servicios: 1, ofrece_arriendos: 1 }
 
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(finalUser))
