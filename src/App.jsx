@@ -229,6 +229,22 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
+  // Dev auto-login: si no hay token, intentar auto-login de desarrollo
+  useEffect(() => {
+    if (localStorage.getItem('token')) return
+    const api = import.meta.env.VITE_API || ''
+    fetch(`${api}/api/v1/auth/dev-auto-login`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.token) {
+          localStorage.setItem('token', data.token)
+          localStorage.setItem('user', JSON.stringify(data.user))
+          setUser(data.user)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Registrar visita al sitio
   useEffect(() => {
     fetch(`${API}/api/v1/servidor/visita`, {

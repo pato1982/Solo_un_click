@@ -528,6 +528,35 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
   }
 })
 
+
+// ============================================================
+// GET /api/auth/dev-auto-login
+// Solo disponible en NODE_ENV !== 'production'
+// Devuelve un JWT real del primer admin o crea uno temporal
+// ============================================================
+router.get('/dev-auto-login', async (req, res) => {
+  if (!process.env.DEV_MODE) {
+    return res.status(403).json({ error: 'No disponible en producción' })
+  }
+
+  try {
+    // Buscar el primer usuario admin existente
+    // Usar usuario dev fijo con todos los permisos necesarios para evaluar el panel
+    const user = { id: 999, nombre: 'Dev Admin', email: 'dev@soloaunclick.cl', tipo_cuenta: 'general', plan_id: 3, vende_productos: 1, ofrece_servicios: 1, ofrece_arriendos: 1 }
+
+    const token = require('jsonwebtoken').sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+
+    res.json({ token, user })
+  } catch (err) {
+    logger.error('Error en dev-auto-login', { error: err.message })
+    res.status(500).json({ error: 'Error generando token de desarrollo' })
+  }
+})
+
 module.exports = router
 module.exports.authMiddleware = authMiddleware
 module.exports.programadorMiddleware = programadorMiddleware
