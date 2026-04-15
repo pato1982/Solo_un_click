@@ -50,6 +50,7 @@ const allowedOrigins = [
   'http://soloaunclick.cl',
   'http://www.soloaunclick.cl',
   'http://45.236.130.25',
+  'http://158.220.123.58',
   'http://localhost:5173',
   'http://localhost:3000',
 ]
