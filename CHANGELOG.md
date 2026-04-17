@@ -1,5 +1,85 @@
 # Registro de Cambios - Solo a un Click
 
+## 14 de Abril 2026 (sesión 22) - Auditoría mediano plazo, limpieza BD y documentación
+
+### Tareas de mediano plazo (auditoría BD)
+
+**Tarea 4: Fusionar businesses + turismo_negocios**
+- `turismo.js` lee y escribe en tabla `businesses` (JOIN users WHERE tipo_cuenta='turismo')
+- `business.js` incluye campo `ubicacion` en GET/POST/UPDATE
+- `auth.js`: `deleteAllTurismData` hace soft delete en `businesses` en lugar de `turismo_negocios`
+- Migración ejecutada en producción — tabla `turismo_negocios` eliminada (estaba vacía)
+
+**Tarea 5: Tabla `media` unificada**
+- Nueva tabla `media(entity_type, entity_id, url, orden)` reemplaza `listing_images` y `carousel_images`
+- `listings.js`, `carousels.js`, `servicios.js` apuntan a `media`
+- Tablas `listing_images` y `carousel_images` eliminadas de producción (estaban vacías)
+
+**Tarea 6: JSON nativo en MySQL**
+- `businesses.horarios`, `turismo_tours.imagenes/imagenes_crop`, `turismo_portada.imagenes/categorias` migrados a tipo JSON nativo
+
+### Correcciones SQL detectadas en logs
+- **locales.js**: `DISTINCT + ORDER BY cb.orden` fallaba porque `orden` no estaba en SELECT → corregido
+- **eventos.js**: misma corrección para `ce.orden`
+- Estas queries causaban errores silenciosos desde el 9/04 cada vez que se cargaban categorías de barrio y evento
+
+### Limpieza de base de datos
+- Verificado que las 3 tablas legacy estaban vacías antes de eliminar
+- Eliminadas de producción: `turismo_negocios`, `listing_images`, `carousel_images`
+- Removidas de `schema_local.sql` para mantener el esquema limpio
+- BD queda con **24 tablas activas**, sin tablas huérfanas
+
+### Sincronización y deploy
+- Push a GitHub que estaba pendiente desde sesión anterior completado
+- Git del VPS sincronizado con `git fetch + reset --hard origin/main`
+- PM2 reiniciado con código actualizado — sin errores en logs
+
+### Documentación
+- Creado archivo `RESP_AUDITORIA.md` con informe completo de toda la auditoría:
+  - Lo que ya estaba bien desde el inicio (no aplicaba)
+  - Cada corrección implementada por fase y sesión
+  - Estado actual de la BD
+  - Historial de commits relacionados
+  - 2 pendientes finales (SMTP Gmail y CI/CD)
+
+### Estado de auditoría
+- **Completado:** todos los ítems urgentes, mediano plazo y correcciones adicionales
+- **Pendiente:** SMTP Gmail (recuperación de contraseña) y CI/CD pipeline (deploy automático)
+
+---
+
+## 13 de Abril 2026 (sesión 21) - Reparación BD, índices de rendimiento y compresión de imágenes
+
+### Reparación crítica de base de datos
+- **Contraseña MySQL rota desde el 9/04:** la app llevaba 4 días online pero devolviendo errores en todos los endpoints de BD
+- Password corregida en usuario MySQL `soloaunclick`, `backend/.env` y `ecosystem.config.js` → `SoloUnClick2026`
+- PM2 reiniciado limpio con `pm2 delete` + `pm2 start ecosystem.config.js --env production`
+- `pm2 save` ejecutado para persistir configuración en reinicios del servidor
+
+### Índices de rendimiento en MySQL
+- Agregados 15 índices nuevos en las tablas más consultadas:
+  - `listings`: `(tipo, activo)`, `(created_at)` — mejora filtros y ORDER BY
+  - `turismo_tours`: `(activo)`, `(user_id, activo)` — mejora mosaico home
+  - `turismo_portada`: `(activo)` — mejora consultas públicas
+- Tablas ya tenían índices previos en `user_id`, `banner_orden`, `carousel_posicion` que se conservaron
+
+### Compresión automática de imágenes con Sharp
+- Instalado `sharp v0.34.5` en backend del VPS
+- Reescrito `backend/routes/upload.js`: multer ahora almacena en memoria (no en disco), Sharp procesa antes de guardar
+- Toda imagen subida se redimensiona a máx 1200×1200px (respetando proporción) y se convierte a WebP calidad 82
+- Corrección automática de orientación EXIF (fotos tomadas con celular giradas)
+- Límite de entrada aumentado de 5MB a 10MB (Sharp reduce el tamaño final de todas formas)
+- Ahorro promedio: **~90% del peso original** (ej: JPEG 4MB → WebP 150KB)
+- Los logs del servidor registran el ahorro de cada subida
+
+### Análisis y documentación
+- Mapeado el flujo completo Turismo: frontend → backend → BD (4 tablas: `turismo_negocios`, `turismo_tours`, `turismo_portada`, `turismo_pagina`)
+- Confirmado que Turismo es módulo independiente de Listings (productos/servicios/arriendos)
+- Explicación de por qué NO conviene consolidar tablas (tablas separadas = mejor rendimiento)
+- CREDENCIALES.md actualizado: password MySQL corregida, PM2 nombre corregido, comando de deploy agregado
+
+---
+
 ## 7 de Abril 2026 (sesión 19) - Rediseño tarjetas, popup productos, locales y cambio de plan
 
 ### Correcciones
@@ -1879,3 +1959,40 @@ Intercalados: Banner (después de fila 2), Eventos (después de fila 3), Tiendas
 
 ### Turismo
 - Imagen de rafting removida del banner (solo quedan: Volcán, Canopy, Kayak)
+
+## 14 de Abril 2026 — Sesión 22
+
+### Auditoría Mediano Plazo — 3 tareas
+
+**Tarea 4: Fusionar businesses + turismo_negocios**
+- `turismo.js` ahora lee y escribe en la tabla `businesses` (ya no usa `turismo_negocios`)
+- JOIN con `users WHERE tipo_cuenta='turismo'` para identificar negocios turísticos
+- Se agrega campo `ubicacion` a `businesses` (solo existía en turismo_negocios)
+- `business.js` actualizado para incluir `ubicacion` en GET/POST/UPDATE
+- `auth.js`: `deleteAllTurismData` ahora hace soft delete en `businesses` en lugar de `turismo_negocios`
+- Datos migrados desde `turismo_negocios` → `businesses` en producción
+- Tabla `turismo_negocios` se conserva como legacy (no se elimina)
+
+**Tarea 5: Tabla `media` unificada**
+- Nueva tabla `media(entity_type, entity_id, url, orden)` reemplaza `listing_images` y `carousel_images`
+- `listings.js`: todos los JOINs, INSERTs y DELETEs de imágenes apuntan a `media` (`entity_type='listing'`)
+- `carousels.js`: todos los JOINs y CRUDs apuntan a `media` (`entity_type='carousel'`)
+- `servicios.js`: query de imágenes actualizada a tabla `media`
+- Datos migrados desde `listing_images` y `carousel_images` → `media` en producción
+- Tablas `listing_images` y `carousel_images` se conservan como legacy
+
+**Tarea 6: JSON nativo en MySQL**
+- Campos migrados de `TEXT` a tipo `JSON` nativo de MySQL en producción:
+  - `businesses.horarios`
+  - `turismo_negocios.horarios`
+  - `turismo_tours.imagenes`, `turismo_tours.imagenes_crop`
+  - `turismo_portada.imagenes`, `turismo_portada.categorias`
+- No requirió cambios en código Node.js (el check `typeof === 'string'` sigue funcionando con ambos tipos)
+
+**Archivos creados**
+- `backend/migrations/mediano_plazo.sql` — migración completa para producción
+- `backend/schema_local.sql` — esquema local actualizado con todos los cambios
+
+**Estado post-deploy**
+- Migración ejecutada exitosamente en producción
+- PM2 reiniciado, todos los endpoints respondiendo sin errores

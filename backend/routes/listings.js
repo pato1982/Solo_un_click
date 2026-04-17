@@ -15,6 +15,17 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// Validar que la categoría exista en la tabla maestra (case-insensitive)
+async function validateCategoria(nombre, tipo) {
+  if (!nombre) return { valid: true }
+  const [rows] = await pool.query(
+    'SELECT nombre FROM categorias WHERE tipo = ? AND LOWER(nombre) = LOWER(?) AND activo = 1',
+    [tipo, nombre.trim()]
+  )
+  if (rows.length === 0) return { valid: false, nombre }
+  return { valid: true, nombre: rows[0].nombre } // devuelve nombre normalizado
+}
+
 // GET /api/listings — obtener publicaciones (público, para página principal)
 router.get('/', async (req, res) => {
   try {
@@ -29,7 +40,7 @@ router.get('/', async (req, res) => {
              b.telefono as negocio_telefono, b.direccion as negocio_direccion,
              b.correo as negocio_correo, b.facebook as negocio_facebook, b.instagram as negocio_instagram
       FROM listings l
-      LEFT JOIN listing_images li ON l.id = li.listing_id
+      LEFT JOIN media li ON li.entity_type = 'listing' AND li.entity_id = l.id
       LEFT JOIN users u ON l.user_id = u.id
       LEFT JOIN businesses b ON l.user_id = b.user_id
       WHERE l.activo = 1 AND l.deleted_at IS NULL
@@ -140,7 +151,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT l.*, li.url as imagen
        FROM listings l
-       LEFT JOIN listing_images li ON l.id = li.listing_id
+       LEFT JOIN media li ON li.entity_type = 'listing' AND li.entity_id = l.id
        WHERE l.user_id = ?
        ORDER BY l.created_at DESC`,
       [req.userId]
@@ -223,6 +234,14 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: `Has alcanzado el límite de ${userRows[0].max_listings} publicaciones de tu plan` })
     }
 
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria, tipo)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para tipo "${tipo}"` })
+      }
+    }
+
     // Validar que badge solo se use con productos
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
@@ -243,7 +262,7 @@ router.post('/', authMiddleware, async (req, res) => {
       listingId = result.insertId
 
       if (imagen) {
-        await conn.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [listingId, imagen])
+        await conn.query('INSERT INTO media (entity_type, entity_id, url) VALUES (\'listing\', ?, ?)', [listingId, imagen])
       }
 
       if (tallas && tallas.tipo && tallas.seleccion && tallas.seleccion.length > 0) {
@@ -285,6 +304,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
 
+    // Validar categoría contra tabla maestra
+    if (categoria) {
+      const catCheck = await validateCategoria(categoria, tipo)
+      if (!catCheck.valid) {
+        return res.status(400).json({ error: `Categoría "${categoria}" no es válida para tipo "${tipo}"` })
+      }
+    }
+
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
     // Fase 2: resolver categoria_id / subcategoria_id desde texto
@@ -302,8 +329,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       )
 
       if (imagen) {
-        await conn.query('DELETE FROM listing_images WHERE listing_id = ?', [id])
-        await conn.query('INSERT INTO listing_images (listing_id, url) VALUES (?, ?)', [id, imagen])
+        await conn.query('DELETE FROM media WHERE entity_type = \'listing\' AND entity_id = ?', [id])
+        await conn.query('INSERT INTO media (entity_type, entity_id, url) VALUES (\'listing\', ?, ?)', [id, imagen])
       }
 
       await conn.query('DELETE FROM listing_sizes WHERE listing_id = ?', [id])
@@ -347,7 +374,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
 
     // Eliminar imagen del disco
-    const [imgRows] = await pool.query('SELECT url FROM listing_images WHERE listing_id = ?', [id])
+    const [imgRows] = await pool.query('SELECT url FROM media WHERE entity_type = \'listing\' AND entity_id = ?', [id])
     if (imgRows.length > 0 && imgRows[0].url) {
       const filePath = path.join(uploadsDir, path.basename(imgRows[0].url))
       try { fs.unlinkSync(filePath) } catch (e) {}

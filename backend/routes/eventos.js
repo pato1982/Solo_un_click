@@ -38,7 +38,7 @@ function sanitize(str) {
 router.get('/categorias', async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT DISTINCT ce.id, ce.nombre, ce.icono
+      SELECT DISTINCT ce.id, ce.nombre, ce.icono, ce.orden
       FROM categorias_evento ce
       INNER JOIN eventos e ON e.categoria_evento_id = ce.id AND e.activo = 1
       WHERE ce.activo = 1

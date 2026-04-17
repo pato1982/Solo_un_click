@@ -59,17 +59,10 @@ export default function AdminTour() {
 
   useEffect(() => {
     fetchTours()
-    // Cargar categorías desde la portada del usuario
-    fetch(`${API}/api/v1/portada`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : { portada: null })
-      .then(data => {
-        if (data.portada && data.portada.categorias) {
-          try {
-            const cats = typeof data.portada.categorias === 'string' ? JSON.parse(data.portada.categorias) : data.portada.categorias
-            setCategorias(cats)
-          } catch { setCategorias([]) }
-        }
-      })
+    // Cargar categorías desde la tabla maestra
+    fetch(`${API}/api/v1/categorias?tipo=turismo`)
+      .then(r => r.ok ? r.json() : { categorias: [] })
+      .then(data => setCategorias(data.categorias || []))
       .catch(() => {})
   }, [])
 
@@ -424,9 +417,9 @@ export default function AdminTour() {
                       onChange={(e) => update('categoria', e.target.value)}
                       className="w-full rounded-md border-gray-300 text-xs py-1.5 focus:ring-primary focus:border-primary"
                     >
-                      <option value="">Sin categoría</option>
+                      <option value="">Seleccionar categoría...</option>
                       {categorias.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat.id || cat.nombre || cat} value={cat.nombre || cat}>{cat.nombre || cat}</option>
                       ))}
                     </select>
                   </div>

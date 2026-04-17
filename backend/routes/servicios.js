@@ -11,31 +11,32 @@ router.get('/public', async (req, res) => {
     const [rows] = await pool.query(`
       SELECT
         b.user_id,
-        b.nombre_negocio,
-        b.descripcion,
-        b.direccion,
-        b.whatsapp,
-        b.telefono,
-        b.correo,
-        b.facebook,
-        b.instagram,
-        b.horarios,
-        u.plan_id,
+        ANY_VALUE(b.nombre_negocio) as nombre_negocio,
+        ANY_VALUE(b.descripcion) as descripcion,
+        ANY_VALUE(b.direccion) as direccion,
+        ANY_VALUE(b.whatsapp) as whatsapp,
+        ANY_VALUE(b.telefono) as telefono,
+        ANY_VALUE(b.correo) as correo,
+        ANY_VALUE(b.facebook) as facebook,
+        ANY_VALUE(b.instagram) as instagram,
+        ANY_VALUE(b.horarios) as horarios,
+        ANY_VALUE(u.plan_id) as plan_id,
         GROUP_CONCAT(DISTINCT l.categoria ORDER BY l.categoria SEPARATOR '||') as categorias
       FROM businesses b
       JOIN users u ON b.user_id = u.id
-      JOIN listings l ON l.user_id = b.user_id AND l.tipo = 'servicio'
+      JOIN listings l ON l.user_id = b.user_id AND l.tipo = 'servicio' AND l.activo = 1
       WHERE b.nombre_negocio IS NOT NULL AND b.nombre_negocio != ''
+        AND b.activo = 1
       GROUP BY b.user_id
-      ORDER BY u.plan_id DESC, b.nombre_negocio ASC
+      ORDER BY ANY_VALUE(u.plan_id) DESC, ANY_VALUE(b.nombre_negocio) ASC
     `)
 
     // Para cada negocio, obtener sus primeras 5 imágenes de listings tipo servicio
     const servicios = await Promise.all(rows.map(async (row) => {
       const [imgs] = await pool.query(`
-        SELECT li.url as imagen FROM listing_images li
-        JOIN listings l ON l.id = li.listing_id
-        WHERE l.user_id = ? AND l.tipo = 'servicio'
+        SELECT m.url as imagen FROM media m
+        JOIN listings l ON l.id = m.entity_id
+        WHERE m.entity_type = 'listing' AND l.user_id = ? AND l.tipo = 'servicio' AND l.activo = 1
         ORDER BY l.id DESC LIMIT 5
       `, [row.user_id])
 

@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { requirePlan } = require('../middlewares/planMiddleware')
 const logger = require('../logger')
 
 const router = express.Router()
@@ -58,13 +59,8 @@ router.get('/public/:userId', async (req, res) => {
 })
 
 // POST /api/pagina — crear o actualizar página premium
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
   try {
-    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
-    if (!userRows.length || userRows[0].plan_id < 3) {
-      return res.status(403).json({ error: 'Se requiere Plan Premium' })
-    }
-
     const { titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior } = req.body
 
     const [result] = await pool.query(
@@ -83,13 +79,8 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/pagina/:id — actualizar página premium
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
   try {
-    const [userRows] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
-    if (!userRows.length || userRows[0].plan_id < 3) {
-      return res.status(403).json({ error: 'Se requiere Plan Premium' })
-    }
-
     const { titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior } = req.body
 
     const [result] = await pool.query(

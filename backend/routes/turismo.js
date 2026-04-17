@@ -75,11 +75,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' })
     }
 
-    // Verificar que el usuario no tenga ya un negocio en businesses
-    const [existing] = await pool.query(
-      'SELECT id FROM businesses WHERE user_id = ?',
-      [req.userId]
-    )
+    const [existing] = await pool.query('SELECT id FROM businesses WHERE user_id = ?', [req.userId])
     if (existing.length > 0) {
       return res.status(400).json({ error: 'Ya existe un negocio, usa PUT para actualizar' })
     }
@@ -101,7 +97,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// PUT /api/turismo/:id — actualizar negocio de turismo
+// PUT /api/turismo/:id — actualizar negocio de turismo (actualiza en businesses)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { nombre, descripcion, direccion, ubicacion, whatsapp, telefono, correo, facebook, instagram, horarios } = req.body
@@ -133,11 +129,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 })
 
-// DELETE /api/turismo/:id — eliminar negocio de turismo
+// DELETE /api/turismo/:id — soft delete de negocio de turismo
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const [result] = await pool.query(
-      `DELETE FROM businesses WHERE id = ? AND user_id = ? AND tipo = 'turismo'`,
+      `UPDATE businesses SET activo = 0, deleted_at = NOW() WHERE id = ? AND user_id = ? AND tipo = 'turismo'`,
       [req.params.id, req.userId]
     )
 

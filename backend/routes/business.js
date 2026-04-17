@@ -22,7 +22,7 @@ function parseHorarios(val) {
 // GET /api/business/public/:userId — datos públicos de un negocio por user_id
 router.get('/public/:userId', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ?', [req.params.userId])
+    const [rows] = await pool.query('SELECT * FROM businesses WHERE user_id = ? AND activo = 1', [req.params.userId])
     if (rows.length === 0) return res.json({ business: null })
     const business = rows[0]
     business.horarios = parseHorarios(business.horarios)
@@ -55,7 +55,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:userId', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ?`,
+      `SELECT b.*, u.plan_id FROM businesses b JOIN users u ON b.user_id = u.id WHERE b.user_id = ? AND b.activo = 1`,
       [req.params.userId]
     )
 
@@ -102,7 +102,8 @@ router.post('/', authMiddleware, async (req, res) => {
       await pool.query(
         `UPDATE businesses
          SET nombre_negocio=?, slogan=?, descripcion=?, direccion=?, ubicacion=?,
-             whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?
+             whatsapp=?, telefono=?, correo=?, facebook=?, instagram=?, horarios=?,
+             activo=1, deleted_at=NULL
          WHERE user_id=?`,
         [sanitize(nombre_negocio) || null, sanitize(slogan) || null, sanitize(descripcion) || null,
          sanitize(direccion) || null, sanitize(ubicacion) || null,
