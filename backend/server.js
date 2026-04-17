@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 const path = require('path')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
@@ -116,15 +117,18 @@ const uploadLimiter = rateLimit({
 })
 
 app.use(express.json({ limit: '2mb' }))
+app.use(cookieParser())
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Rate limiters en endpoints sensibles (ambos prefijos)
 app.use('/api/v1/auth/login', authLimiter)
 app.use('/api/v1/auth/register', authLimiter)
+app.use('/api/v1/auth/refresh', authLimiter)
 app.use('/api/v1/password-reset', resetLimiter)
 app.use('/api/v1/upload', uploadLimiter)
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
+app.use('/api/auth/refresh', authLimiter)
 app.use('/api/password-reset', resetLimiter)
 app.use('/api/upload', uploadLimiter)
 

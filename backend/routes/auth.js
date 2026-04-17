@@ -1,6 +1,7 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const { body, validationResult } = require('express-validator')
 const pool = require('../db')
 const logActivity = require('../logActivity')
@@ -13,10 +14,49 @@ if (!JWT_SECRET) {
   process.exit(1)
 }
 
+const REFRESH_SECRET = process.env.REFRESH_SECRET || JWT_SECRET + '_refresh'
+const ACCESS_TOKEN_TTL = '15m'
+const REFRESH_TOKEN_TTL_DAYS = 7
+const MAX_FAILED_ATTEMPTS = 5
+const LOCKOUT_MINUTES = 15
+
 // Sanitización: elimina tags HTML de un string
 function sanitize(str) {
   if (typeof str !== 'string') return str
   return str.replace(/<[^>]*>/g, '').trim()
+}
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+function cookieOptions(maxAgeSeconds) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: maxAgeSeconds * 1000,
+    path: '/',
+  }
+}
+
+async function issueTokens(res, userId, email) {
+  const accessToken = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+
+  const refreshToken = jwt.sign({ id: userId }, REFRESH_SECRET, { expiresIn: `${REFRESH_TOKEN_TTL_DAYS}d` })
+  const tokenHash = hashToken(refreshToken)
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000)
+    .toISOString().slice(0, 19).replace('T', ' ')
+
+  await pool.query(
+    'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+    [userId, tokenHash, expiresAt]
+  )
+
+  res.cookie('access_token', accessToken, cookieOptions(15 * 60))
+  res.cookie('refresh_token', refreshToken, cookieOptions(REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60))
+
+  return { accessToken, refreshToken }
 }
 
 // POST /api/auth/register
@@ -33,19 +73,14 @@ router.post('/register', [
 
     const { nombre, email, password, telefono, comuna, direccion, tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id } = req.body
 
-    // Verificar si el email ya existe
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email])
     if (existing.length > 0) {
       return res.status(400).json({ error: 'El email ya está registrado' })
     }
 
-    // Encriptar password
     const hashedPassword = await bcrypt.hash(password, 12)
-
-    // Validar plan_id (1, 2 o 3)
     const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : 1
 
-    // Insertar usuario
     const [result] = await pool.query(
       `INSERT INTO users (plan_id, tipo_cuenta, nombre, email, password, telefono, comuna, direccion, vende_productos, ofrece_servicios, ofrece_arriendos)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -64,16 +99,15 @@ router.post('/register', [
       ]
     )
 
-    // Generar token
-    const token = jwt.sign({ id: result.insertId, email }, JWT_SECRET, { expiresIn: '24h' })
+    const userId = result.insertId
+    const { accessToken } = await issueTokens(res, userId, email)
 
-    // Registrar primera sesión
     try {
       const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
       const userAgent = req.headers['user-agent'] || ''
       await pool.query(
         'INSERT INTO user_sessions (user_id, ip, user_agent) VALUES (?, ?, ?)',
-        [result.insertId, ip, userAgent]
+        [userId, ip, userAgent]
       )
     } catch (sessErr) {
       logger.error('Error registrando sesión', { error: sessErr.message })
@@ -81,8 +115,8 @@ router.post('/register', [
 
     res.status(201).json({
       message: 'Usuario registrado',
-      token,
-      user: { id: result.insertId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, rol: null, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
+      token: accessToken,
+      user: { id: userId, nombre, email, tipo_cuenta: tipo_cuenta || 'general', plan_id: selectedPlan, rol: null, vende_productos: vende_productos ? 1 : 0, ofrece_servicios: ofrece_servicios ? 1 : 0, ofrece_arriendos: ofrece_arriendos ? 1 : 0 }
     })
   } catch (err) {
     logger.error('Error en registro', { error: err.message })
@@ -103,29 +137,49 @@ router.post('/login', [
 
     const { email, password } = req.body
 
-    // Buscar usuario
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email])
     if (rows.length === 0) {
-      return res.status(401).json({ error: 'Email o contraseña incorrectos' })
+      return res.status(401).json({ error: 'Credenciales inválidas' })
     }
 
     const user = rows[0]
 
-    // Verificar que esté activo
     if (!user.activo) {
       return res.status(403).json({ error: 'Cuenta desactivada' })
     }
 
-    // Verificar password
-    const valid = await bcrypt.compare(password, user.password)
-    if (!valid) {
-      return res.status(401).json({ error: 'Email o contraseña incorrectos' })
+    // Account lockout check
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      return res.status(429).json({ error: 'Cuenta bloqueada temporalmente. Intenta en 15 minutos.' })
     }
 
-    // Generar token
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' })
+    const valid = await bcrypt.compare(password, user.password)
+    if (!valid) {
+      const newAttempts = (user.failed_attempts || 0) + 1
+      if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+        const lockUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
+          .toISOString().slice(0, 19).replace('T', ' ')
+        await pool.query(
+          'UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?',
+          [newAttempts, lockUntil, user.id]
+        )
+      } else {
+        await pool.query(
+          'UPDATE users SET failed_attempts = ? WHERE id = ?',
+          [newAttempts, user.id]
+        )
+      }
+      return res.status(401).json({ error: 'Credenciales inválidas' })
+    }
 
-    // Registrar sesión en user_sessions
+    // Reset lockout on successful login
+    await pool.query(
+      'UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?',
+      [user.id]
+    )
+
+    const { accessToken } = await issueTokens(res, user.id, user.email)
+
     try {
       const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
       const userAgent = req.headers['user-agent'] || ''
@@ -139,7 +193,7 @@ router.post('/login', [
 
     res.json({
       message: 'Login exitoso',
-      token,
+      token: accessToken,
       user: {
         id: user.id,
         nombre: user.nombre,
@@ -158,15 +212,88 @@ router.post('/login', [
   }
 })
 
+// POST /api/auth/refresh
+router.post('/refresh', async (req, res) => {
+  try {
+    const token = req.cookies?.refresh_token
+    if (!token) {
+      return res.status(401).json({ error: 'Refresh token requerido' })
+    }
+
+    let decoded
+    try {
+      decoded = jwt.verify(token, REFRESH_SECRET)
+    } catch {
+      return res.status(401).json({ error: 'Refresh token inválido o expirado' })
+    }
+
+    const tokenHash = hashToken(token)
+    const [rows] = await pool.query(
+      'SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL AND expires_at > NOW()',
+      [tokenHash]
+    )
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Refresh token revocado o expirado' })
+    }
+
+    const [userRows] = await pool.query('SELECT id, email, activo FROM users WHERE id = ?', [decoded.id])
+    if (userRows.length === 0 || !userRows[0].activo) {
+      return res.status(401).json({ error: 'Usuario no disponible' })
+    }
+
+    const user = userRows[0]
+
+    // Rotate: revoke old token, issue new pair
+    await pool.query('UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = ?', [tokenHash])
+
+    const { accessToken } = await issueTokens(res, user.id, user.email)
+
+    res.json({ token: accessToken })
+  } catch (err) {
+    logger.error('Error en refresh', { error: err.message })
+    res.status(500).json({ error: 'Error al renovar sesión' })
+  }
+})
+
+// POST /api/auth/logout
+router.post('/logout', async (req, res) => {
+  try {
+    const token = req.cookies?.refresh_token
+    if (token) {
+      const tokenHash = hashToken(token)
+      await pool.query(
+        'UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = ? AND revoked_at IS NULL',
+        [tokenHash]
+      )
+    }
+
+    res.clearCookie('access_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' })
+    res.clearCookie('refresh_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' })
+
+    res.json({ message: 'Sesión cerrada' })
+  } catch (err) {
+    logger.error('Error en logout', { error: err.message })
+    res.status(500).json({ error: 'Error al cerrar sesión' })
+  }
+})
+
 // Middleware para verificar token
 function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Leer desde cookie httpOnly primero, luego header Authorization como fallback
+  let token = req.cookies?.access_token
+
+  if (!token) {
+    const authHeader = req.headers.authorization
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1]
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({ error: 'Token requerido' })
   }
 
   try {
-    const token = authHeader.split(' ')[1]
     const decoded = jwt.verify(token, JWT_SECRET)
     req.userId = decoded.id
     next()
@@ -243,13 +370,11 @@ router.get('/profile/counts', authMiddleware, async (req, res) => {
   }
 })
 
-// Función auxiliar para eliminar imágenes de listings del servidor
 const fs = require('fs')
 const path = require('path')
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
 
 async function deleteListingsByType(userId, tipo) {
-  // Soft delete: desactiva los listings sin borrarlos físicamente
   const [result] = await pool.query(
     'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND tipo = ? AND activo = 1',
     [userId, tipo]
@@ -258,8 +383,6 @@ async function deleteListingsByType(userId, tipo) {
 }
 
 async function deleteAllCommerceData(userId) {
-  // Soft delete: desactiva datos de comercio sin borrarlos físicamente
-  // Los archivos e imágenes se conservan para posible restauración
   await pool.query(
     'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
     [userId]
@@ -275,8 +398,6 @@ async function deleteAllCommerceData(userId) {
 }
 
 async function deleteAllTurismData(userId) {
-  // Soft delete: desactiva datos de turismo sin borrarlos físicamente
-  // Los archivos e imágenes se conservan para posible restauración
   await pool.query(
     'UPDATE turismo_tours SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
     [userId]
@@ -301,12 +422,10 @@ router.put('/profile', authMiddleware, async (req, res) => {
     const { tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id, delete_tipos, email, telefono, direccion } = req.body
     const uid = req.userId
 
-    // Obtener estado actual del usuario
     const [currentRows] = await pool.query('SELECT * FROM users WHERE id = ?', [uid])
     if (currentRows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' })
     const current = currentRows[0]
 
-    // Eliminar datos de tipos que se están quitando
     if (delete_tipos && Array.isArray(delete_tipos)) {
       for (const tipo of delete_tipos) {
         if (tipo === 'producto') await deleteListingsByType(uid, 'producto')
@@ -315,21 +434,17 @@ router.put('/profile', authMiddleware, async (req, res) => {
       }
     }
 
-    // Si cambia de comercio a turismo, eliminar todo lo de comercio
     if (tipo_cuenta === 'turismo' && current.tipo_cuenta === 'general') {
       await deleteAllCommerceData(uid)
     }
 
-    // Si cambia de turismo a comercio, eliminar todo lo de turismo
     if (tipo_cuenta === 'general' && current.tipo_cuenta === 'turismo') {
       await deleteAllTurismData(uid)
     }
 
-    // Actualizar campos
     const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : current.plan_id
     const tipo = ['general', 'turismo'].includes(tipo_cuenta) ? tipo_cuenta : current.tipo_cuenta
 
-    // Validar email si se proporcionó uno diferente
     const newEmail = (typeof email === 'string' && email.trim()) ? email.trim() : current.email
     if (newEmail !== current.email) {
       const [existing] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, uid])
@@ -353,7 +468,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
       ]
     )
 
-    // Registrar cambio de plan en activity_log
     const PLAN_NAMES = { 1: 'Gratis', 2: 'Normal', 3: 'Premium' }
     if (selectedPlan !== current.plan_id) {
       await logActivity(uid, 'cambio_plan', 'user', uid, {
@@ -365,7 +479,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
       })
     }
 
-    // Registrar cambio de tipo de cuenta en activity_log
     if (tipo !== current.tipo_cuenta) {
       await logActivity(uid, 'cambio_tipo_cuenta', 'user', uid, {
         tipo_anterior: current.tipo_cuenta,
@@ -373,7 +486,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
       })
     }
 
-    // Devolver usuario actualizado
     const [rows] = await pool.query(
       `SELECT u.id, u.nombre, u.email, u.tipo_cuenta, u.telefono, u.comuna, u.direccion,
               u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos,
@@ -393,7 +505,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 })
 
-// GET /api/auth/profile/plans-info — planes disponibles según tipo de cuenta
+// GET /api/auth/profile/plans-info
 router.get('/profile/plans-info', authMiddleware, async (req, res) => {
   try {
     const tipo = req.query.tipo || 'general'
@@ -410,7 +522,7 @@ router.get('/profile/plans-info', authMiddleware, async (req, res) => {
   }
 })
 
-// GET /api/auth/profile/history — historial de cambios de plan y tipo de cuenta
+// GET /api/auth/profile/history
 router.get('/profile/history', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -419,7 +531,6 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
        ORDER BY created_at DESC LIMIT 50`,
       [req.userId]
     )
-    // Parsear detalles JSON
     const history = rows.map(r => ({
       ...r,
       detalles: r.detalles ? (typeof r.detalles === 'string' ? JSON.parse(r.detalles) : r.detalles) : null,
