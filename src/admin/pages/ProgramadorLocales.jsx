@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
@@ -22,8 +22,7 @@ export default function ProgramadorLocales() {
   const [toast, setToast] = useState(null)
   const fileRef = useRef(null)
 
-  const token = localStorage.getItem('token')
-  const headers = { Authorization: `Bearer ${token}` }
+  const headers = { }
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -31,7 +30,7 @@ export default function ProgramadorLocales() {
   }
 
   const fetchLocales = () => {
-    fetch(`${API}/api/v1/locales/admin`, { headers })
+    fetch(`${API}/api/v1/locales/admin`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => { setLocales(data.locales || []); setLoading(false) })
       .catch(() => setLoading(false))

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
@@ -39,14 +39,13 @@ export default function AdminPagina() {
   const [infCrop, setInfCrop] = useState(null)
   const infRef = useRef(null)
 
-  const token = localStorage.getItem('token')
 
   // Cargar datos existentes
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${token}` }
-    fetch(`${API}/api/v1/pagina`, { headers })
+    const headers = { }
+    fetch(`${API}/api/v1/pagina`, { credentials: 'include' })
       .then(r => {
-        if (r.status === 401 && token !== 'dev-token') {
+        if (r.status === 401) {
           localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'
           return {}
         }
@@ -115,7 +114,7 @@ export default function AdminPagina() {
     fd.append('imagen', imagen)
     const res = await fetch(`${API}/api/v1/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
       body: fd,
     })
     const data = await res.json()
@@ -171,13 +170,13 @@ export default function AdminPagina() {
       if (paginaId) {
         res = await fetch(`${API}/api/v1/pagina/${paginaId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body),
         })
       } else {
         res = await fetch(`${API}/api/v1/pagina`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body),
         })
       }
@@ -271,7 +270,7 @@ export default function AdminPagina() {
                       : { crop_superior: supCrop, crop_inferior: cropData }
                     fetch(`${API}/api/v1/pagina/${paginaId}/crop`, {
                       method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                       body: JSON.stringify(body),
                     }).catch(() => {})
                   }

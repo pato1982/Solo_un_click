@@ -19,6 +19,31 @@ const ACCESS_TOKEN_TTL = '15m'
 const REFRESH_TOKEN_TTL_DAYS = 7
 const MAX_FAILED_ATTEMPTS = 5
 const LOCKOUT_MINUTES = 15
+const MIN_PASSWORD_LENGTH = 12 // OWASP ASVS V2.1
+
+// OWASP V2.1: lista de contraseñas comunes prohibidas
+const COMMON_PASSWORDS = new Set([
+  'password123456', '123456789012', 'qwertyuiop12', 'soloaunclick1',
+  'contraseña123', 'administrator1', 'passwordpassw', 'aaaaaaaaaaaa',
+  'abcdefghijkl', '111111111111', '123123123123', 'iloveyou12345',
+  'welcome12345!', 'letmein12345!', 'dragon123456!', 'monkey123456',
+])
+
+function isCommonPassword(password) {
+  return COMMON_PASSWORDS.has(password.toLowerCase())
+}
+
+function validatePasswordStrength(password) {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `Contraseña mínimo ${MIN_PASSWORD_LENGTH} caracteres`
+  }
+  if (isCommonPassword(password)) {
+    return 'Contraseña demasiado común. Elige una más segura.'
+  }
+  return null
+}
+
+const MFA_PENDING_TTL_SECONDS = 5 * 60 // 5 minutos
 
 // Sanitización: elimina tags HTML de un string
 function sanitize(str) {
@@ -62,7 +87,7 @@ async function issueTokens(res, userId, email) {
 // POST /api/auth/register
 router.post('/register', [
   body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('password').isLength({ min: 6 }).withMessage('Contraseña mínimo 6 caracteres'),
+  body('password').isLength({ min: MIN_PASSWORD_LENGTH }).withMessage(`Contraseña mínimo ${MIN_PASSWORD_LENGTH} caracteres`),
   body('nombre').trim().escape().notEmpty().withMessage('Nombre requerido'),
 ], async (req, res) => {
   try {
@@ -72,6 +97,9 @@ router.post('/register', [
     }
 
     const { nombre, email, password, telefono, comuna, direccion, tipo_cuenta, vende_productos, ofrece_servicios, ofrece_arriendos, plan_id } = req.body
+
+    const pwdError = validatePasswordStrength(password)
+    if (pwdError) return res.status(400).json({ error: pwdError })
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email])
     if (existing.length > 0) {
@@ -113,6 +141,8 @@ router.post('/register', [
       logger.error('Error registrando sesión', { error: sessErr.message })
     }
 
+    logger.info('auth:register', { requestId: req.id, userId, email })
+
     res.status(201).json({
       message: 'Usuario registrado',
       token: accessToken,
@@ -150,6 +180,7 @@ router.post('/login', [
 
     // Account lockout check
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      logger.warn('auth:lockout_blocked', { requestId: req.id, userId: user.id, email, lockedUntil: user.locked_until })
       return res.status(429).json({ error: 'Cuenta bloqueada temporalmente. Intenta en 15 minutos.' })
     }
 
@@ -163,11 +194,13 @@ router.post('/login', [
           'UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?',
           [newAttempts, lockUntil, user.id]
         )
+        logger.warn('auth:lockout_activated', { requestId: req.id, userId: user.id, email, attempts: newAttempts, lockUntil })
       } else {
         await pool.query(
           'UPDATE users SET failed_attempts = ? WHERE id = ?',
           [newAttempts, user.id]
         )
+        logger.warn('auth:login_failed', { requestId: req.id, userId: user.id, email, attempts: newAttempts })
       }
       return res.status(401).json({ error: 'Credenciales inválidas' })
     }
@@ -190,6 +223,8 @@ router.post('/login', [
     } catch (sessErr) {
       logger.error('Error registrando sesión', { error: sessErr.message })
     }
+
+    logger.info('auth:login_success', { requestId: req.id, userId: user.id, email })
 
     res.json({
       message: 'Login exitoso',
@@ -248,6 +283,8 @@ router.post('/refresh', async (req, res) => {
 
     const { accessToken } = await issueTokens(res, user.id, user.email)
 
+    logger.info('auth:refresh_success', { requestId: req.id, userId: user.id })
+
     res.json({ token: accessToken })
   } catch (err) {
     logger.error('Error en refresh', { error: err.message })
@@ -269,6 +306,8 @@ router.post('/logout', async (req, res) => {
 
     res.clearCookie('access_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' })
     res.clearCookie('refresh_token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/' })
+
+    logger.info('auth:logout', { requestId: req.id })
 
     res.json({ message: 'Sesión cerrada' })
   } catch (err) {
@@ -545,3 +584,4 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
 module.exports = router
 module.exports.authMiddleware = authMiddleware
 module.exports.programadorMiddleware = programadorMiddleware
+module.exports.issueTokens = issueTokens

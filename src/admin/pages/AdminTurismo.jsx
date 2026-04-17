@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -32,11 +32,10 @@ export default function AdminTurismo() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
-  const token = localStorage.getItem('token')
 
   const fetchNegocios = () => {
     fetch(`${API}/api/v1/turismo`, {
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: 'include'
     })
       .then(r => r.json())
       .then(data => {
@@ -97,8 +96,7 @@ export default function AdminTurismo() {
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(form)
       })
@@ -120,7 +118,7 @@ export default function AdminTurismo() {
     try {
       await fetch(`${API}/api/v1/turismo/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
       })
       if (selected === id) {
         setShowForm(false)

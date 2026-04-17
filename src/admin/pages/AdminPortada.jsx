@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
@@ -31,14 +31,13 @@ export default function AdminPortada() {
   const dropdownRef = useRef(null)
   const fileRefs = [useRef(null), useRef(null), useRef(null)]
 
-  const token = localStorage.getItem('token')
 
   useEffect(() => {
     // Cargar portada y nombre del negocio en paralelo
-    const headers = { Authorization: `Bearer ${token}` }
+    const headers = { }
 
-    const safeFetch = (url) => fetch(url, { headers }).then(r => {
-      if (r.status === 401 && token !== 'dev-token') { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
+    const safeFetch = (url) => fetch(url, { credentials: 'include' }).then(r => {
+      if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
       if (!r.ok) return {}
       return r.json()
     })
@@ -142,7 +141,7 @@ export default function AdminPortada() {
           fd.append('imagen', img)
           const upRes = await fetch(`${API}/api/v1/upload`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
             body: fd
           })
           if (!upRes.ok) {
@@ -171,7 +170,7 @@ export default function AdminPortada() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify(body)
       })
 
@@ -260,7 +259,7 @@ export default function AdminPortada() {
                   if (portadaId) {
                     fetch(`${API}/api/v1/portada/${portadaId}/crop`, {
                       method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                       body: JSON.stringify({ imagenes_crop: newCrops }),
                     }).catch(() => {})
                   }

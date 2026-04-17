@@ -331,8 +331,10 @@ export default function App() {
     setUser(userData)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
+    } catch {}
     localStorage.removeItem('user')
     setUser(null)
   }

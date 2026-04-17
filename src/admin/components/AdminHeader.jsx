@@ -123,13 +123,10 @@ function ProfileModal({ onClose }) {
   const [ofreceArriendos, setOfreceArriendos] = useState(false)
   const [planId, setPlanId] = useState(1)
 
-  const token = localStorage.getItem('token')
-
   useEffect(() => {
-    if (!token || token === 'dev-token') { setLoading(false); return }
     Promise.all([
-      fetch(`${API}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/api/v1/auth/me`, { credentials: 'include' }).then(r => r.json()),
+      fetch(`${API}/api/v1/auth/profile/counts`, { credentials: 'include' }).then(r => r.json()),
     ]).then(([meData, countsData]) => {
       const u = meData.user || null
       setUser(u)
@@ -150,8 +147,8 @@ function ProfileModal({ onClose }) {
 
   // Cargar historial cuando se abre la pestaña
   useEffect(() => {
-    if (activeTab === 'historial' && !history && token) {
-      fetch(`${API}/api/v1/auth/profile/history`, { headers: { Authorization: `Bearer ${token}` } })
+    if (activeTab === 'historial' && !history) {
+      fetch(`${API}/api/v1/auth/profile/history`, { credentials: 'include' })
         .then(r => r.json())
         .then(data => setHistory(data.history || []))
         .catch(() => setHistory([]))
@@ -232,7 +229,6 @@ function ProfileModal({ onClose }) {
   }
 
   const handleSave = async (deleteTipos = []) => {
-    if (!token) return
     setSaving(true)
     const prevPlanId = Number(JSON.parse(localStorage.getItem('user') || '{}').plan_id || 1)
     try {
@@ -249,7 +245,8 @@ function ProfileModal({ onClose }) {
       }
       const res = await fetch(`${API}/api/v1/auth/profile`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(body),
       })
       const data = await res.json()
@@ -261,6 +258,7 @@ function ProfileModal({ onClose }) {
       if (data.user) {
         // Si el plan cambió, cerrar sesión para aplicar cambios
         if (Number(data.user.plan_id) !== prevPlanId) {
+          await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
           localStorage.removeItem('token')
           localStorage.removeItem('user')
           window.location.href = '/'
@@ -281,7 +279,7 @@ function ProfileModal({ onClose }) {
         setEditEmail(data.user.email || '')
         setEditTelefono(data.user.telefono || '')
         setEditDireccion(data.user.direccion || '')
-        const countsRes = await fetch(`${API}/api/v1/auth/profile/counts`, { headers: { Authorization: `Bearer ${token}` } })
+        const countsRes = await fetch(`${API}/api/v1/auth/profile/counts`, { credentials: 'include' })
         setCounts(await countsRes.json())
         setHistory(null)
       }
@@ -774,7 +772,7 @@ export default function AdminHeader({ onToggleSidebar }) {
           {/* Programador: botón salir */}
           {isProg && (
             <button
-              onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/' }}
+              onClick={async () => { await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' }); localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/' }}
               className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors mr-1 sm:mr-3"
               title="Cerrar sesión"
             >

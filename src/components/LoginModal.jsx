@@ -216,6 +216,7 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
       const res = await fetch(`${API}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(form)
       })
       const data = await res.json()
@@ -226,7 +227,7 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
         return
       }
 
-      localStorage.setItem('token', data.token)
+      localStorage.removeItem('token')
       localStorage.setItem('user', JSON.stringify(data.user))
       onLoginSuccess(data.user)
       onClose()

@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
+import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './admin/AdminLayout'
 import AdminProductos from './admin/pages/AdminProductos'
 import AdminNegocio from './admin/pages/AdminNegocio'
@@ -28,7 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<AdminIndex />} />
           <Route path="negocio" element={<AdminNegocio />} />
           <Route path="carruseles" element={<AdminCarruseles />} />

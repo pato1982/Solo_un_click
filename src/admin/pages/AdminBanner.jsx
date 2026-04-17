@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 const MAX_PER_SLIDE = 5
@@ -160,7 +160,7 @@ function BannerPreview({ items }) {
 
 export default function AdminBanner() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
+
   const esPremium = user.plan_id && user.plan_id >= 3
 
   const [activeSlide, setActiveSlide] = useState(1)
@@ -181,7 +181,7 @@ export default function AdminBanner() {
   }
 
   const fetchItems = () => {
-    fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/listings/mine`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (data.listings) {
@@ -260,7 +260,7 @@ export default function AdminBanner() {
         const blob = await generateCroppedBlob(formData.imagenPreview, formData.imagenPos, formData.imagenScale, formData.imagenNaturalW, formData.imagenNaturalH)
         const fd = new FormData()
         fd.append('imagen', blob, 'banner.jpg')
-        const upRes = await fetch(`${API}/api/v1/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+        const upRes = await fetch(`${API}/api/v1/upload`, { method: 'POST', credentials: 'include', body: fd })
         const upData = await upRes.json()
         if (upData.url) imagenUrl = upData.url
       }
@@ -283,8 +283,8 @@ export default function AdminBanner() {
       }
 
       const res = editingId
-        ? await fetch(`${API}/api/v1/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
-        : await fetch(`${API}/api/v1/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+        ? await fetch(`${API}/api/v1/listings/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
+        : await fetch(`${API}/api/v1/listings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
 
       if (res.ok) {
         fetchItems()
@@ -300,7 +300,7 @@ export default function AdminBanner() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API}/api/v1/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API}/api/v1/listings/${id}`, { method: 'DELETE', credentials: 'include' })
       if (res.ok) { setItems(prev => prev.filter(p => p.id !== id)); showToast('Eliminado') }
       else showToast('Error al eliminar', 'error')
     } catch (err) { showToast('Error de conexión', 'error') }
@@ -328,8 +328,8 @@ export default function AdminBanner() {
 
     // Guardar en BD
     Promise.all([
-      fetch(`${API}/api/v1/listings/${prod.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(prod), banner_orden: principalOrden }) }),
-      fetch(`${API}/api/v1/listings/${currentPrincipal.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...buildBodyFromItem(currentPrincipal), banner_orden: prod.orden }) }),
+      fetch(`${API}/api/v1/listings/${prod.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ ...buildBodyFromItem(prod), banner_orden: principalOrden }) }),
+      fetch(`${API}/api/v1/listings/${currentPrincipal.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ ...buildBodyFromItem(currentPrincipal), banner_orden: prod.orden }) }),
     ]).catch(err => console.error('Error reordenando:', err))
   }
 

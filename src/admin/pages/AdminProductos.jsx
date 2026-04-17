@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+﻿import { useState, useRef, useCallback, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -169,7 +169,7 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
 
 export default function AdminProductos() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
+
 
   // Filtrar tabs según permisos del usuario
   const tabs = allTabs.filter((tab) => {
@@ -225,12 +225,8 @@ export default function AdminProductos() {
 
   // Cargar productos desde API
   useEffect(() => {
-    if (!token) {
-      setLoading(false)
-      return
-    }
-
-    fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } })
+    
+    fetch(`${API}/api/v1/listings/mine`, { credentials: 'include' })
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
@@ -332,7 +328,7 @@ export default function AdminProductos() {
         fd.append('imagen', blob, 'producto.jpg')
         const uploadRes = await fetch(`${API}/api/v1/upload`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
           body: fd
         })
         const uploadData = await uploadRes.json()
@@ -367,13 +363,13 @@ export default function AdminProductos() {
       if (editingId) {
         res = await fetch(`${API}/api/v1/listings/${editingId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body)
         })
       } else {
         res = await fetch(`${API}/api/v1/listings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body)
         })
       }
@@ -381,7 +377,7 @@ export default function AdminProductos() {
       if (res.ok) {
         // Recargar lista
         const listRes = await fetch(`${API}/api/v1/listings/mine`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: 'include'
         })
         const listData = await listRes.json()
         if (listData.listings) {
@@ -422,7 +418,7 @@ export default function AdminProductos() {
     try {
       const res = await fetch(`${API}/api/v1/listings/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
       })
       if (res.ok) {
         setProductos((prev) => prev.filter((p) => p.id !== id))

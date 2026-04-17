@@ -6,11 +6,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://45.236.130.25',
+        target: 'http://localhost:3001',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://45.236.130.25',
+        target: 'http://localhost:3001',
         changeOrigin: true,
       },
     },
