@@ -85,7 +85,6 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas peticiones, intenta más tarde' },
-  skip: () => process.env.DEV_MODE === 'true',
 })
 app.use(globalLimiter)
 

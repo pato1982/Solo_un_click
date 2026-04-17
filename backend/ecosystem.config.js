@@ -1,3 +1,6 @@
+// IMPORTANTE: Los secretos (DB_PASS, JWT_SECRET, SMTP_PASS) NO van aquí.
+// Deben estar en /var/www/soloaunclick/backend/.env en el servidor.
+// Ver .env.example para la lista completa de variables requeridas.
 module.exports = {
   apps: [{
     name: "soloaunclick",
@@ -6,20 +9,8 @@ module.exports = {
     instances: 1,
     exec_mode: "fork",
     env_production: {
-      DEV_MODE: "true",
       NODE_ENV: "production",
-      PORT: 3001,
-      DB_HOST: "localhost",
-      DB_USER: "soloaunclick",
-      DB_PASS: "SoloUnClick2026",
-      DB_NAME: "soloaunclick",
-      JWT_SECRET: "soloaunclick_jwt_2026_villarrica_key_change_this",
-      SMTP_HOST: "smtp.gmail.com",
-      SMTP_PORT: "587",
-      SMTP_USER: "",
-      SMTP_PASS: "",
-      SMTP_FROM: "noreply@soloaunclick.cl",
-      SITE_URL: "https://soloaunclick.cl"
+      PORT: 3001
     }
   }]
 }

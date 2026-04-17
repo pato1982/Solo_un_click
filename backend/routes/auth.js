@@ -40,7 +40,7 @@ router.post('/register', [
     }
 
     // Encriptar password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 12)
 
     // Validar plan_id (1, 2 o 3)
     const selectedPlan = [1, 2, 3].includes(plan_id) ? plan_id : 1
@@ -428,35 +428,6 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
   } catch (err) {
     logger.error('Error obteniendo historial', { error: err.message })
     res.status(500).json({ error: 'Error al obtener historial' })
-  }
-})
-
-
-// ============================================================
-// GET /api/auth/dev-auto-login
-// Solo disponible en NODE_ENV !== 'production'
-// Devuelve un JWT real del primer admin o crea uno temporal
-// ============================================================
-router.get('/dev-auto-login', async (req, res) => {
-  if (!process.env.DEV_MODE) {
-    return res.status(403).json({ error: 'No disponible en producción' })
-  }
-
-  try {
-    // Buscar el primer usuario admin existente
-    // Usar usuario dev fijo con todos los permisos necesarios para evaluar el panel
-    const user = { id: 999, nombre: 'Dev Admin', email: 'dev@soloaunclick.cl', tipo_cuenta: 'general', plan_id: 3, vende_productos: 1, ofrece_servicios: 1, ofrece_arriendos: 1 }
-
-    const token = require('jsonwebtoken').sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    res.json({ token, user })
-  } catch (err) {
-    logger.error('Error en dev-auto-login', { error: err.message })
-    res.status(500).json({ error: 'Error generando token de desarrollo' })
   }
 })
 

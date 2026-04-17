@@ -15,7 +15,6 @@ import ProgramadorLocales from './admin/pages/ProgramadorLocales'
 import ProgramadorEventos from './admin/pages/ProgramadorEventos'
 import ProgramadorServidor from './admin/pages/ProgramadorServidor'
 import ProgramadorEstadisticas from './admin/pages/ProgramadorEstadisticas'
-import DevLogin from './admin/DevLogin'
 import './index.css'
 
 function AdminIndex() {
@@ -29,7 +28,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/dev" element={<DevLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminIndex />} />
           <Route path="negocio" element={<AdminNegocio />} />
