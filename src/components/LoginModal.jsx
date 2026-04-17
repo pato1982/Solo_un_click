@@ -192,12 +192,100 @@ function ForgotPasswordView({ onBack }) {
   )
 }
 
+function MfaVerifyView({ mfaToken, onSuccess, onCancel }) {
+  const [code, setCode] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/api/v1/auth/mfa/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ mfa_token: mfaToken, code }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Código incorrecto')
+        setLoading(false)
+        return
+      }
+      localStorage.setItem('user', JSON.stringify(data.user))
+      onSuccess(data.user)
+    } catch {
+      setError('Error de conexión')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="bg-primary px-6 py-4 flex items-center justify-between">
+        <h2 className="text-white font-bold text-lg flex items-center gap-2">
+          <span className="material-symbols-outlined">security</span>
+          Verificación en 2 pasos
+        </h2>
+        <button onClick={onCancel} className="text-white/70 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <span className="material-symbols-outlined text-blue-500">smartphone</span>
+          <p className="text-sm text-blue-700">Abre tu app de autenticación (Google Authenticator, Authy) e ingresa el código de 6 dígitos.</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">error</span>
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Código de autenticación</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9A-Fa-f]{6,10}"
+            maxLength={10}
+            required
+            autoFocus
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\s/g, ''))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-3 text-center text-xl font-mono tracking-widest focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            placeholder="000000"
+          />
+          <p className="text-xs text-gray-400 mt-1 text-center">También puedes usar un código de recuperación</p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || code.length < 6}
+          className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          {loading ? 'Verificando...' : 'Verificar'}
+        </button>
+
+        <button type="button" onClick={onCancel} className="w-full text-sm text-gray-500 hover:text-primary transition-colors">
+          Volver al login
+        </button>
+      </form>
+    </>
+  )
+}
+
 export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [mfaToken, setMfaToken] = useState(null)
 
   // Si hay ?reset= en la URL, abrir directamente el formulario de reset
   useEffect(() => {
@@ -227,6 +315,13 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
         return
       }
 
+      // Segundo factor requerido
+      if (data.mfa_required) {
+        setMfaToken(data.mfa_token)
+        setLoading(false)
+        return
+      }
+
       localStorage.removeItem('token')
       localStorage.setItem('user', JSON.stringify(data.user))
       onLoginSuccess(data.user)
@@ -237,11 +332,23 @@ export default function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess
     }
   }
 
+  const handleMfaSuccess = (user) => {
+    localStorage.removeItem('token')
+    onLoginSuccess(user)
+    onClose()
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {showForgot ? (
           <ForgotPasswordView onBack={() => setShowForgot(false)} />
+        ) : mfaToken ? (
+          <MfaVerifyView
+            mfaToken={mfaToken}
+            onSuccess={handleMfaSuccess}
+            onCancel={() => { setMfaToken(null); setForm({ email: form.email, password: '' }) }}
+          />
         ) : (
           <>
             {/* Header */}
