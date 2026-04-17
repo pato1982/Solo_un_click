@@ -119,11 +119,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 })
 
-// DELETE /api/portada/:id — eliminar portada
+// DELETE /api/portada/:id — eliminar portada (soft delete)
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'DELETE FROM turismo_portada WHERE id = ? AND user_id = ?',
+      'UPDATE turismo_portada SET activo = 0 WHERE id = ? AND user_id = ?',
       [req.params.id, req.userId]
     )
 

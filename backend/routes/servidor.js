@@ -1,5 +1,6 @@
 const express = require('express')
 const path = require('path')
+const fs = require('fs')
 const { exec } = require('child_process')
 const pool = require('../db')
 const { authMiddleware, programadorMiddleware } = require('./auth')
@@ -17,6 +18,42 @@ function execPromise(cmd) {
   })
 }
 
+// Calcula el tamaño total de un directorio de forma recursiva usando fs.promises (sin shell)
+async function getDirSize(dirPath) {
+  let total = 0
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+    for (const entry of entries) {
+      const full = path.join(dirPath, entry.name)
+      if (entry.isDirectory()) {
+        total += await getDirSize(full)
+      } else if (entry.isFile()) {
+        const stat = await fs.promises.stat(full)
+        total += stat.size
+      }
+    }
+  } catch {}
+  return total
+}
+
+// Lista subdirectorios de primer nivel con su tamaño usando fs.promises (sin shell)
+async function getSubdirSizes(dirPath) {
+  const result = []
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+    await Promise.all(
+      entries
+        .filter(e => e.isDirectory())
+        .map(async e => {
+          const full = path.join(dirPath, e.name)
+          const bytes = await getDirSize(full)
+          result.push({ nombre: e.name, bytes })
+        })
+    )
+  } catch {}
+  return result
+}
+
 // GET /api/servidor/stats
 router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => {
   try {
@@ -24,25 +61,24 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
     const dfOutput = await execPromise("df -B1 / | tail -1 | awk '{print $2, $3, $4}'")
     const [totalBytes, usedBytes, availBytes] = dfOutput.split(' ').map(Number)
 
-    // Uploads folder size + breakdown
+    // Uploads folder size + breakdown (usando fs.promises, sin exec shell)
     let uploadsBytes = 0
     let uploadsCarpetas = []
     try {
-      const duOutput = await execPromise(`du -sb ${uploadsDir} 2>/dev/null | awk '{print $1}'`)
-      uploadsBytes = parseInt(duOutput) || 0
-
-      // Desglose: subcarpetas
-      const subdirsOutput = await execPromise(`find ${uploadsDir} -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null`)
-      if (subdirsOutput) {
-        uploadsCarpetas = subdirsOutput.split('\n').map(line => {
-          const [bytes, fullpath] = line.split('\t')
-          return { nombre: fullpath.split('/').pop(), bytes: parseInt(bytes) || 0 }
-        })
-      }
-
-      // Archivos sueltos = total uploads - suma de subcarpetas
+      uploadsCarpetas = await getSubdirSizes(uploadsDir)
       const subdirsTotal = uploadsCarpetas.reduce((sum, c) => sum + c.bytes, 0)
-      const looseBytes = uploadsBytes - subdirsTotal
+
+      // Archivos sueltos en la raíz de uploads
+      const entries = await fs.promises.readdir(uploadsDir, { withFileTypes: true })
+      let looseBytes = 0
+      for (const e of entries) {
+        if (e.isFile()) {
+          const stat = await fs.promises.stat(path.join(uploadsDir, e.name))
+          looseBytes += stat.size
+        }
+      }
+      uploadsBytes = subdirsTotal + looseBytes
+
       if (looseBytes > 0) {
         uploadsCarpetas.unshift({ nombre: 'imágenes (raíz)', bytes: looseBytes })
       }
