@@ -211,10 +211,32 @@ router.post('/login', [
       [user.id]
     )
 
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
+
+    // MFA challenge: si el usuario tiene MFA activo, emitir token pendiente en vez de JWT completo
+    if (user.mfa_enabled) {
+      const mfaPlainToken = crypto.randomBytes(32).toString('hex')
+      const mfaTokenHash = hashToken(mfaPlainToken)
+      const mfaExpiresAt = new Date(Date.now() + MFA_PENDING_TTL_SECONDS * 1000)
+        .toISOString().slice(0, 19).replace('T', ' ')
+
+      await pool.query(
+        'INSERT INTO mfa_pending_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+        [user.id, mfaTokenHash, mfaExpiresAt]
+      )
+
+      logger.info('auth:mfa_required', { requestId: req.id, userId: user.id, email })
+
+      return res.json({
+        mfa_required: true,
+        mfa_token: mfaPlainToken,
+        message: 'Verifica tu segundo factor de autenticación',
+      })
+    }
+
     const { accessToken } = await issueTokens(res, user.id, user.email)
 
     try {
-      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0'
       const userAgent = req.headers['user-agent'] || ''
       await pool.query(
         'INSERT INTO user_sessions (user_id, ip, user_agent) VALUES (?, ?, ?)',

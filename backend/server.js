@@ -165,15 +165,29 @@ app.use(express.json({ limit: '2mb' }))
 app.use(cookieParser())
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
+// --- Seguridad: Rate Limiting estricto para MFA ---
+const mfaLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos MFA. Espera 1 minuto.' },
+  store: makeStore('rl:mfa:'),
+})
+
 // Rate limiters en endpoints sensibles (ambos prefijos)
 app.use('/api/v1/auth/login', authLimiter)
 app.use('/api/v1/auth/register', authLimiter)
 app.use('/api/v1/auth/refresh', authLimiter)
+app.use('/api/v1/auth/mfa/verify', mfaLimiter)
+app.use('/api/v1/auth/mfa/enable', mfaLimiter)
 app.use('/api/v1/password-reset', resetLimiter)
 app.use('/api/v1/upload', uploadLimiter)
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/auth/refresh', authLimiter)
+app.use('/api/auth/mfa/verify', mfaLimiter)
+app.use('/api/auth/mfa/enable', mfaLimiter)
 app.use('/api/password-reset', resetLimiter)
 app.use('/api/upload', uploadLimiter)
 
