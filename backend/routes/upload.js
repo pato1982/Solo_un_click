@@ -4,7 +4,11 @@ const path = require('path')
 const fs = require('fs')
 const sharp = require('sharp')
 const { authMiddleware } = require('./auth')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
+const pool = require('../db')
 const logger = require('../logger')
+
+const MAX_IMAGES_PER_BUSINESS = 200
 
 const router = express.Router()
 
@@ -27,12 +31,23 @@ const upload = multer({
 })
 
 // POST /api/upload — subir imagen con compresión automática
-router.post('/', authMiddleware, upload.single('imagen'), async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, upload.single('imagen'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No se recibió imagen' })
   }
 
   try {
+    // M-12: cap por business para prevenir acumulación de imágenes
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS total FROM media m
+       JOIN listings l ON m.entity_type = 'listing' AND m.entity_id = l.id
+       WHERE l.business_id = ?`,
+      [req.businessId]
+    )
+    if (countRows[0].total >= MAX_IMAGES_PER_BUSINESS) {
+      return res.status(429).json({ error: `Límite de ${MAX_IMAGES_PER_BUSINESS} imágenes alcanzado para este negocio` })
+    }
+
     const filename = `${Date.now()}-${Math.round(Math.random() * 1000)}.webp`
     const outputPath = path.join(uploadsDir, filename)
 

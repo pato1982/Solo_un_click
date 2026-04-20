@@ -16,15 +16,22 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
-// Validar que la categoría exista en la tabla maestra (case-insensitive)
+// A-15: caché TTL 5 min para evitar N queries redundantes por validación de categoría
+const _catCache = new Map()
+const CAT_CACHE_TTL = 5 * 60 * 1000
+
 async function validateCategoria(nombre, tipo) {
   if (!nombre) return { valid: true }
+  const key = `${tipo}:${nombre.trim().toLowerCase()}`
+  const cached = _catCache.get(key)
+  if (cached && Date.now() - cached.ts < CAT_CACHE_TTL) return cached.val
   const [rows] = await pool.query(
     'SELECT nombre FROM categorias WHERE tipo = ? AND LOWER(nombre) = LOWER(?) AND activo = 1',
     [tipo, nombre.trim()]
   )
-  if (rows.length === 0) return { valid: false, nombre }
-  return { valid: true, nombre: rows[0].nombre } // devuelve nombre normalizado
+  const val = rows.length === 0 ? { valid: false, nombre } : { valid: true, nombre: rows[0].nombre }
+  _catCache.set(key, { val, ts: Date.now() })
+  return val
 }
 
 // GET /api/listings — obtener publicaciones (público, para página principal)
