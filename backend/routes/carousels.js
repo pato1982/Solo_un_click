@@ -36,11 +36,19 @@ const upload = multer({
   }
 })
 
-// GET /api/carousels — obtener los 3 carruseles del usuario
+// GET /api/carousels — obtener los 3 carruseles del usuario (requiere plan >= 2)
 router.get('/', authMiddleware, async (req, res) => {
   try {
+    // Filtrar por plan: solo usuarios con plan_id >= 2 tienen carousels activos.
+    // Usuarios en plan 1 (o downgrade desde plan 2) no deben ver sus carousels.
+    const [planRow] = await pool.query('SELECT plan_id FROM users WHERE id = ?', [req.userId])
+    const planId = planRow[0]?.plan_id || 1
+    if (planId < 2) {
+      return res.json({ carousels: [] })
+    }
+
     const [carousels] = await pool.query(
-      'SELECT * FROM carousels WHERE user_id = ? ORDER BY posicion',
+      'SELECT id, user_id, nombre, posicion FROM carousels WHERE user_id = ? ORDER BY posicion',
       [req.userId]
     )
 
@@ -70,7 +78,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST /api/carousels/:posicion — guardar carrusel (nombre + imágenes nuevas)
 router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes', 8), async (req, res) => {
   try {
-    const posicion = parseInt(req.params.posicion)
+    const posicion = parseInt(req.params.posicion, 10)
     if (![1, 2, 3].includes(posicion)) {
       return res.status(400).json({ error: 'Posición inválida (1, 2 o 3)' })
     }
@@ -145,7 +153,7 @@ router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes
 // PUT /api/carousels/:posicion/reorder — reordenar imágenes
 router.put('/:posicion/reorder', authMiddleware, requirePlan(2), async (req, res) => {
   try {
-    const posicion = parseInt(req.params.posicion)
+    const posicion = parseInt(req.params.posicion, 10)
     const { imageIds } = req.body // Array de IDs en el nuevo orden
 
     const [carousel] = await pool.query(
@@ -196,8 +204,8 @@ router.put('/:posicion/reorder', authMiddleware, requirePlan(2), async (req, res
 // DELETE /api/carousels/:posicion/images/:imageId — eliminar imagen
 router.delete('/:posicion/images/:imageId', authMiddleware, requirePlan(2), async (req, res) => {
   try {
-    const posicion = parseInt(req.params.posicion)
-    const imageId = parseInt(req.params.imageId)
+    const posicion = parseInt(req.params.posicion, 10)
+    const imageId = parseInt(req.params.imageId, 10)
 
     const [carousel] = await pool.query(
       'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',

@@ -27,6 +27,7 @@ const eventosRoutes = require('./routes/eventos')
 const servidorRoutes = require('./routes/servidor')
 const serviciosRoutes = require('./routes/servicios')
 const mfaRoutes = require('./routes/mfa')
+const monitorRoutes = require('./routes/monitor')
 
 // --- Validación de variables de entorno críticas al arrancar ---
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -87,16 +88,23 @@ app.use(helmet({
 }))
 
 // --- Seguridad: CORS restringido ---
-const allowedOrigins = [
-  'https://soloaunclick.cl',
-  'https://www.soloaunclick.cl',
-  'http://soloaunclick.cl',
-  'http://www.soloaunclick.cl',
-  'http://45.236.130.25',
-  'http://158.220.123.58',
-  'http://localhost:5173',
-  'http://localhost:3000',
-]
+// M-05: en producción solo HTTPS. HTTP se mantiene en dev/local para no romper flujos.
+const isProd = process.env.NODE_ENV === 'production'
+const allowedOrigins = isProd
+  ? [
+      'https://soloaunclick.cl',
+      'https://www.soloaunclick.cl',
+    ]
+  : [
+      'https://soloaunclick.cl',
+      'https://www.soloaunclick.cl',
+      'http://soloaunclick.cl',
+      'http://www.soloaunclick.cl',
+      'http://45.236.130.25',
+      'http://158.220.123.58',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ]
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -209,6 +217,7 @@ v1Routes.use('/locales', localesRoutes)
 v1Routes.use('/eventos', eventosRoutes)
 v1Routes.use('/servidor', servidorRoutes)
 v1Routes.use('/servicios', serviciosRoutes)
+v1Routes.use('/monitor', monitorRoutes)
 
 // Montar v1 y mantener /api/ como alias para compatibilidad
 app.use('/api/v1', v1Routes)

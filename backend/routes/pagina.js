@@ -12,6 +12,20 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// A-04: solo acepta URLs de imagen relativas al propio dominio (`/uploads/...`).
+// Rechaza URLs externas que podrían usarse para hotlink, phishing o exfiltración.
+function sanitizeImageUrl(val) {
+  if (!val) return null
+  if (typeof val !== 'string') return null
+  const v = val.trim()
+  if (v === '') return null
+  // Solo paths internos servidos desde /uploads/
+  if (!v.startsWith('/uploads/')) return null
+  // Previene path traversal
+  if (v.includes('..')) return null
+  return v
+}
+
 // ============================================================
 // FASE 2 — crop_superior y crop_inferior son ahora tipo JSON nativo.
 // parseJson() mantiene compatibilidad con filas legado (TEXT) si las hubiera.
@@ -70,7 +84,7 @@ router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE titulo_superior=VALUES(titulo_superior), texto_superior=VALUES(texto_superior), imagen_superior=VALUES(imagen_superior),
        titulo_inferior=VALUES(titulo_inferior), texto_inferior=VALUES(texto_inferior), imagen_inferior=VALUES(imagen_inferior)`,
-      [req.userId, sanitize(titulo_superior) || null, sanitize(texto_superior) || null, imagen_superior || null, sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, imagen_inferior || null]
+      [req.userId, sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior)]
     )
 
     res.status(201).json({ message: 'Página guardada', id: result.insertId })
@@ -88,7 +102,7 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
     const [result] = await pool.query(
       `UPDATE turismo_pagina SET titulo_superior=?, texto_superior=?, imagen_superior=?, titulo_inferior=?, texto_inferior=?, imagen_inferior=?
        WHERE id=? AND user_id=?`,
-      [sanitize(titulo_superior) || null, sanitize(texto_superior) || null, imagen_superior || null, sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, imagen_inferior || null, req.params.id, req.userId]
+      [sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior), req.params.id, req.userId]
     )
 
     if (result.affectedRows === 0) {

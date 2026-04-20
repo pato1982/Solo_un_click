@@ -82,13 +82,25 @@ router.get('/public/:userId', async (req, res) => {
   }
 })
 
+// B-01: leer límite de tours desde la tabla `plans` en lugar de hardcodearlo
+async function getToursLimit(userId) {
+  const [rows] = await pool.query(
+    `SELECT p.max_tours FROM users u
+     LEFT JOIN plans p ON u.plan_id = p.id
+     WHERE u.id = ?`,
+    [userId]
+  )
+  return rows[0]?.max_tours ?? 12
+}
+
 // POST /api/tours — crear tour (solo Premium)
 router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
   try {
     // requirePlan(3) middleware ya verifica el plan Premium arriba
-    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ?', [req.userId])
-    if (countRows[0].total >= 12) {
-      return res.status(400).json({ error: 'Máximo 12 tours permitidos' })
+    const limit = await getToursLimit(req.userId)
+    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ? AND activo = 1', [req.userId])
+    if (countRows[0].total >= limit) {
+      return res.status(400).json({ error: `Máximo ${limit} tours permitidos` })
     }
 
     const { nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body

@@ -1,7 +1,6 @@
 const express = require('express')
 const path = require('path')
 const fs = require('fs')
-const { exec } = require('child_process')
 const pool = require('../db')
 const { authMiddleware, programadorMiddleware } = require('./auth')
 const logger = require('../logger')
@@ -9,13 +8,21 @@ const logger = require('../logger')
 const router = express.Router()
 const uploadsDir = path.join(__dirname, '..', 'uploads')
 
-function execPromise(cmd) {
-  return new Promise((resolve, reject) => {
-    exec(cmd, { timeout: 30000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
-      if (err) return reject(err)
-      resolve(stdout.trim())
-    })
-  })
+// B-05 / C-07: reemplazo de `df` vía shell por fs.statfs nativo (Node ≥18.15).
+// Evita exec() y bloqueo del event loop; fallback a 0 si no está disponible.
+async function getDiskStats(targetPath) {
+  try {
+    if (typeof fs.promises.statfs === 'function') {
+      const s = await fs.promises.statfs(targetPath)
+      const totalBytes = Number(s.blocks) * Number(s.bsize)
+      const availBytes = Number(s.bavail) * Number(s.bsize)
+      const usedBytes = totalBytes - Number(s.bfree) * Number(s.bsize)
+      return { totalBytes, usedBytes, availBytes }
+    }
+  } catch (e) {
+    logger.warn('fs.statfs falló', { error: e.message })
+  }
+  return { totalBytes: 0, usedBytes: 0, availBytes: 0 }
 }
 
 // Calcula el tamaño total de un directorio de forma recursiva usando fs.promises (sin shell)
@@ -57,9 +64,8 @@ async function getSubdirSizes(dirPath) {
 // GET /api/servidor/stats
 router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => {
   try {
-    // Disco
-    const dfOutput = await execPromise("df -B1 / | tail -1 | awk '{print $2, $3, $4}'")
-    const [totalBytes, usedBytes, availBytes] = dfOutput.split(' ').map(Number)
+    // Disco (sin shell — usa fs.statfs)
+    const { totalBytes, usedBytes, availBytes } = await getDiskStats('/')
 
     // Uploads folder size + breakdown (usando fs.promises, sin exec shell)
     let uploadsBytes = 0
