@@ -5,6 +5,7 @@ const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const { requirePlan } = require('../middlewares/planMiddleware')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logger = require('../logger')
 
 const router = express.Router()
@@ -37,7 +38,7 @@ const upload = multer({
 })
 
 // GET /api/carousels — obtener los 3 carruseles del usuario (requiere plan >= 2)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     // Filtrar por plan: solo usuarios con plan_id >= 2 tienen carousels activos.
     // Usuarios en plan 1 (o downgrade desde plan 2) no deben ver sus carousels.
@@ -48,8 +49,8 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 
     const [carousels] = await pool.query(
-      'SELECT id, user_id, nombre, posicion FROM carousels WHERE user_id = ? ORDER BY posicion',
-      [req.userId]
+      'SELECT id, business_id, nombre, posicion FROM carousels WHERE business_id = ? ORDER BY posicion',
+      [req.businessId]
     )
 
     // Obtener imágenes de cada carrusel desde tabla media
@@ -76,7 +77,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // POST /api/carousels/:posicion — guardar carrusel (nombre + imágenes nuevas)
-router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes', 8), async (req, res) => {
+router.post('/:posicion', authMiddleware, attachBusinessId, requirePlan(2), upload.array('imagenes', 8), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion, 10)
     if (![1, 2, 3].includes(posicion)) {
@@ -92,8 +93,8 @@ router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes
       await conn.beginTransaction()
 
       const [existing] = await conn.query(
-        'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
-        [req.userId, posicion]
+        'SELECT id FROM carousels WHERE business_id = ? AND posicion = ?',
+        [req.businessId, posicion]
       )
 
       if (existing.length > 0) {
@@ -101,8 +102,8 @@ router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes
         await conn.query('UPDATE carousels SET nombre = ? WHERE id = ?', [nombre || '', carouselId])
       } else {
         const [result] = await conn.query(
-          'INSERT INTO carousels (user_id, nombre, posicion) VALUES (?, ?, ?)',
-          [req.userId, nombre || '', posicion]
+          'INSERT INTO carousels (user_id, business_id, nombre, posicion) VALUES (?, ?, ?, ?)',
+          [req.userId, req.businessId, nombre || '', posicion]
         )
         carouselId = result.insertId
       }
@@ -151,14 +152,14 @@ router.post('/:posicion', authMiddleware, requirePlan(2), upload.array('imagenes
 })
 
 // PUT /api/carousels/:posicion/reorder — reordenar imágenes
-router.put('/:posicion/reorder', authMiddleware, requirePlan(2), async (req, res) => {
+router.put('/:posicion/reorder', authMiddleware, attachBusinessId, requirePlan(2), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion, 10)
     const { imageIds } = req.body // Array de IDs en el nuevo orden
 
     const [carousel] = await pool.query(
-      'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
-      [req.userId, posicion]
+      'SELECT id FROM carousels WHERE business_id = ? AND posicion = ?',
+      [req.businessId, posicion]
     )
 
     if (carousel.length === 0) {
@@ -202,14 +203,14 @@ router.put('/:posicion/reorder', authMiddleware, requirePlan(2), async (req, res
 })
 
 // DELETE /api/carousels/:posicion/images/:imageId — eliminar imagen
-router.delete('/:posicion/images/:imageId', authMiddleware, requirePlan(2), async (req, res) => {
+router.delete('/:posicion/images/:imageId', authMiddleware, attachBusinessId, requirePlan(2), async (req, res) => {
   try {
     const posicion = parseInt(req.params.posicion, 10)
     const imageId = parseInt(req.params.imageId, 10)
 
     const [carousel] = await pool.query(
-      'SELECT id FROM carousels WHERE user_id = ? AND posicion = ?',
-      [req.userId, posicion]
+      'SELECT id FROM carousels WHERE business_id = ? AND posicion = ?',
+      [req.businessId, posicion]
     )
 
     if (carousel.length === 0) {

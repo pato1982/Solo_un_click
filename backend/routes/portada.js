@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -32,11 +33,11 @@ function normalizarPortada(row) {
 }
 
 // GET /api/portada — obtener portada del usuario autenticado
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_portada WHERE user_id = ? LIMIT 1',
-      [req.userId]
+      'SELECT * FROM turismo_portada WHERE business_id = ? LIMIT 1',
+      [req.businessId]
     )
 
     const portada = rows[0] ? normalizarPortada(rows[0]) : null
@@ -70,19 +71,19 @@ router.get('/public', async (req, res) => {
 })
 
 // POST /api/portada — crear portada
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { nombre, descripcion, imagenes, categorias } = req.body
 
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
     const categoriasJson = categorias ? JSON.stringify(categorias) : '[]'
 
-    // INSERT con ON DUPLICATE KEY para evitar race condition (user_id es UNIQUE)
+    // INSERT con ON DUPLICATE KEY para evitar race condition (business_id es UNIQUE)
     const [result] = await pool.query(
-      `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes, categorias)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO turismo_portada (user_id, business_id, nombre, descripcion, imagenes, categorias)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes), categorias=VALUES(categorias)`,
-      [req.userId, sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson]
+      [req.userId, req.businessId, sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson]
     )
 
     await logActivity(req.userId, 'crear', 'portada', result.insertId, { nombre })
@@ -94,7 +95,7 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/portada/:id — actualizar portada
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { nombre, descripcion, imagenes, categorias } = req.body
 
@@ -103,8 +104,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const [result] = await pool.query(
       `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?, categorias=?
-       WHERE id=? AND user_id=?`,
-      [sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson, req.params.id, req.userId]
+       WHERE id=? AND business_id=?`,
+      [sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson, req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -120,11 +121,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
 })
 
 // DELETE /api/portada/:id — eliminar portada (soft delete)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_portada SET activo = 0 WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_portada SET activo = 0 WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -140,12 +141,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/portada/:id/crop — guardar encuadre de imágenes
-router.patch('/:id/crop', authMiddleware, async (req, res) => {
+router.patch('/:id/crop', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { imagenes_crop } = req.body
     await pool.query(
-      'UPDATE turismo_portada SET imagenes_crop=? WHERE id=? AND user_id=?',
-      [JSON.stringify(imagenes_crop || []), req.params.id, req.userId]
+      'UPDATE turismo_portada SET imagenes_crop=? WHERE id=? AND business_id=?',
+      [JSON.stringify(imagenes_crop || []), req.params.id, req.businessId]
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
@@ -155,11 +156,11 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/portada/:id/toggle — activar/desactivar portada
-router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+router.patch('/:id/toggle', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_portada SET activo = NOT activo WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_portada SET activo = NOT activo WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {

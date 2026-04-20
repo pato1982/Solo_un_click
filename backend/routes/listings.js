@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -215,7 +216,7 @@ async function resolverCategoriaIds(categoria, subcategoria, tipo) {
 }
 
 // POST /api/listings — crear publicación
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden, banner_orden } = req.body
 
@@ -225,8 +226,8 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId]
     )
     const [countRows] = await pool.query(
-      'SELECT COUNT(*) as total FROM listings WHERE user_id = ? AND carousel_posicion IS NULL AND banner_orden IS NULL',
-      [req.userId]
+      'SELECT COUNT(*) as total FROM listings WHERE business_id = ? AND carousel_posicion IS NULL AND banner_orden IS NULL',
+      [req.businessId]
     )
 
     // Carruseles y banners no cuentan en el límite del plan
@@ -260,9 +261,9 @@ router.post('/', authMiddleware, async (req, res) => {
       await conn.beginTransaction()
 
       const [result] = await conn.query(
-        `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
+        `INSERT INTO listings (user_id, business_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, req.businessId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
       )
       listingId = result.insertId
 
@@ -299,15 +300,15 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/listings/:id — editar publicación
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
     const { tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden, banner_orden } = req.body
 
-    // Verificar que el listing pertenece al usuario
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    // Verificar que el listing pertenece al business del usuario
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
 
     // Validar precio
     if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
@@ -374,14 +375,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
 })
 
 // DELETE /api/listings/:id — eliminar publicación
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
 
-    // Verificar que pertenece al usuario
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    // Verificar que pertenece al business del usuario
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
 
     // Eliminar imagen del disco
     const [imgRows] = await pool.query('SELECT url FROM media WHERE entity_type = \'listing\' AND entity_id = ?', [id])
@@ -405,14 +406,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/listings/:id/banner-pos — actualizar posición y escala de imagen en banner
-router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
+router.patch('/:id/banner-pos', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
     const { banner_pos_x, banner_pos_y, banner_scale } = req.body
 
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'No encontrado' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
 
     await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=?, banner_scale=? WHERE id=?', [
       Math.max(0, Math.min(100, parseInt(banner_pos_x) || 50)),

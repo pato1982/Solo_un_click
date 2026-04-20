@@ -2,6 +2,7 @@ const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const { requirePlan } = require('../middlewares/planMiddleware')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logger = require('../logger')
 
 const router = express.Router()
@@ -43,11 +44,11 @@ function normalizarPagina(row) {
 }
 
 // GET /api/pagina — obtener página premium del usuario autenticado
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_pagina WHERE user_id = ? LIMIT 1',
-      [req.userId]
+      'SELECT * FROM turismo_pagina WHERE business_id = ? LIMIT 1',
+      [req.businessId]
     )
     const pagina = rows[0] ? normalizarPagina(rows[0]) : null
     res.json({ pagina })
@@ -75,16 +76,16 @@ router.get('/public/:userId', async (req, res) => {
 })
 
 // POST /api/pagina — crear o actualizar página premium
-router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, requirePlan(3), async (req, res) => {
   try {
     const { titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior } = req.body
 
     const [result] = await pool.query(
-      `INSERT INTO turismo_pagina (user_id, titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO turismo_pagina (user_id, business_id, titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE titulo_superior=VALUES(titulo_superior), texto_superior=VALUES(texto_superior), imagen_superior=VALUES(imagen_superior),
        titulo_inferior=VALUES(titulo_inferior), texto_inferior=VALUES(texto_inferior), imagen_inferior=VALUES(imagen_inferior)`,
-      [req.userId, sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior)]
+      [req.userId, req.businessId, sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior)]
     )
 
     res.status(201).json({ message: 'Página guardada', id: result.insertId })
@@ -95,14 +96,14 @@ router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
 })
 
 // PUT /api/pagina/:id — actualizar página premium
-router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, requirePlan(3), async (req, res) => {
   try {
     const { titulo_superior, texto_superior, imagen_superior, titulo_inferior, texto_inferior, imagen_inferior } = req.body
 
     const [result] = await pool.query(
       `UPDATE turismo_pagina SET titulo_superior=?, texto_superior=?, imagen_superior=?, titulo_inferior=?, texto_inferior=?, imagen_inferior=?
-       WHERE id=? AND user_id=?`,
-      [sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior), req.params.id, req.userId]
+       WHERE id=? AND business_id=?`,
+      [sanitize(titulo_superior) || null, sanitize(texto_superior) || null, sanitizeImageUrl(imagen_superior), sanitize(titulo_inferior) || null, sanitize(texto_inferior) || null, sanitizeImageUrl(imagen_inferior), req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -117,12 +118,12 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
 })
 
 // PATCH /api/pagina/:id/crop — guardar encuadre de imágenes
-router.patch('/:id/crop', authMiddleware, requirePlan(3), async (req, res) => {
+router.patch('/:id/crop', authMiddleware, attachBusinessId, requirePlan(3), async (req, res) => {
   try {
     const { crop_superior, crop_inferior } = req.body
     await pool.query(
-      'UPDATE turismo_pagina SET crop_superior=?, crop_inferior=? WHERE id=? AND user_id=?',
-      [crop_superior ? JSON.stringify(crop_superior) : null, crop_inferior ? JSON.stringify(crop_inferior) : null, req.params.id, req.userId]
+      'UPDATE turismo_pagina SET crop_superior=?, crop_inferior=? WHERE id=? AND business_id=?',
+      [crop_superior ? JSON.stringify(crop_superior) : null, crop_inferior ? JSON.stringify(crop_inferior) : null, req.params.id, req.businessId]
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {

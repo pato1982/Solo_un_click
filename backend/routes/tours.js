@@ -2,6 +2,7 @@ const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
 const { requirePlan } = require('../middlewares/planMiddleware')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -42,11 +43,11 @@ async function validateCategoria(nombre) {
 }
 
 // GET /api/tours — listar tours del usuario autenticado
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_tours WHERE user_id = ? ORDER BY created_at DESC',
-      [req.userId]
+      'SELECT * FROM turismo_tours WHERE business_id = ? ORDER BY created_at DESC',
+      [req.businessId]
     )
     res.json({ tours: rows.map(normalizarTour) })
   } catch (err) {
@@ -94,11 +95,11 @@ async function getToursLimit(userId) {
 }
 
 // POST /api/tours — crear tour (solo Premium)
-router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, requirePlan(3), async (req, res) => {
   try {
     // requirePlan(3) middleware ya verifica el plan Premium arriba
     const limit = await getToursLimit(req.userId)
-    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE user_id = ? AND activo = 1', [req.userId])
+    const [countRows] = await pool.query('SELECT COUNT(*) as total FROM turismo_tours WHERE business_id = ? AND activo = 1', [req.businessId])
     if (countRows[0].total >= limit) {
       return res.status(400).json({ error: `Máximo ${limit} tours permitidos` })
     }
@@ -125,9 +126,9 @@ router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
 
     const [result] = await pool.query(
-      `INSERT INTO turismo_tours (user_id, nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.userId, sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null,
+      `INSERT INTO turismo_tours (user_id, business_id, nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.userId, req.businessId, sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null,
        sanitize(detalle) || null, precio || null, precio_antes || null,
        imagen_principal || 0, imagenesJson]
     )
@@ -141,7 +142,7 @@ router.post('/', authMiddleware, requirePlan(3), async (req, res) => {
 })
 
 // PUT /api/tours/:id — actualizar tour (solo Premium)
-router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, requirePlan(3), async (req, res) => {
   try {
     const { nombre, categoria, ubicacion, detalle, precio, precio_antes, imagen_principal, imagenes } = req.body
 
@@ -167,10 +168,10 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
     const [result] = await pool.query(
       `UPDATE turismo_tours
        SET nombre=?, categoria=?, ubicacion=?, detalle=?, precio=?, precio_antes=?, imagen_principal=?, imagenes=?
-       WHERE id=? AND user_id=?`,
+       WHERE id=? AND business_id=?`,
       [sanitize(nombre), sanitize(categoria) || null, sanitize(ubicacion) || null,
        sanitize(detalle) || null, precio || null, precio_antes || null,
-       imagen_principal || 0, imagenesJson, req.params.id, req.userId]
+       imagen_principal || 0, imagenesJson, req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -186,11 +187,11 @@ router.put('/:id', authMiddleware, requirePlan(3), async (req, res) => {
 })
 
 // DELETE /api/tours/:id — eliminar tour (soft delete)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_tours SET activo = 0 WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_tours SET activo = 0 WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -206,12 +207,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/tours/:id/crop — guardar encuadre de imágenes
-router.patch('/:id/crop', authMiddleware, async (req, res) => {
+router.patch('/:id/crop', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { imagenes_crop } = req.body
     await pool.query(
-      'UPDATE turismo_tours SET imagenes_crop=? WHERE id=? AND user_id=?',
-      [JSON.stringify(imagenes_crop || []), req.params.id, req.userId]
+      'UPDATE turismo_tours SET imagenes_crop=? WHERE id=? AND business_id=?',
+      [JSON.stringify(imagenes_crop || []), req.params.id, req.businessId]
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
@@ -221,11 +222,11 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/tours/:id/toggle — activar/desactivar tour
-router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+router.patch('/:id/toggle', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_tours SET activo = NOT activo WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_tours SET activo = NOT activo WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
