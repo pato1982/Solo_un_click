@@ -1,18 +1,25 @@
 # RESOLUCIÓN AUDITORÍA BACKEND 2 — Solo a un Click
-**Fecha:** 15 de Abril 2026
-**Branch:** `fix/auditoria-abril-2026`
-**Estado:** ✅ Todos los hallazgos de código resueltos
+**Fecha original:** 15 de Abril 2026
+**Última actualización:** 20 de Abril 2026 (post-Batch B)
+**Branch:** `feature/db-schema-v2`
+**Estado:** ⚠️ Auditoría re-verificada contra código real — no todos los hallazgos estaban cerrados
 
 ---
 
-## RESUMEN DE LO RESUELTO
+## RESUMEN REAL (re-auditado 2026-04-20)
 
-| Tipo | Resueltos | Pendientes |
-|------|-----------|------------|
-| Código (hallazgos) | 50 | 0 |
-| Base de datos | 1 | 0 |
-| Infraestructura | 2 | 0 |
-| Históricos | 0 | 2 |
+| Tipo | Confirmados aplicados | Parciales | No aplicados | No verificables |
+|------|---------------------|-----------|--------------|-----------------|
+| Código (hallazgos) | 30 + 9 (Batch A) | 7 | 2 | 2 |
+| Base de datos | 1 + Batch B (5 tablas) | 0 | 0 | 0 |
+| Infraestructura | 2 | 0 | 0 | 0 |
+| Históricos | 0 | 0 | 0 | 2 |
+
+**Batch A (commit `49c8a19`):** A-05, A-16, C-12, A-14 parcial, M-06, B-01/C-13, B-03, A-04, M-05, B-05/C-07
+**Batch B (commit `19af513`):** Migración `user_id → business_id` en listings + carousels + turismo_*, refactor de 5 routers backend con `attachBusinessId` middleware
+
+### Pendientes residuales
+- M-12 (límite imágenes en listings), M-01 (sanitización inconsistente), A-15 (cache categoría), B-02 (audit originalname), A-14/M-05 resto parciales
 
 ---
 
