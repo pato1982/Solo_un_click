@@ -17,7 +17,8 @@ module.exports = {
       SMTP_PORT: '25',
       SMTP_USER: '',
       SMTP_PASS: '',
-      SMTP_FROM: 'test@soloaunclick.cl'
+      SMTP_FROM: 'test@soloaunclick.cl',
+      DEV_BYPASS: 'true'
     },
     watch: false,
     max_memory_restart: '200M',

@@ -340,6 +340,25 @@ router.post('/logout', async (req, res) => {
 
 // Middleware para verificar token
 function authMiddleware(req, res, next) {
+  // --- Dev Bypass: permite requests sin JWT cuando DEV_BYPASS=true ---
+  // Solo funciona si el request viene directamente (sin Nginx/proxy)
+  // Esto lo hace seguro en producción: los requests externos pasan por Nginx
+  // que agrega X-Forwarded-For, mientras que el tunnel SSH no.
+  if (process.env.DEV_BYPASS === 'true') {
+    const devUserId = req.headers['x-dev-user-id']
+    const forwardedFor = req.headers['x-forwarded-for']
+    const isDirectLocal = !forwardedFor && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')
+    if (devUserId && isDirectLocal) {
+      const parsedId = parseInt(devUserId)
+      if (!isNaN(parsedId) && parsedId > 0) {
+        req.userId = parsedId
+        req.isDevBypass = true
+        logger.info('auth:dev_bypass', { requestId: req.id, devUserId: parsedId, path: req.path })
+        return next()
+      }
+    }
+  }
+
   // Leer desde cookie httpOnly primero, luego header Authorization como fallback
   let token = req.cookies?.access_token
 
@@ -600,6 +619,22 @@ router.get('/profile/history', authMiddleware, async (req, res) => {
   } catch (err) {
     logger.error('Error obteniendo historial', { error: err.message })
     res.status(500).json({ error: 'Error al obtener historial' })
+  }
+})
+
+// GET /api/auth/dev-info — listar usuarios disponibles para desarrollo (solo si DEV_BYPASS=true)
+router.get('/dev-info', async (req, res) => {
+  if (process.env.DEV_BYPASS !== 'true') {
+    return res.status(404).json({ error: 'No disponible' })
+  }
+  try {
+    const [users] = await pool.query(
+      'SELECT u.id, u.nombre, u.email, u.rol, u.tipo_cuenta, u.plan_id, u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos, b.id as business_id FROM users u LEFT JOIN businesses b ON u.user_id = b.user_id AND b.activo = 1 WHERE u.activo = 1 ORDER BY u.id LIMIT 20'
+    )
+    res.json({ users, devBypass: true })
+  } catch (err) {
+    logger.error('Error en /dev-info', { error: err.message })
+    res.status(500).json({ error: 'Error al obtener usuarios de desarrollo' })
   }
 })
 

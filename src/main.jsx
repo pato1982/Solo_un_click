@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import ProtectedRoute from './components/ProtectedRoute'
+import { installDevFetchInterceptor } from './lib/devFetch'
 import AdminLayout from './admin/AdminLayout'
 import AdminProductos from './admin/pages/AdminProductos'
 import AdminNegocio from './admin/pages/AdminNegocio'
@@ -16,7 +17,11 @@ import ProgramadorLocales from './admin/pages/ProgramadorLocales'
 import ProgramadorEventos from './admin/pages/ProgramadorEventos'
 import ProgramadorServidor from './admin/pages/ProgramadorServidor'
 import ProgramadorEstadisticas from './admin/pages/ProgramadorEstadisticas'
+import AdminMonitor from './admin/pages/AdminMonitor'
 import './index.css'
+
+// Instalar interceptor de fetch para bypass en desarrollo
+installDevFetchInterceptor()
 
 function AdminIndex() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -38,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="portada" element={<AdminPortada />} />
           <Route path="tour" element={<AdminTour />} />
           <Route path="pagina" element={<AdminPagina />} />
+          <Route path="monitor" element={<AdminMonitor />} />
           <Route path="programador/locales" element={<ProgramadorLocales />} />
           <Route path="programador/eventos" element={<ProgramadorEventos />} />
           <Route path="programador/estadisticas" element={<ProgramadorEstadisticas />} />
