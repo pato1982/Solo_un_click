@@ -177,7 +177,66 @@ Logs almacenados en `backend/logs/` con rotación (5MB, 5 archivos).
 
 ---
 
-## 12. Divulgación Responsable
+## 12. Gestión de Secretos
+
+### Principios
+
+- **Nunca en git:** Credenciales, tokens y contraseñas nunca se commiten al repositorio.
+- **`.env` en servidor:** Las variables secretas viven exclusivamente en `/var/www/soloaunclick/backend/.env` en el VPS.
+- **`ecosystem.config.js` limpio:** Solo define estructura de PM2 (nombre, script, modo). Sin credenciales.
+- **dotenv en arranque:** `server.js` llama `require('dotenv').config()` como primera línea para cargar `.env`.
+- **`.env.example` documentado:** Todo secreto necesario está listado en `backend/.env.example` con descripción, sin valores reales.
+
+### Variables secretas actuales
+
+| Variable | Descripción | Longitud mínima |
+|----------|-------------|-----------------|
+| `JWT_SECRET` | Firma de access tokens | 96 chars hex |
+| `REFRESH_SECRET` | Firma de refresh tokens | 96 chars hex |
+| `DB_PASS` | Password MySQL usuario `soloaunclick` | 32+ chars |
+| `SMTP_PASS` | App password SMTP para emails | — |
+| `SENTRY_DSN` | DSN de Sentry (no es secreto estricto, pero se trata como variable de entorno) | — |
+
+### Incidente de historial git (2026-04-17 a 2026-04-20)
+
+En el commit `564d129` (2026-04-14), credenciales hardcodeadas fueron introducidas en `ecosystem.config.js`.
+El commit `489c015` (2026-04-17) las eliminó del código, pero permanecen en el historial.
+
+**Estado del repositorio:** público en GitHub (`pato1982/Solo_un_click`).  
+**Acción tomada (2026-04-20):** Todas las credenciales comprometidas fueron rotadas en el VPS.
+Las credenciales antiguas (`SoloUnClick2026`, `soloaunclick_jwt_2026_villarrica_key_change_this`) **ya no son válidas**.
+
+**Decisión sobre rewrite de historial:** No se realizó `git filter-repo` + force-push por el riesgo
+de ruptura del historial para colaboradores activos. La rotación de credenciales es la mitigación
+suficiente dado que las credenciales antiguas quedaron inservibles.
+
+---
+
+## 13. Política de Rotación de Credenciales
+
+| Credencial | Frecuencia mínima | Rotación inmediata si... |
+|------------|-------------------|--------------------------|
+| `JWT_SECRET` | 90 días | Posible compromiso, cambio de equipo |
+| `REFRESH_SECRET` | 90 días | Posible compromiso |
+| `DB_PASS` | 90 días | Posible compromiso, acceso de ex-colaborador |
+| `SMTP_PASS` | 180 días | Posible compromiso |
+| Llaves SSH (`villarrica`) | 365 días | Posible compromiso, pérdida del archivo |
+
+Para el proceso de rotación, ver `docs/DISASTER_RECOVERY.md` — Escenario 3.
+
+---
+
+## 14. Referencias y Runbooks
+
+- **Runbook de login/autenticación:** `docs/RUNBOOK_LOGIN.md`
+- **Infraestructura y accesos:** `docs/INFRASTRUCTURE.md`
+- **Proceso de deploy:** `docs/DEPLOYMENT.md`
+- **Recuperación ante desastres:** `docs/DISASTER_RECOVERY.md`
+- **Monitoreo:** `docs/MONITORING_SETUP.md`
+
+---
+
+## 16. Divulgación Responsable
 
 Si descubres una vulnerabilidad de seguridad en este proyecto, por favor repórtala de forma privada a:
 
@@ -188,7 +247,7 @@ El equipo se compromete a responder dentro de **72 horas** y a publicar un parch
 
 ---
 
-## 13. Revisión de este Documento
+## 17. Revisión de este Documento
 
 Este documento debe revisarse:
 - Cada 6 meses o después de cambios arquitectónicos significativos

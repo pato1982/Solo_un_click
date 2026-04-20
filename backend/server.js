@@ -1,3 +1,13 @@
+require('dotenv').config()
+const Sentry = require('@sentry/node')
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.1,
+    release: process.env.npm_package_version,
+  })
+}
 const express = require('express')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
@@ -262,6 +272,9 @@ app.get('/api/health', async (req, res) => {
 })
 
 // --- Middleware centralizado de errores ---
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler())
+}
 app.use((err, req, res, next) => {
   if (err.message === 'No permitido por CORS') {
     return res.status(403).json({ error: 'Origen no permitido' })

@@ -70,16 +70,46 @@ Configuración recomendada: intervalo 5 min, alertas a `admin@soloaunclick.cl`
 
 Ver instrucciones completas en: `docs/MONITORING_SETUP.md`
 
-## Ambiente de Desarrollo
+## Ambientes
 
-### Base de Datos
+| Ambiente | Puerto | BD | Branch | URL |
+|----------|--------|-----|--------|-----|
+| Producción | 3001 | soloaunclick | main | https://soloaunclick.cl |
+| Desarrollo | 3002 | soloaunclick_dev | feature/* | http://dev.soloaunclick.cl |
 
-| BD | Usuario | Host |
-|----|---------|------|
-| `soloaunclick` (prod) | `soloaunclick` | localhost |
-| `soloaunclick_dev` (dev) | `soloaunclick_dev` | localhost |
+## Acceso SSH
 
-### Flujo de Trabajo Dev → Prod
+```bash
+# Llave privada: ~/.ssh/villarrica
+ssh -i ~/.ssh/villarrica -o StrictHostKeyChecking=no root@158.220.123.58
+```
+
+## Comandos PM2 frecuentes
+
+```bash
+pm2 list                            # Ver todos los procesos
+pm2 logs soloaunclick --lines 50    # Ver logs del proceso prod
+pm2 restart soloaunclick            # Reiniciar prod (carga .env)
+pm2 restart soloaunclick --update-env  # Reiniciar cargando nuevas env vars
+pm2 delete soloaunclick && pm2 start ecosystem.config.js --env production  # Reinicio limpio
+pm2 save                            # Persistir lista actual de procesos
+pm2 startup                         # Configurar autoinicio al rebotar VPS
+```
+
+## Base de Datos MySQL
+
+| BD | Usuario | Host | Propósito |
+|----|---------|------|-----------|
+| `soloaunclick` | `soloaunclick` | localhost | Producción |
+| `soloaunclick_dev` | — | localhost | Desarrollo |
+| `soloaunclick_test` | — | localhost | Tests |
+
+Autenticación MySQL como root: `mysql --defaults-file=/etc/mysql/debian.cnf`
+
+> **Nota de seguridad:** Las credenciales de BD nunca van en `ecosystem.config.js`.
+> Se leen desde `/var/www/soloaunclick/backend/.env` mediante `require('dotenv').config()`.
+
+## Flujo de Trabajo Dev → Prod
 
 1. **Desarrollar en dev:**
    ```bash
@@ -91,22 +121,17 @@ Ver instrucciones completas en: `docs/MONITORING_SETUP.md`
 
 2. **Probar en:** `http://158.220.123.58:3002/api/health`
 
-3. **Aplicar migraciones en dev primero:**
+3. **Aplicar migraciones en dev primero, luego en prod:**
    ```bash
-   mysql -u soloaunclick_dev -p'DevSoloUnClick2026!' soloaunclick_dev < migration.sql
-   # Validar en dev, luego aplicar en prod:
-   mysql -u soloaunclick -p'SoloUnClick2026' soloaunclick < migration.sql
+   # Dev (usar credenciales del .env de dev)
+   mysql --defaults-file=/etc/mysql/debian.cnf soloaunclick_dev < migration.sql
+   # Prod (usar credenciales del .env de prod — las credenciales reales están en .env)
+   mysql --defaults-file=/etc/mysql/debian.cnf soloaunclick < migration.sql
    ```
 
-4. **Deploy a producción:**
-   ```bash
-   cd /var/www/soloaunclick
-   git pull origin main
-   cd backend && npm install
-   pm2 restart soloaunclick
-   ```
+4. **Deploy a producción:** Ver `docs/DEPLOYMENT.md` para el proceso completo.
 
-### Nginx Virtual Hosts
+## Nginx Virtual Hosts
 
 | Host | Config |
 |------|--------|
