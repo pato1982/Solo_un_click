@@ -629,7 +629,7 @@ router.get('/dev-info', async (req, res) => {
   }
   try {
     const [users] = await pool.query(
-      'SELECT u.id, u.nombre, u.email, u.rol, u.tipo_cuenta, u.plan_id, u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos, b.id as business_id FROM users u LEFT JOIN businesses b ON u.user_id = b.user_id AND b.activo = 1 WHERE u.activo = 1 ORDER BY u.id LIMIT 20'
+      'SELECT u.id, u.nombre, u.email, u.rol, u.tipo_cuenta, u.plan_id, u.vende_productos, u.ofrece_servicios, u.ofrece_arriendos, b.id as business_id FROM users u LEFT JOIN businesses b ON b.user_id = u.id AND b.activo = 1 WHERE u.activo = 1 ORDER BY u.id LIMIT 20'
     )
     res.json({ users, devBypass: true })
   } catch (err) {
