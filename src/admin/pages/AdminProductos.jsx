@@ -19,7 +19,9 @@ const emptyForm = {
   precio: '',
   precioOriginal: '',
   categoria: '',
+  categoria_id: null,
   subcategoria: '',
+  subcategoria_id: null,
   badge: '',
   tipo: '',
   attrMedidas: false,
@@ -241,7 +243,9 @@ export default function AdminProductos() {
             precio: l.precio,
             precioOriginal: l.precio_original,
             categoria: l.categoria || '',
+            categoria_id: l.categoria_id || null,
             subcategoria: l.subcategoria,
+            subcategoria_id: l.subcategoria_id || null,
             badge: l.badge,
             tipo: l.tipo,
             tallas: l.tallas,
@@ -351,7 +355,9 @@ export default function AdminProductos() {
         precio: Math.round(Number(formData.precio)) || 0,
         precio_original: formData.precioOriginal ? Math.round(Number(formData.precioOriginal)) : null,
         categoria: formData.categoria,
+        categoria_id: formData.categoria_id || null,
         subcategoria: formData.subcategoria,
+        subcategoria_id: formData.subcategoria_id || null,
         badge: formData.badge,
         genero: formData.genero || null,
         imagen: imagenUrl,
@@ -389,7 +395,9 @@ export default function AdminProductos() {
             precio: l.precio,
             precioOriginal: l.precio_original,
             categoria: l.categoria || '',
+            categoria_id: l.categoria_id || null,
             subcategoria: l.subcategoria,
+            subcategoria_id: l.subcategoria_id || null,
             badge: l.badge,
             tipo: l.tipo,
             tallas: l.tallas,
@@ -451,7 +459,9 @@ export default function AdminProductos() {
       precio: String(prod.precio),
       precioOriginal: prod.precioOriginal ? String(prod.precioOriginal) : '',
       categoria: prod.categoria || '',
+      categoria_id: prod.categoria_id || null,
       subcategoria: prod.subcategoria,
+      subcategoria_id: prod.subcategoria_id || null,
       badge: prod.badge || '',
       tipo: prod.tipo || '',
       attrMedidas: !!prod.medidas,
@@ -741,7 +751,7 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', categoria_id: null, subcategoria: '', subcategoria_id: null }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -756,19 +766,19 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
-                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="categoria" value={formData.categoria_id ?? ''} onChange={(e) => { const cat = categoriasDB.find(c => c.id === Number(e.target.value)); setFormData(prev => ({ ...prev, categoria_id: cat ? cat.id : null, categoria: cat ? cat.nombre : '', subcategoria: '', subcategoria_id: null })) }} disabled={!formData.tipo} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary disabled:opacity-50">
                       <option value="">Seleccionar categoría</option>
                       {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
-                        <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="subcategoria" value={formData.subcategoria_id ?? ''} onChange={(e) => { const subcat = (categoriasDB.find(c => c.id === formData.categoria_id)?.subcategorias || []).find(s => s.id === Number(e.target.value)); setFormData(prev => ({ ...prev, subcategoria_id: subcat ? subcat.id : null, subcategoria: subcat ? subcat.nombre : '' })) }} disabled={!formData.categoria_id} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary disabled:opacity-50">
                       <option value="">Seleccionar subcategoría</option>
-                      {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
-                        <option key={s.id} value={s.nombre}>{s.nombre}</option>
+                      {(categoriasDB.find(c => c.id === formData.categoria_id)?.subcategorias || []).map(s => (
+                        <option key={s.id} value={s.id}>{s.nombre}</option>
                       ))}
                     </select>
                   </div>
