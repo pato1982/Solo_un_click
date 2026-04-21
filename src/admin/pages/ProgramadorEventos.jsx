@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
@@ -22,8 +22,7 @@ export default function ProgramadorEventos() {
   const [toast, setToast] = useState(null)
   const fileRef = useRef(null)
 
-  const token = localStorage.getItem('token')
-  const headers = { Authorization: `Bearer ${token}` }
+  const headers = { }
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -31,7 +30,7 @@ export default function ProgramadorEventos() {
   }
 
   const fetchEventos = () => {
-    fetch(`${API}/api/v1/eventos/admin`, { headers })
+    fetch(`${API}/api/v1/eventos/admin`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => { setEventos(data.eventos || []); setLoading(false) })
       .catch(() => setLoading(false))

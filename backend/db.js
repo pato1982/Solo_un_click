@@ -8,14 +8,36 @@ for (const v of requiredEnvVars) {
   }
 }
 
+// B-03: SSL opcional (activar vía DB_SSL=true cuando la BD acepte TLS)
+const sslConfig = process.env.DB_SSL === 'true'
+  ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+  : undefined
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 50,
+  queueLimit: 100,
+  connectTimeout: 10000,
+  idleTimeout: 60000,
+  ...(sslConfig ? { ssl: sslConfig } : {}),
 })
 
+async function checkHealth() {
+  let conn
+  try {
+    conn = await pool.getConnection()
+    await conn.query('SELECT 1')
+    return { status: 'ok' }
+  } catch (err) {
+    return { status: 'error', message: err.message }
+  } finally {
+    if (conn) conn.release()
+  }
+}
+
 module.exports = pool
+module.exports.checkHealth = checkHealth

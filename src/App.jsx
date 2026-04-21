@@ -229,6 +229,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
+
   // Registrar visita al sitio
   useEffect(() => {
     fetch(`${API}/api/v1/servidor/visita`, {
@@ -330,8 +331,10 @@ export default function App() {
     setUser(userData)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
+    } catch {}
     localStorage.removeItem('user')
     setUser(null)
   }

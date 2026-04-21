@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import ImageZoomPan from '../components/ImageZoomPan'
 
 const API = import.meta.env.VITE_API || ''
@@ -41,14 +41,13 @@ export default function AdminTour() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const token = localStorage.getItem('token')
 
   const fetchTours = () => {
     fetch(`${API}/api/v1/tours`, {
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: 'include'
     })
       .then(r => {
-        if (r.status === 401 && token !== 'dev-token') { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return null }
+        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return null }
         if (!r.ok) return { tours: [] }
         return r.json()
       })
@@ -140,7 +139,7 @@ export default function AdminTour() {
           fd.append('imagen', img)
           const upRes = await fetch(`${API}/api/v1/upload`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
             body: fd
           })
           const upData = await upRes.json()
@@ -168,7 +167,7 @@ export default function AdminTour() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify(body)
       })
 
@@ -192,7 +191,7 @@ export default function AdminTour() {
     try {
       const res = await fetch(`${API}/api/v1/tours/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
       })
       if (res.ok) {
         showToast('Tour eliminado')
@@ -366,7 +365,7 @@ export default function AdminTour() {
                       if (editingId) {
                         fetch(`${API}/api/v1/tours/${editingId}/crop`, {
                           method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                           body: JSON.stringify({ imagenes_crop: newCrops }),
                         }).catch(() => {})
                       }

@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
        FROM locales_barrio l
        LEFT JOIN categorias_barrio cb ON l.categoria_barrio_id = cb.id
        WHERE l.activo = 1
-       ORDER BY RAND()
+       ORDER BY l.orden ASC, l.id ASC
        LIMIT 200`
     )
     res.json({ locales: rows })

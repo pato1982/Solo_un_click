@@ -1,6 +1,6 @@
 const express = require('express')
 const path = require('path')
-const { exec } = require('child_process')
+const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware, programadorMiddleware } = require('./auth')
 const logger = require('../logger')
@@ -8,41 +8,83 @@ const logger = require('../logger')
 const router = express.Router()
 const uploadsDir = path.join(__dirname, '..', 'uploads')
 
-function execPromise(cmd) {
-  return new Promise((resolve, reject) => {
-    exec(cmd, { timeout: 30000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
-      if (err) return reject(err)
-      resolve(stdout.trim())
-    })
-  })
+// B-05 / C-07: reemplazo de `df` vía shell por fs.statfs nativo (Node ≥18.15).
+// Evita exec() y bloqueo del event loop; fallback a 0 si no está disponible.
+async function getDiskStats(targetPath) {
+  try {
+    if (typeof fs.promises.statfs === 'function') {
+      const s = await fs.promises.statfs(targetPath)
+      const totalBytes = Number(s.blocks) * Number(s.bsize)
+      const availBytes = Number(s.bavail) * Number(s.bsize)
+      const usedBytes = totalBytes - Number(s.bfree) * Number(s.bsize)
+      return { totalBytes, usedBytes, availBytes }
+    }
+  } catch (e) {
+    logger.warn('fs.statfs falló', { error: e.message })
+  }
+  return { totalBytes: 0, usedBytes: 0, availBytes: 0 }
+}
+
+// Calcula el tamaño total de un directorio de forma recursiva usando fs.promises (sin shell)
+async function getDirSize(dirPath) {
+  let total = 0
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+    for (const entry of entries) {
+      const full = path.join(dirPath, entry.name)
+      if (entry.isDirectory()) {
+        total += await getDirSize(full)
+      } else if (entry.isFile()) {
+        const stat = await fs.promises.stat(full)
+        total += stat.size
+      }
+    }
+  } catch {}
+  return total
+}
+
+// Lista subdirectorios de primer nivel con su tamaño usando fs.promises (sin shell)
+async function getSubdirSizes(dirPath) {
+  const result = []
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+    await Promise.all(
+      entries
+        .filter(e => e.isDirectory())
+        .map(async e => {
+          const full = path.join(dirPath, e.name)
+          const bytes = await getDirSize(full)
+          result.push({ nombre: e.name, bytes })
+        })
+    )
+  } catch {}
+  return result
 }
 
 // GET /api/servidor/stats
 router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => {
   try {
-    // Disco
-    const dfOutput = await execPromise("df -B1 / | tail -1 | awk '{print $2, $3, $4}'")
-    const [totalBytes, usedBytes, availBytes] = dfOutput.split(' ').map(Number)
+    // Disco (sin shell — usa fs.statfs)
+    const { totalBytes, usedBytes, availBytes } = await getDiskStats('/')
 
-    // Uploads folder size + breakdown
+    // Uploads folder size + breakdown (usando fs.promises, sin exec shell)
     let uploadsBytes = 0
     let uploadsCarpetas = []
     try {
-      const duOutput = await execPromise(`du -sb ${uploadsDir} 2>/dev/null | awk '{print $1}'`)
-      uploadsBytes = parseInt(duOutput) || 0
-
-      // Desglose: subcarpetas
-      const subdirsOutput = await execPromise(`find ${uploadsDir} -mindepth 1 -maxdepth 1 -type d -exec du -sb {} \\; 2>/dev/null`)
-      if (subdirsOutput) {
-        uploadsCarpetas = subdirsOutput.split('\n').map(line => {
-          const [bytes, fullpath] = line.split('\t')
-          return { nombre: fullpath.split('/').pop(), bytes: parseInt(bytes) || 0 }
-        })
-      }
-
-      // Archivos sueltos = total uploads - suma de subcarpetas
+      uploadsCarpetas = await getSubdirSizes(uploadsDir)
       const subdirsTotal = uploadsCarpetas.reduce((sum, c) => sum + c.bytes, 0)
-      const looseBytes = uploadsBytes - subdirsTotal
+
+      // Archivos sueltos en la raíz de uploads
+      const entries = await fs.promises.readdir(uploadsDir, { withFileTypes: true })
+      let looseBytes = 0
+      for (const e of entries) {
+        if (e.isFile()) {
+          const stat = await fs.promises.stat(path.join(uploadsDir, e.name))
+          looseBytes += stat.size
+        }
+      }
+      uploadsBytes = subdirsTotal + looseBytes
+
       if (looseBytes > 0) {
         uploadsCarpetas.unshift({ nombre: 'imágenes (raíz)', bytes: looseBytes })
       }
@@ -59,7 +101,7 @@ router.get('/stats', authMiddleware, programadorMiddleware, async (req, res) => 
         ROUND(data_length + index_length) AS total_bytes,
         table_rows AS filas
       FROM information_schema.tables
-      WHERE table_schema = 'soloaunclick'
+      WHERE table_schema = DATABASE()
       ORDER BY (data_length + index_length) DESC
     `)
 

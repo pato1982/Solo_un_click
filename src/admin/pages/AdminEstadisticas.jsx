@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -89,7 +89,7 @@ function LineChart({ data }) {
 
 export default function AdminEstadisticas() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
+
   const planId = user.plan_id || 1
   const esTurismo = user.tipo_cuenta === 'turismo'
 
@@ -112,13 +112,13 @@ export default function AdminEstadisticas() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${token}` }
+    const headers = { }
 
     if (esTurismo) {
       Promise.all([
-        fetch(`${API}/api/v1/tours`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/v1/portada`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/v1/analytics/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/tours`, { credentials: 'include' }).then(r => r.json()),
+        fetch(`${API}/api/v1/portada`, { credentials: 'include' }).then(r => r.json()),
+        fetch(`${API}/api/v1/analytics/stats`, { credentials: 'include' }).then(r => r.json()),
       ])
         .then(([toursData, portadaData, statsData]) => {
           if (toursData.tours) setTours(toursData.tours)
@@ -132,8 +132,8 @@ export default function AdminEstadisticas() {
         .finally(() => setLoading(false))
     } else {
       Promise.all([
-        fetch(`${API}/api/v1/listings/mine`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/v1/analytics/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/listings/mine`, { credentials: 'include' }).then(r => r.json()),
+        fetch(`${API}/api/v1/analytics/stats`, { credentials: 'include' }).then(r => r.json()),
       ])
         .then(([listData, statsData]) => {
           if (listData.listings) setListings(listData.listings)

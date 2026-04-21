@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+﻿import { useState, useRef, useCallback, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -19,7 +19,9 @@ const emptyForm = {
   precio: '',
   precioOriginal: '',
   categoria: '',
+  categoria_id: null,
   subcategoria: '',
+  subcategoria_id: null,
   badge: '',
   tipo: '',
   attrMedidas: false,
@@ -169,7 +171,7 @@ function ImageCropper({ src, pos, onPosChange, naturalW, naturalH, scale, onScal
 
 export default function AdminProductos() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
+
 
   // Filtrar tabs según permisos del usuario
   const tabs = allTabs.filter((tab) => {
@@ -204,17 +206,34 @@ export default function AdminProductos() {
     user.ofrece_arriendos && 'arriendo',
   ].filter(Boolean)
 
-  // Cargar productos y categorías desde API
+  // Cargar categorías desde API (independiente de productos)
   useEffect(() => {
     const catUrl = tiposUsuario.length > 0
       ? `${API}/api/v1/categorias?tipo=${tiposUsuario.join(',')}`
-      : null
+      : `${API}/api/v1/categorias`
 
-    Promise.all([
-      fetch(`${API}/api/v1/listings/mine`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      catUrl ? fetch(catUrl).then(r => r.json()) : Promise.resolve({ categorias: [] }),
-    ])
-      .then(([data, catsData]) => {
+    fetch(catUrl)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then(data => {
+        if (data.categorias) {
+          setCategoriasDB(data.categorias)
+        }
+      })
+      .catch(err => console.error('Error cargando categorías:', err))
+  }, [])
+
+  // Cargar productos desde API
+  useEffect(() => {
+    
+    fetch(`${API}/api/v1/listings/mine`, { credentials: 'include' })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then(data => {
         if (data.listings) {
           setProductos(data.listings.filter(l => !l.carousel_posicion && !l.banner_orden).map(l => ({
             id: l.id,
@@ -224,7 +243,9 @@ export default function AdminProductos() {
             precio: l.precio,
             precioOriginal: l.precio_original,
             categoria: l.categoria || '',
+            categoria_id: l.categoria_id || null,
             subcategoria: l.subcategoria,
+            subcategoria_id: l.subcategoria_id || null,
             badge: l.badge,
             tipo: l.tipo,
             tallas: l.tallas,
@@ -233,9 +254,6 @@ export default function AdminProductos() {
             imagenPreview: l.imagen ? `${API}${l.imagen}` : null,
             imagenUrl: l.imagen,
           })))
-        }
-        if (catsData.categorias) {
-          setCategoriasDB(catsData.categorias)
         }
       })
       .catch(err => console.error('Error cargando productos:', err))
@@ -314,7 +332,7 @@ export default function AdminProductos() {
         fd.append('imagen', blob, 'producto.jpg')
         const uploadRes = await fetch(`${API}/api/v1/upload`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
           body: fd
         })
         const uploadData = await uploadRes.json()
@@ -337,7 +355,9 @@ export default function AdminProductos() {
         precio: Math.round(Number(formData.precio)) || 0,
         precio_original: formData.precioOriginal ? Math.round(Number(formData.precioOriginal)) : null,
         categoria: formData.categoria,
+        categoria_id: formData.categoria_id || null,
         subcategoria: formData.subcategoria,
+        subcategoria_id: formData.subcategoria_id || null,
         badge: formData.badge,
         genero: formData.genero || null,
         imagen: imagenUrl,
@@ -349,13 +369,13 @@ export default function AdminProductos() {
       if (editingId) {
         res = await fetch(`${API}/api/v1/listings/${editingId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body)
         })
       } else {
         res = await fetch(`${API}/api/v1/listings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' }, credentials: 'include',
           body: JSON.stringify(body)
         })
       }
@@ -363,7 +383,7 @@ export default function AdminProductos() {
       if (res.ok) {
         // Recargar lista
         const listRes = await fetch(`${API}/api/v1/listings/mine`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: 'include'
         })
         const listData = await listRes.json()
         if (listData.listings) {
@@ -375,7 +395,9 @@ export default function AdminProductos() {
             precio: l.precio,
             precioOriginal: l.precio_original,
             categoria: l.categoria || '',
+            categoria_id: l.categoria_id || null,
             subcategoria: l.subcategoria,
+            subcategoria_id: l.subcategoria_id || null,
             badge: l.badge,
             tipo: l.tipo,
             tallas: l.tallas,
@@ -404,7 +426,7 @@ export default function AdminProductos() {
     try {
       const res = await fetch(`${API}/api/v1/listings/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include'
       })
       if (res.ok) {
         setProductos((prev) => prev.filter((p) => p.id !== id))
@@ -437,7 +459,9 @@ export default function AdminProductos() {
       precio: String(prod.precio),
       precioOriginal: prod.precioOriginal ? String(prod.precioOriginal) : '',
       categoria: prod.categoria || '',
+      categoria_id: prod.categoria_id || null,
       subcategoria: prod.subcategoria,
+      subcategoria_id: prod.subcategoria_id || null,
       badge: prod.badge || '',
       tipo: prod.tipo || '',
       attrMedidas: !!prod.medidas,
@@ -727,7 +751,7 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tipo *</label>
-                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="tipo" value={formData.tipo} onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value, categoria: '', categoria_id: null, subcategoria: '', subcategoria_id: null }))} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                       <option value="">Seleccionar</option>
                       {user.vende_productos && <option value="producto">Productos</option>}
                       {user.ofrece_servicios && <option value="servicio">Servicios</option>}
@@ -742,19 +766,19 @@ export default function AdminProductos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Categoría *</label>
-                    <select name="categoria" value={formData.categoria} onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value, subcategoria: '' }))} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="categoria" value={formData.categoria_id ?? ''} onChange={(e) => { const cat = categoriasDB.find(c => c.id === Number(e.target.value)); setFormData(prev => ({ ...prev, categoria_id: cat ? cat.id : null, categoria: cat ? cat.nombre : '', subcategoria: '', subcategoria_id: null })) }} disabled={!formData.tipo} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary disabled:opacity-50">
                       <option value="">Seleccionar categoría</option>
                       {categoriasDB.filter(c => !formData.tipo || c.tipo === formData.tipo).map(c => (
-                        <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Subcategoría *</label>
-                    <select name="subcategoria" value={formData.subcategoria} onChange={handleInputChange} required className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                    <select name="subcategoria" value={formData.subcategoria_id ?? ''} onChange={(e) => { const subcat = (categoriasDB.find(c => c.id === formData.categoria_id)?.subcategorias || []).find(s => s.id === Number(e.target.value)); setFormData(prev => ({ ...prev, subcategoria_id: subcat ? subcat.id : null, subcategoria: subcat ? subcat.nombre : '' })) }} disabled={!formData.categoria_id} required className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary disabled:opacity-50">
                       <option value="">Seleccionar subcategoría</option>
-                      {(categoriasDB.find(c => c.nombre === formData.categoria)?.subcategorias || []).map(s => (
-                        <option key={s.id} value={s.nombre}>{s.nombre}</option>
+                      {(categoriasDB.find(c => c.id === formData.categoria_id)?.subcategorias || []).map(s => (
+                        <option key={s.id} value={s.id}>{s.nombre}</option>
                       ))}
                     </select>
                   </div>
@@ -765,7 +789,7 @@ export default function AdminProductos() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Tallas</label>
-                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                      <select name="tallasTipo" value={formData.tallasTipo} onChange={(e) => setFormData((prev) => ({ ...prev, tallasTipo: e.target.value, tallasSeleccion: [] }))} className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin tallas</option>
                         <option value="calzado">Calzado</option>
                         <option value="ropa">Ropa</option>
@@ -782,7 +806,7 @@ export default function AdminProductos() {
                     </div>
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-semibold text-gray-600 mb-0.5">Género</label>
-                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
+                      <select name="genero" value={formData.genero} onChange={handleInputChange} className="w-full rounded-md border-gray-300 text-gray-800 bg-white text-[11px] sm:text-xs py-1 sm:py-1.5 focus:ring-primary focus:border-primary">
                         <option value="">Sin definir</option>
                         <option value="Niño">Niño</option>
                         <option value="Niña">Niña</option>

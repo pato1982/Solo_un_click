@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -12,27 +13,34 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
+// ============================================================
+// FASE 2 — imagenes, categorias e imagenes_crop son ahora tipo JSON nativo.
+// MySQL los retorna ya como objetos/arrays — no se necesita JSON.parse().
+// parseJson() mantiene compatibilidad con filas legado (TEXT) si las hubiera.
+// ============================================================
+function parseJson(val, fallback = []) {
+  if (val === null || val === undefined) return fallback
+  if (typeof val === 'object') return val   // JSON nativo de MySQL 8
+  try { return JSON.parse(val) } catch { return fallback }
+}
+
+function normalizarPortada(row) {
+  row.imagenes      = parseJson(row.imagenes, [])
+  row.categorias    = parseJson(row.categorias, [])
+  row.imagenes_crop = parseJson(row.imagenes_crop, [])
+  if (row.horarios !== undefined) row.horarios = parseJson(row.horarios, [])
+  return row
+}
+
 // GET /api/portada — obtener portada del usuario autenticado
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM turismo_portada WHERE user_id = ? LIMIT 1',
-      [req.userId]
+      'SELECT * FROM turismo_portada WHERE business_id = ? LIMIT 1',
+      [req.businessId]
     )
 
-    const portada = rows[0] || null
-    if (portada) {
-      if (portada.imagenes && typeof portada.imagenes === 'string') {
-        try { portada.imagenes = JSON.parse(portada.imagenes) } catch { portada.imagenes = [] }
-      }
-      if (portada.categorias && typeof portada.categorias === 'string') {
-        try { portada.categorias = JSON.parse(portada.categorias) } catch { portada.categorias = [] }
-      }
-      if (portada.imagenes_crop && typeof portada.imagenes_crop === 'string') {
-        try { portada.imagenes_crop = JSON.parse(portada.imagenes_crop) } catch { portada.imagenes_crop = [] }
-      }
-    }
-
+    const portada = rows[0] ? normalizarPortada(rows[0]) : null
     res.json({ portada })
   } catch (err) {
     logger.error('Error al obtener portada', { error: err.message })
@@ -55,22 +63,7 @@ router.get('/public', async (req, res) => {
        LIMIT 200`
     )
 
-    for (const row of rows) {
-      if (row.imagenes && typeof row.imagenes === 'string') {
-        try { row.imagenes = JSON.parse(row.imagenes) } catch { row.imagenes = [] }
-      }
-      if (row.categorias && typeof row.categorias === 'string') {
-        try { row.categorias = JSON.parse(row.categorias) } catch { row.categorias = [] }
-      }
-      if (row.horarios && typeof row.horarios === 'string') {
-        try { row.horarios = JSON.parse(row.horarios) } catch { row.horarios = [] }
-      }
-      if (row.imagenes_crop && typeof row.imagenes_crop === 'string') {
-        try { row.imagenes_crop = JSON.parse(row.imagenes_crop) } catch { row.imagenes_crop = [] }
-      }
-    }
-
-    res.json({ portadas: rows })
+    res.json({ portadas: rows.map(normalizarPortada) })
   } catch (err) {
     logger.error('Error al obtener portadas públicas', { error: err.message })
     res.status(500).json({ error: 'Error al obtener portadas' })
@@ -78,19 +71,19 @@ router.get('/public', async (req, res) => {
 })
 
 // POST /api/portada — crear portada
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { nombre, descripcion, imagenes, categorias } = req.body
 
     const imagenesJson = imagenes ? JSON.stringify(imagenes) : '[]'
     const categoriasJson = categorias ? JSON.stringify(categorias) : '[]'
 
-    // INSERT con ON DUPLICATE KEY para evitar race condition (user_id es UNIQUE)
+    // INSERT con ON DUPLICATE KEY para evitar race condition (business_id es UNIQUE)
     const [result] = await pool.query(
-      `INSERT INTO turismo_portada (user_id, nombre, descripcion, imagenes, categorias)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO turismo_portada (user_id, business_id, nombre, descripcion, imagenes, categorias)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), descripcion=VALUES(descripcion), imagenes=VALUES(imagenes), categorias=VALUES(categorias)`,
-      [req.userId, sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson]
+      [req.userId, req.businessId, sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson]
     )
 
     await logActivity(req.userId, 'crear', 'portada', result.insertId, { nombre })
@@ -102,7 +95,7 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/portada/:id — actualizar portada
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { nombre, descripcion, imagenes, categorias } = req.body
 
@@ -111,8 +104,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const [result] = await pool.query(
       `UPDATE turismo_portada SET nombre=?, descripcion=?, imagenes=?, categorias=?
-       WHERE id=? AND user_id=?`,
-      [sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson, req.params.id, req.userId]
+       WHERE id=? AND business_id=?`,
+      [sanitize(nombre) || null, sanitize(descripcion) || null, imagenesJson, categoriasJson, req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -127,12 +120,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 })
 
-// DELETE /api/portada/:id — eliminar portada
-router.delete('/:id', authMiddleware, async (req, res) => {
+// DELETE /api/portada/:id — eliminar portada (soft delete)
+router.delete('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'DELETE FROM turismo_portada WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_portada SET activo = 0 WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {
@@ -148,12 +141,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/portada/:id/crop — guardar encuadre de imágenes
-router.patch('/:id/crop', authMiddleware, async (req, res) => {
+router.patch('/:id/crop', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { imagenes_crop } = req.body
     await pool.query(
-      'UPDATE turismo_portada SET imagenes_crop=? WHERE id=? AND user_id=?',
-      [JSON.stringify(imagenes_crop || []), req.params.id, req.userId]
+      'UPDATE turismo_portada SET imagenes_crop=? WHERE id=? AND business_id=?',
+      [JSON.stringify(imagenes_crop || []), req.params.id, req.businessId]
     )
     res.json({ message: 'Encuadre guardado' })
   } catch (err) {
@@ -163,11 +156,11 @@ router.patch('/:id/crop', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/portada/:id/toggle — activar/desactivar portada
-router.patch('/:id/toggle', authMiddleware, async (req, res) => {
+router.patch('/:id/toggle', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const [result] = await pool.query(
-      'UPDATE turismo_portada SET activo = NOT activo WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      'UPDATE turismo_portada SET activo = NOT activo WHERE id = ? AND business_id = ?',
+      [req.params.id, req.businessId]
     )
 
     if (result.affectedRows === 0) {

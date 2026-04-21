@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -33,16 +33,16 @@ export default function AdminNegocio() {
   const [error, setError] = useState('')
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
+
   const esTurismo = user.tipo_cuenta === 'turismo'
   const tieneSlogan = !esTurismo && user.plan_id && user.plan_id >= 2
 
   useEffect(() => {
     fetch(`${API}/api/v1/business`, {
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: 'include'
     })
       .then(r => {
-        if (r.status === 401 && token !== 'dev-token') { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
+        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/'; return {} }
         if (!r.ok) return {}
         return r.json()
       })
@@ -97,8 +97,7 @@ export default function AdminNegocio() {
       const res = await fetch(`${API}/api/v1/business`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(form)
       })

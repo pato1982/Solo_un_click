@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const pool = require('../db')
 const { authMiddleware } = require('./auth')
+const { attachBusinessId } = require('../middlewares/businessMiddleware')
 const logActivity = require('../logActivity')
 const logger = require('../logger')
 
@@ -15,15 +16,22 @@ function sanitize(str) {
   return str.replace(/<[^>]*>/g, '').trim()
 }
 
-// Validar que la categoría exista en la tabla maestra (case-insensitive)
+// A-15: caché TTL 5 min para evitar N queries redundantes por validación de categoría
+const _catCache = new Map()
+const CAT_CACHE_TTL = 5 * 60 * 1000
+
 async function validateCategoria(nombre, tipo) {
   if (!nombre) return { valid: true }
+  const key = `${tipo}:${nombre.trim().toLowerCase()}`
+  const cached = _catCache.get(key)
+  if (cached && Date.now() - cached.ts < CAT_CACHE_TTL) return cached.val
   const [rows] = await pool.query(
     'SELECT nombre FROM categorias WHERE tipo = ? AND LOWER(nombre) = LOWER(?) AND activo = 1',
     [tipo, nombre.trim()]
   )
-  if (rows.length === 0) return { valid: false, nombre }
-  return { valid: true, nombre: rows[0].nombre } // devuelve nombre normalizado
+  const val = rows.length === 0 ? { valid: false, nombre } : { valid: true, nombre: rows[0].nombre }
+  _catCache.set(key, { val, ts: Date.now() })
+  return val
 }
 
 // GET /api/listings — obtener publicaciones (público, para página principal)
@@ -43,7 +51,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN media li ON li.entity_type = 'listing' AND li.entity_id = l.id
       LEFT JOIN users u ON l.user_id = u.id
       LEFT JOIN businesses b ON l.user_id = b.user_id
-      WHERE l.activo = 1
+      WHERE l.activo = 1 AND l.deleted_at IS NULL
     `
     const params = []
 
@@ -191,8 +199,31 @@ router.get('/mine', authMiddleware, async (req, res) => {
   }
 })
 
+// Resuelve categoria_id y subcategoria_id desde texto libre
+async function resolverCategoriaIds(categoria, subcategoria, tipo) {
+  let categoriaId = null
+  let subcategoriaId = null
+  if (categoria) {
+    const [catRows] = await pool.query(
+      'SELECT id FROM categorias WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) AND tipo = ? LIMIT 1',
+      [categoria, tipo || 'general']
+    )
+    if (catRows.length > 0) {
+      categoriaId = catRows[0].id
+      if (subcategoria) {
+        const [subRows] = await pool.query(
+          'SELECT id FROM subcategorias WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) AND categoria_id = ? LIMIT 1',
+          [subcategoria, categoriaId]
+        )
+        if (subRows.length > 0) subcategoriaId = subRows[0].id
+      }
+    }
+  }
+  return { categoriaId, subcategoriaId }
+}
+
 // POST /api/listings — crear publicación
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden, banner_orden } = req.body
 
@@ -202,13 +233,18 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId]
     )
     const [countRows] = await pool.query(
-      'SELECT COUNT(*) as total FROM listings WHERE user_id = ? AND carousel_posicion IS NULL AND banner_orden IS NULL',
-      [req.userId]
+      'SELECT COUNT(*) as total FROM listings WHERE business_id = ? AND carousel_posicion IS NULL AND banner_orden IS NULL',
+      [req.businessId]
     )
 
     // Carruseles y banners no cuentan en el límite del plan
     if (!carousel_posicion && !banner_orden && countRows[0].total >= userRows[0].max_listings) {
       return res.status(403).json({ error: `Has alcanzado el límite de ${userRows[0].max_listings} publicaciones de tu plan` })
+    }
+
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
     }
 
     // Validar categoría contra tabla maestra
@@ -222,6 +258,9 @@ router.post('/', authMiddleware, async (req, res) => {
     // Validar que badge solo se use con productos
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
+    // Fase 2: resolver categoria_id / subcategoria_id desde texto
+    const { categoriaId, subcategoriaId } = await resolverCategoriaIds(categoria, subcategoria, tipo)
+
     // Transacción: insertar listing + imagen + tallas + medidas
     const conn = await pool.getConnection()
     let listingId
@@ -229,9 +268,9 @@ router.post('/', authMiddleware, async (req, res) => {
       await conn.beginTransaction()
 
       const [result] = await conn.query(
-        `INSERT INTO listings (user_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, carousel_posicion, carousel_orden, banner_orden)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
+        `INSERT INTO listings (user_id, business_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.userId, req.businessId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
       )
       listingId = result.insertId
 
@@ -268,15 +307,20 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // PUT /api/listings/:id — editar publicación
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
     const { tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, badge, genero, imagen, tallas, medidas, carousel_posicion, carousel_orden, banner_orden } = req.body
 
-    // Verificar que el listing pertenece al usuario
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    // Verificar que el listing pertenece al business del usuario
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
+
+    // Validar precio
+    if (precio !== undefined && precio !== null && precio !== '' && parseFloat(precio) < 0) {
+      return res.status(400).json({ error: 'El precio no puede ser negativo' })
+    }
 
     // Validar categoría contra tabla maestra
     if (categoria) {
@@ -288,15 +332,18 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const finalBadge = tipo === 'producto' ? (badge || null) : null
 
+    // Fase 2: resolver categoria_id / subcategoria_id desde texto
+    const { categoriaId, subcategoriaId } = await resolverCategoriaIds(categoria, subcategoria, tipo)
+
     // Transacción: actualizar listing + imagen + tallas + medidas
     const conn = await pool.getConnection()
     try {
       await conn.beginTransaction()
 
       await conn.query(
-        `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
+        `UPDATE listings SET tipo=?, seccion=?, nombre=?, descripcion=?, precio=?, precio_original=?, categoria=?, subcategoria=?, categoria_id=?, subcategoria_id=?, badge=?, genero=?, carousel_posicion=?, carousel_orden=?, banner_orden=?
          WHERE id=?`,
-        [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
+        [tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null, id]
       )
 
       if (imagen) {
@@ -335,14 +382,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
 })
 
 // DELETE /api/listings/:id — eliminar publicación
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
 
-    // Verificar que pertenece al usuario
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    // Verificar que pertenece al business del usuario
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'Publicación no encontrada' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
 
     // Eliminar imagen del disco
     const [imgRows] = await pool.query('SELECT url FROM media WHERE entity_type = \'listing\' AND entity_id = ?', [id])
@@ -351,8 +398,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       try { fs.unlinkSync(filePath) } catch (e) {}
     }
 
-    // Eliminar (CASCADE borra imágenes, tallas y medidas)
-    await pool.query('DELETE FROM listings WHERE id = ?', [id])
+    // Soft delete — marcar como eliminado sin borrar del disco (Fase 1)
+    await pool.query(
+      'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE id = ?',
+      [id]
+    )
 
     await logActivity(req.userId, 'eliminar', 'listing', parseInt(id))
     res.json({ message: 'Publicación eliminada' })
@@ -363,14 +413,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 })
 
 // PATCH /api/listings/:id/banner-pos — actualizar posición y escala de imagen en banner
-router.patch('/:id/banner-pos', authMiddleware, async (req, res) => {
+router.patch('/:id/banner-pos', authMiddleware, attachBusinessId, async (req, res) => {
   try {
     const { id } = req.params
     const { banner_pos_x, banner_pos_y, banner_scale } = req.body
 
-    const [owner] = await pool.query('SELECT user_id FROM listings WHERE id = ?', [id])
+    const [owner] = await pool.query('SELECT business_id FROM listings WHERE id = ?', [id])
     if (owner.length === 0) return res.status(404).json({ error: 'No encontrado' })
-    if (owner[0].user_id !== req.userId) return res.status(403).json({ error: 'No autorizado' })
+    if (owner[0].business_id !== req.businessId) return res.status(403).json({ error: 'No autorizado' })
 
     await pool.query('UPDATE listings SET banner_pos_x=?, banner_pos_y=?, banner_scale=? WHERE id=?', [
       Math.max(0, Math.min(100, parseInt(banner_pos_x) || 50)),

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 
@@ -48,11 +48,10 @@ export default function ProgramadorServidor() {
   const [loading, setLoading] = useState(true)
   const [uploadsOpen, setUploadsOpen] = useState(false)
 
-  const token = localStorage.getItem('token')
 
   const fetchStats = () => {
     setLoading(true)
-    fetch(`${API}/api/v1/servidor/stats`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/v1/servidor/stats`, { credentials: 'include' })
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))

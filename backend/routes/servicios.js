@@ -31,20 +31,27 @@ router.get('/public', async (req, res) => {
       ORDER BY ANY_VALUE(u.plan_id) DESC, ANY_VALUE(b.nombre_negocio) ASC
     `)
 
-    // Para cada negocio, obtener sus primeras 5 imágenes de listings tipo servicio
-    const servicios = await Promise.all(rows.map(async (row) => {
-      const [imgs] = await pool.query(`
-        SELECT m.url as imagen FROM media m
+    // Obtener imágenes de todos los negocios en una sola query (en lugar de 1 query por negocio)
+    const userIds = rows.map(r => r.user_id)
+    let imgsByUser = {}
+    if (userIds.length > 0) {
+      const [allImgs] = await pool.query(`
+        SELECT l.user_id, m.url as imagen FROM media m
         JOIN listings l ON l.id = m.entity_id
-        WHERE m.entity_type = 'listing' AND l.user_id = ? AND l.tipo = 'servicio' AND l.activo = 1
-        ORDER BY l.id DESC LIMIT 5
-      `, [row.user_id])
+        WHERE m.entity_type = 'listing' AND l.user_id IN (?) AND l.tipo = 'servicio' AND l.activo = 1
+        ORDER BY l.user_id, l.id DESC
+      `, [userIds])
+      for (const img of allImgs) {
+        if (!imgsByUser[img.user_id]) imgsByUser[img.user_id] = []
+        if (imgsByUser[img.user_id].length < 5) imgsByUser[img.user_id].push(img.imagen)
+      }
+    }
 
+    const servicios = rows.map(row => {
       let horarios = row.horarios
       if (horarios && typeof horarios === 'string') {
         try { horarios = JSON.parse(horarios) } catch { horarios = [] }
       }
-
       return {
         user_id: row.user_id,
         nombre_negocio: row.nombre_negocio,
@@ -58,9 +65,9 @@ router.get('/public', async (req, res) => {
         horarios: horarios || [],
         plan_id: row.plan_id,
         categorias: row.categorias ? row.categorias.split('||') : [],
-        imagenes: imgs.map(i => i.imagen || i.url),
+        imagenes: imgsByUser[row.user_id] || [],
       }
-    }))
+    })
 
     // Solo incluir negocios que tengan al menos una imagen
     const conImagenes = servicios.filter(s => s.imagenes.length > 0)
