@@ -6,3 +6,15 @@ dist
 CREDENCIALES.md
 backend/uploads
 backend/logs/*.log
+
+# Craft Agent — artefactos de herramienta (no son código del proyecto)
+sessions/
+labels/
+statuses/
+views.json
+events.jsonl
+nul
+.claude-plugin/
+skills/
+*.bat
+config.json
