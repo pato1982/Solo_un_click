@@ -10,8 +10,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "NODE_ENV=test jest --runInBand",
-    "test:watch": "NODE_ENV=test jest --runInBand --watchAll"
+    "test": "jest --runInBand --testPathPatterns=tests/",
+    "test:watch": "jest --runInBand --watchAll --testPathPatterns=tests/",
+    "test:auth": "jest --runInBand tests/auth.test.js",
+    "test:business": "jest --runInBand tests/business.test.js",
+    "test:listings": "jest --runInBand tests/listings.test.js",
+    "test:monitor": "jest --runInBand tests/monitor.test.js"
   },
   "dependencies": {
     "@sentry/node": "^10.49.0",

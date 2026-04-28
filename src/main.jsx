@@ -11,7 +11,21 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import ProtectedRoute from './components/ProtectedRoute'
+import DevUserSwitcher from './components/DevUserSwitcher'
 import { installDevFetchInterceptor } from './lib/devFetch'
+
+const DevApiMonitor = import.meta.env.DEV
+  ? React.lazy(() => import('./components/DevApiMonitor'))
+  : null
+
+class DevErrorBoundary extends React.Component {
+  state = { error: null }
+  static getDerivedStateFromError(e) { return { error: e } }
+  render() {
+    if (this.state.error) return null
+    return this.props.children
+  }
+}
 import AdminLayout from './admin/AdminLayout'
 import AdminProductos from './admin/pages/AdminProductos'
 import AdminNegocio from './admin/pages/AdminNegocio'
@@ -41,6 +55,14 @@ function AdminIndex() {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
+      {import.meta.env.DEV && <DevUserSwitcher />}
+      {import.meta.env.DEV && DevApiMonitor && (
+        <DevErrorBoundary>
+          <React.Suspense fallback={null}>
+            <DevApiMonitor />
+          </React.Suspense>
+        </DevErrorBoundary>
+      )}
       <Routes>
         <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<AdminIndex />} />
