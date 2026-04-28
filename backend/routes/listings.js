@@ -49,8 +49,8 @@ router.get('/', async (req, res) => {
              b.correo as negocio_correo, b.facebook as negocio_facebook, b.instagram as negocio_instagram
       FROM listings l
       LEFT JOIN media li ON li.entity_type = 'listing' AND li.entity_id = l.id
-      LEFT JOIN users u ON l.user_id = u.id
-      LEFT JOIN businesses b ON l.user_id = b.user_id
+      JOIN businesses b ON l.business_id = b.id
+      LEFT JOIN users u ON b.user_id = u.id
       WHERE l.activo = 1 AND l.deleted_at IS NULL
     `
     const params = []
@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
       params.push(badge)
     }
     if (user_id) {
-      query += ' AND l.user_id = ?'
+      query += ' AND b.user_id = ?'
       params.push(user_id)
     }
     // Obtener plan del dueño si se filtra por user_id (vista pública de tienda)
@@ -159,8 +159,9 @@ router.get('/mine', authMiddleware, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT l.*, li.url as imagen
        FROM listings l
+       JOIN businesses b ON l.business_id = b.id
        LEFT JOIN media li ON li.entity_type = 'listing' AND li.entity_id = l.id
-       WHERE l.user_id = ?
+       WHERE b.user_id = ?
        ORDER BY l.created_at DESC`,
       [req.userId]
     )
@@ -268,9 +269,9 @@ router.post('/', authMiddleware, attachBusinessId, async (req, res) => {
       await conn.beginTransaction()
 
       const [result] = await conn.query(
-        `INSERT INTO listings (user_id, business_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [req.userId, req.businessId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
+        `INSERT INTO listings (business_id, tipo, seccion, nombre, descripcion, precio, precio_original, categoria, subcategoria, categoria_id, subcategoria_id, badge, genero, carousel_posicion, carousel_orden, banner_orden)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.businessId, tipo, seccion || 'destacados', sanitize(nombre), sanitize(descripcion) || null, precio || 0, precio_original || null, sanitize(categoria) || null, sanitize(subcategoria) || null, categoriaId, subcategoriaId, finalBadge, genero || null, carousel_posicion || null, carousel_orden || null, banner_orden || null]
       )
       listingId = result.insertId
 

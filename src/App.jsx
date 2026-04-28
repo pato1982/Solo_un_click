@@ -35,7 +35,7 @@ const SECTION_ORDER = ['destacados', 'ofertas', 'arriendos', 'novedades', 'servi
 function mapListingToProduct(l) {
   return {
     id: l.id,
-    user_id: l.user_id,
+    business_id: l.business_id,
     name: l.nombre,
     description: l.descripcion,
     image: l.imagen ? `${API}${l.imagen}` : null,
@@ -68,10 +68,10 @@ function mapListingToProduct(l) {
 function mixProductsByPlan(products) {
   if (products.length <= 1) return products
 
-  // Agrupar por user_id (negocio)
+  // Agrupar por business_id (negocio)
   const byUser = {}
   products.forEach(p => {
-    const uid = p.user_id || 0
+    const uid = p.business_id || 0
     if (!byUser[uid]) byUser[uid] = { plan: p.owner_plan_id || 1, items: [] }
     byUser[uid].items.push(p)
   })

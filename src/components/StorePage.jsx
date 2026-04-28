@@ -7,7 +7,7 @@ function trackClick(userId, listingId) {
   if (!userId) return
   fetch(`${API}/api/v1/analytics/track`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: listingId || null }),
+    body: JSON.stringify({ business_id: userId, event_type: 'product_click', listing_id: listingId || null }),
   }).catch(() => {})
 }
 
@@ -477,7 +477,7 @@ function StoreBanner({ store, products, bannerItems, phone, storeUserId }) {
 function mapListing(l) {
   return {
     id: l.id,
-    user_id: l.user_id,
+    business_id: l.business_id,
     name: l.nombre,
     description: l.descripcion,
     image: l.imagen ? (l.imagen.startsWith('http') ? l.imagen : `${API}${l.imagen}`) : null,
@@ -535,7 +535,7 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
     if (!store.userId) return
     fetch(`${API}/api/v1/analytics/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: store.userId, event_type: 'page_view', pagina: 'tienda' }),
+      body: JSON.stringify({ business_id: store.userId, event_type: 'page_view', pagina: 'tienda' }),
     }).catch(() => {})
   }, [store.userId])
 
@@ -543,9 +543,9 @@ export default function StorePage({ store, onBack, onOpenStore, mobileCatKey }) 
   useEffect(() => {
     if (!store.userId) return
     Promise.all([
-      fetch(`${API}/api/v1/listings?user_id=${store.userId}`).then(r => r.json()),
-      fetch(`${API}/api/v1/listings?user_id=${store.userId}&carousel=1`).then(r => r.json()),
-      fetch(`${API}/api/v1/listings?user_id=${store.userId}&banner=1`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?business_id=${store.userId}`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?business_id=${store.userId}&carousel=1`).then(r => r.json()),
+      fetch(`${API}/api/v1/listings?business_id=${store.userId}&banner=1`).then(r => r.json()),
       fetch(`${API}/api/v1/business/${store.userId}`).then(r => r.json()),
     ]).then(([listData, carData, banData, bizData]) => {
       if (listData.listings) {

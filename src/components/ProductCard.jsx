@@ -2,19 +2,19 @@ import { useState } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 function trackProductClick(product) {
-  const userId = product.user_id
-  if (!userId) return
+  const businessId = product.business_id
+  if (!businessId) return
   fetch(`${API}/api/v1/analytics/track`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, event_type: 'product_click', listing_id: product.id }),
+    body: JSON.stringify({ business_id: businessId, event_type: 'product_click', listing_id: product.id }),
   }).catch(() => {})
 }
 
 function getStoreFromProduct(product) {
-  if (product.user_id && product.nombre_negocio) {
+  if (product.business_id && product.nombre_negocio) {
     return {
-      id: `user-${product.user_id}`,
-      userId: product.user_id,
+      id: `biz-${product.business_id}`,
+      userId: product.business_id,
       name: product.nombre_negocio,
       phone: product.negocio_whatsapp || product.negocio_telefono || '',
       address: product.negocio_direccion || '',

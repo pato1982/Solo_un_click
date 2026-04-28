@@ -425,9 +425,9 @@ router.get('/me', authMiddleware, async (req, res) => {
 router.get('/profile/counts', authMiddleware, async (req, res) => {
   try {
     const uid = req.userId
-    const [productos] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'producto'])
-    const [servicios] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'servicio'])
-    const [arriendos] = await pool.query('SELECT COUNT(*) as c FROM listings WHERE user_id = ? AND tipo = ?', [uid, 'arriendo'])
+    const [productos] = await pool.query('SELECT COUNT(*) as c FROM listings l JOIN businesses b ON l.business_id = b.id WHERE b.user_id = ? AND l.tipo = ?', [uid, 'producto'])
+    const [servicios] = await pool.query('SELECT COUNT(*) as c FROM listings l JOIN businesses b ON l.business_id = b.id WHERE b.user_id = ? AND l.tipo = ?', [uid, 'servicio'])
+    const [arriendos] = await pool.query('SELECT COUNT(*) as c FROM listings l JOIN businesses b ON l.business_id = b.id WHERE b.user_id = ? AND l.tipo = ?', [uid, 'arriendo'])
     const [tours] = await pool.query('SELECT COUNT(*) as c FROM turismo_tours WHERE user_id = ?', [uid])
     const [portada] = await pool.query('SELECT COUNT(*) as c FROM turismo_portada WHERE user_id = ?', [uid])
     const [pagina] = await pool.query('SELECT COUNT(*) as c FROM turismo_pagina WHERE user_id = ?', [uid])
@@ -456,7 +456,7 @@ const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
 
 async function deleteListingsByType(userId, tipo) {
   const [result] = await pool.query(
-    'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND tipo = ? AND activo = 1',
+    'UPDATE listings l JOIN businesses b ON l.business_id = b.id SET l.activo = 0, l.deleted_at = NOW() WHERE b.user_id = ? AND l.tipo = ? AND l.activo = 1',
     [userId, tipo]
   )
   return result.affectedRows
@@ -464,7 +464,7 @@ async function deleteListingsByType(userId, tipo) {
 
 async function deleteAllCommerceData(userId) {
   await pool.query(
-    'UPDATE listings SET activo = 0, deleted_at = NOW() WHERE user_id = ? AND activo = 1',
+    'UPDATE listings l JOIN businesses b ON l.business_id = b.id SET l.activo = 0, l.deleted_at = NOW() WHERE b.user_id = ? AND l.activo = 1',
     [userId]
   )
   await pool.query(

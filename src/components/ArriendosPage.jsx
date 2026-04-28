@@ -16,7 +16,7 @@ export default function ArriendosPage({ sidebarOpen, onBack, activeFilter, onOpe
           .filter(l => l.tipo === 'arriendo')
           .map(l => ({
             id: l.id,
-            user_id: l.user_id,
+            business_id: l.business_id,
             name: l.nombre,
             description: l.descripcion || '',
             image: l.imagen ? `${API}${l.imagen}` : '',

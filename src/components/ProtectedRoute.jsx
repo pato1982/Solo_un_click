@@ -23,47 +23,71 @@ export default function ProtectedRoute({ children }) {
 
     useEffect(() => {
       async function loadDevUser() {
+        const savedId = localStorage.getItem('dev_user_id') || ''
+        const storedUser = localStorage.getItem('user')
+
+        // Si el id guardado es un perfil mock, usarlo directamente sin consultar backend
+        if (savedId.startsWith('mock-') && storedUser) {
+          setDevUser(JSON.parse(storedUser))
+          localStorage.setItem('token', 'dev-bypass')
+          setLoading(false)
+          return
+        }
+
         try {
           // Intentar obtener usuarios reales desde el backend (dev-info endpoint)
           const res = await fetch(`${API}/api/v1/auth/dev-info`)
           if (res.ok) {
             const data = await res.json()
             if (data.users && data.users.length > 0) {
-              // Usar el primer usuario disponible (o el guardado en localStorage)
-              const savedId = localStorage.getItem('dev_user_id')
-              let user = data.users[0]
-              if (savedId) {
-                const found = data.users.find(u => u.id === parseInt(savedId))
-                if (found) user = found
+              // Si el savedId coincide con un usuario real, usarlo; si no, respetar localStorage
+              const found = savedId ? data.users.find(u => u.id === parseInt(savedId)) : null
+              if (found) {
+                const userData = {
+                  id: found.id, nombre: found.nombre, email: found.email,
+                  rol: found.rol, plan_id: found.plan_id, tipo_cuenta: found.tipo_cuenta,
+                  vende_productos: found.vende_productos, ofrece_servicios: found.ofrece_servicios,
+                  ofrece_arriendos: found.ofrece_arriendos,
+                }
+                localStorage.setItem('user', JSON.stringify(userData))
+                localStorage.setItem('token', 'dev-bypass')
+                setDevUser(userData)
+                setLoading(false)
+                return
               }
+              // savedId no encontrado en BD — respetar usuario ya guardado o usar primero de la lista
+              if (storedUser) {
+                localStorage.setItem('token', 'dev-bypass')
+                setDevUser(JSON.parse(storedUser))
+                setLoading(false)
+                return
+              }
+              const first = data.users[0]
               const userData = {
-                id: user.id,
-                nombre: user.nombre,
-                email: user.email,
-                rol: user.rol,
-                plan_id: user.plan_id,
-                tipo_cuenta: user.tipo_cuenta,
-                vende_productos: user.vende_productos,
-                ofrece_servicios: user.ofrece_servicios,
-                ofrece_arriendos: user.ofrece_arriendos,
+                id: first.id, nombre: first.nombre, email: first.email,
+                rol: first.rol, plan_id: first.plan_id, tipo_cuenta: first.tipo_cuenta,
+                vende_productos: first.vende_productos, ofrece_servicios: first.ofrece_servicios,
+                ofrece_arriendos: first.ofrece_arriendos,
               }
               localStorage.setItem('user', JSON.stringify(userData))
               localStorage.setItem('token', 'dev-bypass')
-              localStorage.setItem('dev_user_id', String(user.id))
+              localStorage.setItem('dev_user_id', String(first.id))
               setDevUser(userData)
               setLoading(false)
               return
             }
           }
         } catch {
-          // Backend no disponible o dev-info deshabilitado — usar usuario por defecto
+          // Backend no disponible — usar usuario ya guardado o default
         }
 
-        // Fallback: usuario por defecto
-        localStorage.setItem('user', JSON.stringify(DEFAULT_DEV_USER))
+        const fallback = storedUser ? JSON.parse(storedUser) : DEFAULT_DEV_USER
+        if (!storedUser) {
+          localStorage.setItem('user', JSON.stringify(DEFAULT_DEV_USER))
+          localStorage.setItem('dev_user_id', String(DEFAULT_DEV_USER.id))
+        }
         localStorage.setItem('token', 'dev-bypass')
-        localStorage.setItem('dev_user_id', String(DEFAULT_DEV_USER.id))
-        setDevUser(DEFAULT_DEV_USER)
+        setDevUser(fallback)
         setLoading(false)
       }
       loadDevUser()

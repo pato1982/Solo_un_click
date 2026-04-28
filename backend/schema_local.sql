@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS subcategorias (
 -- ==================== LISTINGS ====================
 CREATE TABLE IF NOT EXISTS listings (
   id                INT AUTO_INCREMENT PRIMARY KEY,
-  user_id           INT             NOT NULL,
+  business_id       INT             NOT NULL,
   tipo              ENUM('producto','servicio','arriendo') NOT NULL DEFAULT 'producto',
   seccion           VARCHAR(50),
   nombre            VARCHAR(255)    NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS listings (
   activo            TINYINT(1)      DEFAULT 1,
   created_at        TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
 );
 
 -- ==================== LISTING_SIZES ====================
@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
 -- ==================== ÍNDICES ====================
 CREATE INDEX idx_users_email       ON users(email);
 CREATE INDEX idx_users_plan_id     ON users(plan_id);
-CREATE INDEX idx_listings_user_id  ON listings(user_id);
+CREATE INDEX idx_listings_business_id ON listings(business_id);
 CREATE INDEX idx_listings_activo   ON listings(activo);
 CREATE INDEX idx_listings_tipo     ON listings(tipo);
 CREATE INDEX idx_eventos_activo    ON eventos(activo);

@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS businesses (
 -- =====================
 CREATE TABLE IF NOT EXISTS listings (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  business_id INT NOT NULL,
   tipo VARCHAR(30) NOT NULL,
   seccion VARCHAR(50) NOT NULL DEFAULT 'destacados',
   nombre VARCHAR(255) NOT NULL,
@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS listings (
   banner_pos_y DECIMAL(6,2) NULL DEFAULT 50,
   banner_scale DECIMAL(5,2) NULL DEFAULT 1,
   activo TINYINT(1) NOT NULL DEFAULT 1,
-  deleted_at TIMESTAMP NULL DEFAULT NULL,  -- Nuevo en Fase 1: soft delete
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_listings_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_listings_business_id FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =====================
@@ -382,12 +382,12 @@ CREATE INDEX idx_users_activo ON users(activo);
 CREATE INDEX idx_businesses_user_id ON businesses(user_id);
 CREATE INDEX idx_businesses_tipo ON businesses(tipo);
 
-CREATE INDEX idx_listings_user_id ON listings(user_id);
+CREATE INDEX idx_listings_business_id ON listings(business_id);
 CREATE INDEX idx_listings_activo ON listings(activo);
 CREATE INDEX idx_listings_tipo ON listings(tipo);
 CREATE INDEX idx_listings_deleted ON listings(deleted_at);
-CREATE INDEX idx_listings_user_carousel ON listings(user_id, carousel_posicion);
-CREATE INDEX idx_listings_user_banner ON listings(user_id, banner_orden);
+CREATE INDEX idx_listings_business_carousel ON listings(business_id, carousel_posicion);
+CREATE INDEX idx_listings_business_banner ON listings(business_id, banner_orden);
 
 CREATE INDEX idx_listing_images_listing_id ON listing_images(listing_id);
 CREATE INDEX idx_listing_sizes_listing_id ON listing_sizes(listing_id);

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API || ''
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -31,6 +31,7 @@ export default function AdminNegocio() {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const initialRef = useRef(null)
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
@@ -48,7 +49,7 @@ export default function AdminNegocio() {
       })
       .then(data => {
         if (data.business) {
-          setForm({
+          const loaded = {
             nombre_negocio: data.business.nombre_negocio || '',
             slogan: data.business.slogan || '',
             descripcion: data.business.descripcion || '',
@@ -59,7 +60,9 @@ export default function AdminNegocio() {
             facebook: data.business.facebook || '',
             instagram: data.business.instagram || '',
             horarios: data.business.horarios || defaultHorarios,
-          })
+          }
+          setForm(loaded)
+          initialRef.current = loaded
         }
       })
       .catch(err => console.error('Error cargando negocio:', err))
@@ -86,6 +89,7 @@ export default function AdminNegocio() {
 
   const fbValid = !form.facebook || /^https?:\/\/(www\.)?(facebook\.com|fb\.com)\//i.test(form.facebook)
   const igValid = !form.instagram || /^https?:\/\/(www\.)?instagram\.com\//i.test(form.instagram) || /^@[\w.]+$/.test(form.instagram)
+  const hasChanges = initialRef.current !== null && JSON.stringify(form) !== JSON.stringify(initialRef.current)
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -96,12 +100,14 @@ export default function AdminNegocio() {
     try {
       const res = await fetch(`${API}/api/v1/business`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(form)
       })
       if (res.ok) {
+        initialRef.current = form
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
       } else {
@@ -326,7 +332,7 @@ export default function AdminNegocio() {
         <div className="flex items-center gap-3 mt-6">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || !hasChanges}
             className="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-lg">save</span>

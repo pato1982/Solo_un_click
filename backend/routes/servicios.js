@@ -24,7 +24,7 @@ router.get('/public', async (req, res) => {
         GROUP_CONCAT(DISTINCT l.categoria ORDER BY l.categoria SEPARATOR '||') as categorias
       FROM businesses b
       JOIN users u ON b.user_id = u.id
-      JOIN listings l ON l.user_id = b.user_id AND l.tipo = 'servicio' AND l.activo = 1
+      JOIN listings l ON l.business_id = b.id AND l.tipo = 'servicio' AND l.activo = 1
       WHERE b.nombre_negocio IS NOT NULL AND b.nombre_negocio != ''
         AND b.activo = 1
       GROUP BY b.user_id
@@ -36,10 +36,11 @@ router.get('/public', async (req, res) => {
     let imgsByUser = {}
     if (userIds.length > 0) {
       const [allImgs] = await pool.query(`
-        SELECT l.user_id, m.url as imagen FROM media m
+        SELECT b.user_id, m.url as imagen FROM media m
         JOIN listings l ON l.id = m.entity_id
-        WHERE m.entity_type = 'listing' AND l.user_id IN (?) AND l.tipo = 'servicio' AND l.activo = 1
-        ORDER BY l.user_id, l.id DESC
+        JOIN businesses b ON l.business_id = b.id
+        WHERE m.entity_type = 'listing' AND b.user_id IN (?) AND l.tipo = 'servicio' AND l.activo = 1
+        ORDER BY b.user_id, l.id DESC
       `, [userIds])
       for (const img of allImgs) {
         if (!imgsByUser[img.user_id]) imgsByUser[img.user_id] = []

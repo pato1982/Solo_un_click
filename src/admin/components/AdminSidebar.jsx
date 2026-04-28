@@ -20,6 +20,7 @@ const menuTurismo = [
 ]
 
 const menuProgramador = [
+  { label: 'Monitor', icon: 'monitoring', path: '/admin/monitor' },
   { label: 'Locales de Barrio', icon: 'store', path: '/admin/programador/locales' },
   { label: 'Próximos Eventos', icon: 'event', path: '/admin/programador/eventos' },
   { label: 'Estadísticas', icon: 'bar_chart', path: '/admin/programador/estadisticas' },
